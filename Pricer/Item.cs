@@ -1,17 +1,17 @@
 ﻿using System;
+using System.Media;
 using System.Text.RegularExpressions;
 
 namespace Pricer {
     class Item {
-        public string rarity, name;
+        public string rarity, name, type;
         public string[] mods, data;
         public int[] sockets; // socket data: 0=red 1=green 2=blue 3=white 4=abyss 5=misc
         public volatile bool match = false;
         public int stackSize;
-        public bool corrupted = false;
-        public string key;
-        public bool hasPrice = false;
-        public int level, quality;
+        public string key = "";
+
+        public volatile bool discard = false;
 
         public Item(string raw) {
             // All Ctrl+C'd item data must contain "--------" or "Rarity:", otherwise it is not an item
@@ -20,10 +20,11 @@ namespace Pricer {
             else if (!raw.Contains("Rarity:"))
                 return;
 
-            // Call parser methods
+            // Format the data and split it into an array
             ParseInput(raw);
-            ParseGemData();
-            BuildDataBaseKey();
+
+            // Checks what type of item is present and calls appropriate methods
+            ParseData();
         }
 
         /**
@@ -67,80 +68,127 @@ namespace Pricer {
 
         // Checks what data is present and then calls parse methods
         private void ParseData() {
-            // Store the index to allow us to get explcitmods location
-            int ilvl_index = 0;
+            // Index 0 will always contain rarity/name/type info
+            ParseData_Rarity(data[0]);
 
-            for (int i = 0; i < data.Length; i++) {
-                if (data[i].Contains("Rarity:")) {
-                    ParseData_Rarity(data[i]); // Done
-                } else if (data[i].Contains("Sockets:")) {
-                    ParseData_Socket(data[i]); // Done
-                } else if (data[i].Contains("Item Level:")) {
-                    ilvl_index = i;
-                } else if (data[i].Contains("Stack Size:")) {
-                    ParseData_StackSize(data[i]); // Done
+            // Can't price unidentified items atm
+            foreach(string line in data) { 
+                if (line.Contains("Unidentified")) {
+                    discard = true;
+                    return;
                 }
             }
 
-            // Int32.Parse(new Regex(@"\d+").Match(splitStr[i]).Value)
-
-            if (rarity == "Rare" || rarity == "Magic") { 
-                if (data.Length == ilvl_index + 1) {
-                    ParseData_Mods(data[data.Length - 1]);
-                } else {
-                    data[ilvl_index + 1] += "|" + data[data.Length - 1];
-                    ParseData_Mods(data[ilvl_index + 1]);
-                }
+            // It's pretty difficult to overwrite an existing note/price
+            if (data[data.Length - 1].Contains("Note:")) {
+                discard = true;
+                return;
             }
+
+            // Call methods based on item type
+            switch (rarity) {
+                case "Gem":
+                    Parse_GemData();
+                    break;
+                case "Divination Card":
+                    Parse_DivinationData();
+                    break;
+                case "Unique":
+                    //SystemSounds.Asterisk.Play();
+                    Parse_Unique(); 
+                    break;
+                case "Currency": // Contains essence and currency
+                    Parse_Currency();
+                    break;
+                default:
+                    Parse_Default();
+                    break;
+            }
+
+            // Add itemtype to key if needed
+            if (type != null) key += "|" + type;
         }
 
-        // Checks what data is present and then calls parse methods
-        private void ParseGemData() {
-            string[] splitStr = data[0].Split('|');
-            this.rarity = TrimProperty(splitStr[0]);
-            this.name = splitStr[1];
+        // Makes specific key when item is a gem
+        private void Parse_GemData() {
+            int level = 0, quality = 0, corrupted = 0;
 
+            // Index 2 in data will contain gem info (if its a gem)
             foreach (string s in data[1].Split('|')) {
                 if (s.Contains("Level:")) {
-                    this.level = Int32.Parse(new Regex(@"\d+").Match(s).Value);
+                    level = Int32.Parse(new Regex(@"\d+").Match(s).Value);
                 } else if (s.Contains("Quality:")) {
-                    this.quality = Int32.Parse(new Regex(@"\d+").Match(s).Value);
+                    quality = Int32.Parse(new Regex(@"\d+").Match(s).Value);
                 }
             }
 
             // Last line will contain "Note:" if item has a note
-            if (data[data.Length - 1].Contains("Note:")) {
-                this.hasPrice = true;
+            if (data[data.Length - 1].Contains("Corrupted")) corrupted = 1;
 
-                // Second to last line will contain "corrupted" if gem is corrupted and has a note
-                if (data[data.Length - 2].Contains("Corrupted")) this.corrupted = true;
-            } else {
-                // Last line will contain "corrupted" if gem is corrupted
-                if (data[data.Length - 1].Contains("Corrupted")) this.corrupted = true;
-            }
+            // 19,20 = 20
+            if (level < 20 && level > 18)
+                level = 20;
+            // 18,17,16.. = 0
+            else if (level < 19)
+                level = 1;
+
+            // 21,20,19,18 = 20
+            if (quality < 22 && quality > 17)
+                quality = 20;
+            // 22,23 = 23
+            else if (quality > 21)
+                quality = 23;
+            // 17,16,15.. = 0
+            else
+                quality = 0;
+
+            // Build key in the format of "Abyssal Cry|4|0|20|0"
+            key = name + "|4|" + level + "|" + quality + "|" + corrupted;
         }
 
-        // Abyss|gems:skill|Abyssal Cry|4|0|20|0
-        private void BuildDataBaseKey() {
-            int temp_level, temp_quality;
+        // Makes specific key when item is a divination card
+        private void Parse_DivinationData() {
+            // Build key in the format of "A Mother's Parting Gift|6"
+            key = name + "|" + 6;
+        }
 
-            if (level < 20 && level > 18)
-                temp_level = 20;
-            else if (level > 19) 
-                temp_level = level;
-            else
-                temp_level = 0;
+        // Makes specific key when item is a currency
+        private void Parse_Currency() {
+            // Build key in the format of "Alchemy Shard|5"
+            key = name + "|" + 5;
+        }
 
-            if (quality < 22 && quality > 17)
-                temp_quality = 20;
-            else if (quality > 21)
-                temp_quality = 23;
-            else
-                temp_quality = 0;
-            
-            this.key = name + "|4|" + temp_level + "|" + temp_quality;
+        // Makes specific key when item is unique
+        private void Parse_Unique() {
+            key = name + "|" + type + "|3";
+            type = null;
+        }
 
-            if (corrupted) key += "|" + 1; else key += "|" + 0;
+        // Makes specific key when item is of normal rarity
+        // (this includes maps, fragments, prophecies and maybe others aswell)
+        private void Parse_Default() {
+            int frameType = 0;
+
+            // Loop through lines, checking if the item contains prophecy text
+            // (They have frameType 8 but Ctrl+C shows them as "Normal")
+            for (int i = data.Length - 1; i > 0; i--) {
+                if (data[i].Contains("Right-click to add this prophecy to your character")) {
+                    frameType = 8;
+                    break;
+                } else if (data[i].Contains("Travel to this Map by using it in the Templar Laboratory or a personal Map Device")) {
+                    frameType = 0;
+                    
+                    if (rarity == "Rare") {
+                        name = type;
+                        type = null;
+                    }
+
+                    break;
+                }
+            }
+
+            // Seems like it was a prophecy afterall. Build key in the format of "A Call into the Void|8"
+            key = name + "|" + frameType;
         }
 
         // Takes input as "Item Level: 55" or "Sockets: B - B B " and returns "55" or "B - B B"
@@ -154,32 +202,24 @@ namespace Pricer {
          * Parse methods
         **/
 
-        // Takes input as "Rarity: Magic|Radiating Samite Gloves of the Penguin"
+        // Takes input as "Rarity: Gem|Faster Attacks Support"
         private void ParseData_Rarity(string str) {
             // Examples of item rarity categories:
-            // Normal:
-            //     Rarity: Normal
-            //     Majestic Plate
-            // Magic:
-            //     Rarity: Magic
-            //     Vaporous Diamond Ring of the Penguin
-            // Rare: 
-            //     Rarity: Rare
-            //     Dire Brand
-            //     Spike-Point Arrow Quiver
-
+            //     Div cards: "Rarity: Divination Card|Rain of Chaos"
+            //     Gem: "Rarity: Gem|Faster Attacks Support"
+            //     Unique: "Rarity: Unique|Inpulsa's Broken Heart|Sadist Garb"
 
             // Rarity and item name will always be under data[0]
             string[] splitStr = str.Split('|');
 
             // Get rarity. [0] is "Rarity: Magic"
-            this.rarity = TrimProperty(splitStr[0]);
+            rarity = TrimProperty(splitStr[0]);
 
             // Get name. [1] is "Majestic Plate" or "Radiating Samite Gloves of the Penguin"
-            this.name = splitStr[1];
+            name = splitStr[1];
 
-            // If item is rare, [1] will have name and [2] item type
-            if (splitStr.Length > 2) this.name += " " + splitStr[2];
+            // If item has a type, add it to the key
+            if (splitStr.Length > 2) type = splitStr[2];
         }
 
         // Expects input in the form of "Sockets: B - B B "
@@ -211,25 +251,6 @@ namespace Pricer {
                         this.sockets[5]++;
                         break;
                 }
-            }
-        }
-
-        // Expects input in the form of "Requirements:|Level: 47|Int: 68"
-        private void ParseData_Mods(string str) {
-            string[] splitStr = str.Split('|');
-            mods = new string[splitStr.Length];
-
-            // "+27 to maximum Energy Shield"
-            for (int i = 0; i < splitStr.Length; i++) {
-                MatchCollection matches = new Regex(@"\d+").Matches(splitStr[i]);
-
-                string values = "";
-                foreach (Match match in matches) {
-                    splitStr[i] = splitStr[i].Replace(match.Value, "#");
-                    values += "|" + match.Value;
-                }
-
-                mods[i] = splitStr[i] + values;
             }
         }
 

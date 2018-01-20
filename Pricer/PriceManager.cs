@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Media;
 using System.Net;
 using System.Web.Script.Serialization;
 
@@ -9,9 +10,11 @@ namespace Pricer {
     /// </summary>
     class PriceManager {
         private Dictionary<string, Entry> priceDataDict = new Dictionary<string, Entry>();
+        public volatile bool trueIfMeanFalseIfMedian = false;
         private WebClient client;
         public string league { get; set; }
         public string prefix { get; set; }
+        public int lowerPercentage { get; set; }
 
         /// <summary>
         /// Initializes the instance. Must be given a WebClient instance
@@ -23,6 +26,9 @@ namespace Pricer {
         /// Downloads price data from http://poe.ovh
         /// </summary>
         public void DownloadPriceData() {
+            // Clear previous data
+            priceDataDict.Clear();
+
             try {
                 // Download JSON-encoded string
                 string jsonString = client.DownloadString("http://api.poe.ovh/Stats?league=" + league);
@@ -55,10 +61,17 @@ namespace Pricer {
         public double Search(string key) {
             priceDataDict.TryGetValue(key, out Entry entry);
 
-            if (entry != null)
-                return entry.mean;
-            else
+            if (entry != null) {
+                if (trueIfMeanFalseIfMedian)
+                    return entry.mean;
+                else
+                    return entry.median;
+
+            } else {
+                SystemSounds.Asterisk.Play();
                 return 0;
+            }
+                
         }
     }
 

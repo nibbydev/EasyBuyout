@@ -19,10 +19,12 @@ namespace Pricer {
         private PriceManager priceManager;
         private WebClient client;
 
-        private const string program_MOTD = "Item pricer v0.4";
+        private const string program_MOTD = "Item pricer v0.5";
         private const string activeWindowTitle = "Path of Exile";
         private volatile bool flag_userControl_run = false;
         private volatile bool flag_hasLeagueSelected = false;
+        private volatile bool flag_sendBuyNote = true;
+        private volatile bool flag_sendEnterKey = true;
 
         /// <summary>
         /// Initializes the form and sets event listeners
@@ -51,6 +53,9 @@ namespace Pricer {
             // Set window title
             Title = program_MOTD;
 
+            // Credit
+            Log(program_MOTD + ". Made by Siegrest", 0);
+
             // Get list of active leagues from http://pathofexile.com and adds them to the
             // leagueSelector
             Log("Downloading league list...", 0);
@@ -60,7 +65,9 @@ namespace Pricer {
 
                 // Invoke dispatcher, allowing UI element updates
                 Dispatcher.Invoke(new Action(() => {
-                    foreach (string league in leagues) leagueSelector.Items.Add(league);
+                    foreach (string league in leagues) {
+                        leagueSelector2.Items.Add(league);
+                    }
                     Log("League list updated", 0);
                 }));
             });
@@ -103,16 +110,20 @@ namespace Pricer {
             Thread.Sleep(4);
 
             Item item = new Item(Clipboard.GetText());
-            //if (item.match) SystemSounds.Asterisk.Play();
 
             double price = priceManager.Search(item.key);
-            Log(item.key + ": " + price + " chaos", 0);
+            double newPrice = price * (100 - slider_lowerPrice.Value) / 100.0;
+            Log(item.key + " \n                 " + price + " -> " + newPrice + " (chaos)", 0);
 
-            Task task = new Task(() => {
-                Thread.Sleep(100);
-                System.Windows.Forms.SendKeys.SendWait("{~}b{/}o " + price + " chaos");
-            });
-            task.Start();
+            // Run only if checkbox is checked
+            if (flag_sendBuyNote) { 
+                Task.Run(() => {
+                    Thread.Sleep(150);
+                    System.Windows.Forms.SendKeys.SendWait(priceManager.prefix + " " + newPrice + " chaos");
+                    // Send enter if checkbox is checked
+                    if (flag_sendEnterKey) System.Windows.Forms.SendKeys.SendWait("{ENTER}");
+                });
+            }
         }
 
         /// <summary>
@@ -169,7 +180,7 @@ namespace Pricer {
         private void button_update_Click(object sender, RoutedEventArgs e) {
             // Disable update button
             button_update.IsEnabled = false;
-            Log("Downloading price data for " + leagueSelector.SelectedValue, 0);
+            Log("Downloading price data for " + leagueSelector2.SelectedValue, 0);
 
             // Run as task so it does not freeze the program
             Task.Run(() => {
@@ -195,12 +206,45 @@ namespace Pricer {
             MouseHook.Stop();
         }
 
+        private void radio_bo_Checked(object sender, RoutedEventArgs e) {
+            priceManager.prefix = "{~}b{/}o";
+        }
+
+        private void radio_price_Checked(object sender, RoutedEventArgs e) {
+            priceManager.prefix = "{~}price";
+        }
+
+        private void button_meanMedSel_Click(object sender, RoutedEventArgs e) {
+            if (button_meanMedSel.Content.ToString() == "Mean") {
+                button_meanMedSel.Content = "Median";
+                priceManager.trueIfMeanFalseIfMedian = true;
+                Log("Using mean prices", 0);
+            } else {
+                button_meanMedSel.Content = "Mean";
+                priceManager.trueIfMeanFalseIfMedian = false;
+                Log("Using median prices", 0);
+            }
+        }
+
+        private void slider_lowerPrice_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
+            label_lowerPrice.Content = "Lower price by " + slider_lowerPrice.Value + "%";
+        }
+
+        private void checkBox_outputNote_Click(object sender, RoutedEventArgs e) {
+            flag_sendBuyNote = (bool)checkBox_outputNote.IsChecked;
+            checkBox_enter.IsEnabled = flag_sendBuyNote;
+        }
+
+        private void checkBox_enter_Click(object sender, RoutedEventArgs e) {
+            flag_sendEnterKey = (bool)checkBox_enter.IsChecked;
+        }
+
         /// <summary>
         /// Fires when league selection has changed (enables/disables buttons accordingly)
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void leagueSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+        private void leagueSelector2_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             // On first launch, enable Update button only after user has picked a league
             if (!flag_hasLeagueSelected) {
                 flag_hasLeagueSelected = true;
@@ -208,7 +252,7 @@ namespace Pricer {
             }
 
             // Set league value in priceManager according to the leagueSelector
-            priceManager.league = (string) leagueSelector.SelectedItem;
+            priceManager.league = (string)leagueSelector2.SelectedItem;
 
             // Enable update button
             if (!button_update.IsEnabled) button_update.IsEnabled = true;
@@ -219,14 +263,6 @@ namespace Pricer {
                 flag_userControl_run = false;
                 button_run.IsEnabled = false;
             }
-        }
-
-        private void radio_bo_Checked(object sender, RoutedEventArgs e) {
-            priceManager.prefix = "~b/o";
-        }
-
-        private void radio_price_Checked(object sender, RoutedEventArgs e) {
-            priceManager.prefix = "~price";
         }
     }
 
