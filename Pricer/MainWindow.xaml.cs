@@ -25,6 +25,7 @@ namespace Pricer {
         private volatile bool flag_hasLeagueSelected = false;
         private volatile bool flag_sendBuyNote = true;
         private volatile bool flag_sendEnterKey = true;
+        private volatile bool flag_clipBoardPaste = true;
 
         /// <summary>
         /// Initializes the form and sets event listeners
@@ -109,21 +110,68 @@ namespace Pricer {
             // Sleep to allow clipboard write action to finish
             Thread.Sleep(4);
 
-            Item item = new Item(Clipboard.GetText());
+            // Get clipboard contents
+            string clipboardString = Clipboard.GetText();
 
-            double price = priceManager.Search(item.key);
-            double newPrice = price * (100 - slider_lowerPrice.Value) / 100.0;
-            Log(item.key + " \n                 " + price + " -> " + newPrice + " (chaos)", 0);
-
-            // Run only if checkbox is checked
-            if (flag_sendBuyNote) { 
-                Task.Run(() => {
-                    Thread.Sleep(150);
-                    System.Windows.Forms.SendKeys.SendWait(priceManager.prefix + " " + newPrice + " chaos");
-                    // Send enter if checkbox is checked
-                    if (flag_sendEnterKey) System.Windows.Forms.SendKeys.SendWait("{ENTER}");
-                });
+            // Since this event handles *all* clipboard events AND we put the buyout note in the clipboard
+            // then this event will also fire when we do that. So, to prevent an infinte loop, this is needed
+            if (clipboardString.Contains("~b/o ") || clipboardString.Contains("~price ")) {
+                Task.Run(() => ClipBoard_NotePasteTask());
+            } else {
+                Task.Run(() => ClipBoard_ItemParseTask(clipboardString));
             }
+        }
+
+        /// <summary>
+        /// Takes the clipboard data, parses it and depending whether the item was desirable, outputs data
+        /// </summary>
+        /// <param name="clipboardString">Item data from the clipboard</param>
+        private void ClipBoard_ItemParseTask(string clipboardString) {
+            // Raise the flag that indicates we will permit 1 buyout note to pass the clipboard event
+            flag_clipBoardPaste = true;
+
+            // Create Item instance
+            Item item = new Item(clipboardString);
+
+            // If the item was shit, discard it
+            if (item.discard) System.Media.SystemSounds.Asterisk.Play();
+
+            // Get price from database and format buyout note
+            double price = priceManager.Search(item.key);
+
+            // Invoke dispatcher, allowing UI element updates (and access to elements outside)
+            // Needed for: slider_lowerPrice.Value, Log(), Clipboard.SetText()
+            Dispatcher.Invoke(new Action(() => {
+                double newPrice = price * (100 - slider_lowerPrice.Value) / 100.0;
+                string note = priceManager.prefix + " " + newPrice + " chaos";
+
+                if(slider_lowerPrice.Value == 0)
+                    Log(item.name + ": " + price + "c", 0);
+                else
+                    Log(item.name + ": " + price + "c -> " + newPrice + "c", 0);
+
+                // Send text only if checkbox is checked
+                if (flag_sendBuyNote) Clipboard.SetText(note); ;
+            }));
+        }
+
+        /// <summary>
+        /// Called via task, this method pastes the current clipboard contents and presses enter
+        /// </summary>
+        private void ClipBoard_NotePasteTask() {
+            if (flag_clipBoardPaste)
+                flag_clipBoardPaste = false;
+            else
+                return;
+
+            // TODO: make this modifiable by the user
+            Thread.Sleep(100);
+
+            // Paste clipboard contents
+            System.Windows.Forms.SendKeys.SendWait("^v");
+
+            // Send enter key if checkbox is checked
+            if (flag_sendEnterKey) System.Windows.Forms.SendKeys.SendWait("{ENTER}");
         }
 
         /// <summary>
@@ -207,11 +255,11 @@ namespace Pricer {
         }
 
         private void radio_bo_Checked(object sender, RoutedEventArgs e) {
-            priceManager.prefix = "{~}b{/}o";
+            priceManager.prefix = "~b/o";
         }
 
         private void radio_price_Checked(object sender, RoutedEventArgs e) {
-            priceManager.prefix = "{~}price";
+            priceManager.prefix = "~price";
         }
 
         private void button_meanMedSel_Click(object sender, RoutedEventArgs e) {

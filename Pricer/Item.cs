@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Media;
 using System.Text.RegularExpressions;
 
 namespace Pricer {
@@ -94,7 +93,6 @@ namespace Pricer {
                     Parse_DivinationData();
                     break;
                 case "Unique":
-                    //SystemSounds.Asterisk.Play();
                     Parse_Unique(); 
                     break;
                 case "Currency": // Contains essence and currency
