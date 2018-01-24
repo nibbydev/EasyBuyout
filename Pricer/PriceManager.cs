@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Media;
 using System.Net;
 using System.Web.Script.Serialization;
 
@@ -10,7 +9,6 @@ namespace Pricer {
     /// </summary>
     class PriceManager {
         private Dictionary<string, Entry> priceDataDict = new Dictionary<string, Entry>();
-        public volatile bool trueIfMeanFalseIfMedian = false;
         private WebClient client;
         public string league { get; set; }
         public string prefix { get; set; }
@@ -58,20 +56,35 @@ namespace Pricer {
         /// </summary>
         /// <param name="key">Database key to search for</param>
         /// <returns>Median value in chaos</returns>
-        public double Search(string key) {
-            priceDataDict.TryGetValue(key, out Entry entry);
+        public Entry Search(Item item) {
+            // Get the database entry
+            priceDataDict.TryGetValue(item.key, out Entry entry);
 
-            if (entry != null) {
-                if (trueIfMeanFalseIfMedian)
-                    return entry.mean;
-                else
-                    return entry.median;
+            // If item is a gem and has quality more than 10, get price by missing GCP
+            if(item.rarity == "Gem" && item.gem_q > 10 && item.gem_q < 22) {
+                // Get GCP's chaos value
+                priceDataDict.TryGetValue("Gemcutter's Prism|5", out Entry gcpCost);
 
-            } else {
-                SystemSounds.Asterisk.Play();
-                return 0;
+                // Subtract the missing GCPChaosValue from the gem's price
+                entry.mean = entry.mean - (20 - item.gem_q) * gcpCost.median;
+                entry.median = entry.median - (20 - item.gem_q) * gcpCost.median;
+
+                // If we went into the negatives, set to 0
+                if (entry.mean < 0) entry.mean = 0;
+                if (entry.median < 0) entry.median = 0;
             }
-                
+
+            return entry;
+        }
+
+        /// <summary>
+        /// Formats the buyout note that will be pasted on the item
+        /// </summary>
+        /// <param name="price">Price that will be present in the note</param>
+        /// <returns>Formatted buyout note (e.g. "~b/o 53.2 chaos")</returns>
+        public string MakeNote(double price) {
+            // Replace "," with "." due to game limitations
+            return prefix + " " + price.ToString().Replace(',', '.') + " chaos";
         }
     }
 

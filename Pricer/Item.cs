@@ -3,14 +3,12 @@ using System.Text.RegularExpressions;
 
 namespace Pricer {
     class Item {
-        public string rarity, name, type;
-        public string[] mods, data;
+        public string rarity, name, type, key = "";
+        public string[] data;
         public int[] sockets; // socket data: 0=red 1=green 2=blue 3=white 4=abyss 5=misc
-        public volatile bool match = false;
         public int stackSize;
-        public string key = "";
-
         public volatile bool discard = false;
+        public int gem_q; // Only available for gems
 
         public Item(string raw) {
             // All Ctrl+C'd item data must contain "--------" or "Rarity:", otherwise it is not an item
@@ -87,7 +85,7 @@ namespace Pricer {
             // Call methods based on item type
             switch (rarity) {
                 case "Gem":
-                    Parse_GemData();
+                    Parse_GemData2();
                     break;
                 case "Divination Card":
                     Parse_DivinationData();
@@ -110,7 +108,7 @@ namespace Pricer {
         // Makes specific key when item is a gem
         private void Parse_GemData() {
             int level = 0, quality = 0, corrupted = 0;
-
+            
             // Index 2 in data will contain gem info (if its a gem)
             foreach (string s in data[1].Split('|')) {
                 if (s.Contains("Level:")) {
@@ -128,7 +126,7 @@ namespace Pricer {
                 level = 20;
             // 18,17,16.. = 0
             else if (level < 19)
-                level = 1;
+                level = 0;
 
             // 21,20,19,18 = 20
             if (quality < 22 && quality > 17)
@@ -139,6 +137,49 @@ namespace Pricer {
             // 17,16,15.. = 0
             else
                 quality = 0;
+
+            // Build key in the format of "Abyssal Cry|4|0|20|0"
+            key = name + "|4|" + level + "|" + quality + "|" + corrupted;
+        }
+
+        // Makes specific key when item is a gem
+        private void Parse_GemData2() {
+            int level = 0, quality = 0, corrupted = 0;
+
+            // Index 2 in data will contain gem info (if its a gem)
+            foreach (string s in data[1].Split('|')) {
+                if (s.Contains("Level:")) {
+                    level = Int32.Parse(new Regex(@"\d+").Match(s).Value);
+                } else if (s.Contains("Quality:")) {
+                    quality = Int32.Parse(new Regex(@"\d+").Match(s).Value);
+                }
+            }
+
+            // Store the quality for later use
+            gem_q = quality;
+
+            // Last line will contain "Note:" if item has a note
+            if (data[data.Length - 1].Contains("Corrupted")) corrupted = 1;
+
+            // 22,23 = 23
+            if (quality > 21)
+                quality = 23;
+            // 17,16,15..11 = 20
+            else if (quality > 10)
+                quality = 20;
+            // 10,9,8...0 = 0
+            else
+                quality = 0;
+            
+            // No need to round levels for special gems
+            if (!name.Contains("Empower") && !name.Contains("Enlighten") && !name.Contains("Enhance")) {
+                // 19,20 = 20
+                if (level > 18 && level < 21)
+                    level = 20;
+                // 18,17,16.. = 0
+                else if (level < 19)
+                    level = 1;
+            }
 
             // Build key in the format of "Abyssal Cry|4|0|20|0"
             key = name + "|4|" + level + "|" + quality + "|" + corrupted;
@@ -180,6 +221,8 @@ namespace Pricer {
                         name = type;
                         type = null;
                     }
+
+                    if (name.Contains("Superior ")) name = name.Remove(0, 9);
 
                     break;
                 }

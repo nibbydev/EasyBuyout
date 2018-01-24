@@ -9,6 +9,15 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
+/*
+ * TODO:
+ *     1) Add special item detection
+ *     2) Add 6L base detection
+ *     3) Outoput price should use "." not ","
+ *     -) Demo version should have [demo] in places (buyout note) title
+ *     5) if price has ",0" the game can't auto-assign note and ^a can be used
+ */
+
 namespace Pricer {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -19,13 +28,15 @@ namespace Pricer {
         private PriceManager priceManager;
         private WebClient client;
 
-        private const string program_MOTD = "Item pricer v0.5";
+        private const string program_MOTD = "Item pricer v0.6";
         private const string activeWindowTitle = "Path of Exile";
         private volatile bool flag_userControl_run = false;
         private volatile bool flag_hasLeagueSelected = false;
         private volatile bool flag_sendBuyNote = true;
         private volatile bool flag_sendEnterKey = true;
         private volatile bool flag_clipBoardPaste = true;
+        private volatile bool flag_useMedianWhenTrue = true;
+        private volatile int userInput_delay = 120;
 
         /// <summary>
         /// Initializes the form and sets event listeners
@@ -55,7 +66,7 @@ namespace Pricer {
             Title = program_MOTD;
 
             // Credit
-            Log(program_MOTD + ". Made by Siegrest", 0);
+            Log(program_MOTD + " by Siegrest", 0);
 
             // Get list of active leagues from http://pathofexile.com and adds them to the
             // leagueSelector
@@ -66,9 +77,7 @@ namespace Pricer {
 
                 // Invoke dispatcher, allowing UI element updates
                 Dispatcher.Invoke(new Action(() => {
-                    foreach (string league in leagues) {
-                        leagueSelector2.Items.Add(league);
-                    }
+                    foreach (string league in leagues) leagueSelector.Items.Add(league);
                     Log("League list updated", 0);
                 }));
             });
@@ -134,23 +143,53 @@ namespace Pricer {
             Item item = new Item(clipboardString);
 
             // If the item was shit, discard it
-            if (item.discard) System.Media.SystemSounds.Asterisk.Play();
+            if (item.discard) {
+                System.Media.SystemSounds.Asterisk.Play();
+                return;
+            }
+            
+            // Get object from database
+            Entry entry = priceManager.Search(item);
 
-            // Get price from database and format buyout note
-            double price = priceManager.Search(item.key);
+            // Make sure return value was not null (i.e. there was no entry with that key)
+            if (entry == null) {
+                // Play a warning sound
+                System.Media.SystemSounds.Asterisk.Play();
+
+                // Invoke dispatcher, allowing UI element updates (and access to elements outside)
+                Dispatcher.Invoke(new Action(() => { Log("No item with key \"" + item.key + "\"", 2); }));
+
+                return;
+            // Send a warning message when count is less than 200 as those items probably have an inaccurate price
+            } else if (entry.count < 200) {
+                // Play a warning sound
+                System.Media.SystemSounds.Asterisk.Play();
+
+                // Invoke dispatcher, allowing UI element updates (and access to elements outside)
+                Dispatcher.Invoke(new Action(() => { Log("Likely incorrect price (count: " + entry.count + ")", 1); }));
+            }
+
+            // Pick either mean or median price
+            double price = 0;
+            if (flag_useMedianWhenTrue)
+                price = Math.Round(entry.median, 2);
+            else
+                price = Math.Round(entry.mean, 2);
 
             // Invoke dispatcher, allowing UI element updates (and access to elements outside)
             // Needed for: slider_lowerPrice.Value, Log(), Clipboard.SetText()
             Dispatcher.Invoke(new Action(() => {
                 double newPrice = price * (100 - slider_lowerPrice.Value) / 100.0;
-                string note = priceManager.prefix + " " + newPrice + " chaos";
+                string note = priceManager.MakeNote(newPrice);
 
-                if(slider_lowerPrice.Value == 0)
+                // If the LowerPriceByPercentage slider is more than 0, change output message
+                if (slider_lowerPrice.Value == 0)
                     Log(item.name + ": " + price + "c", 0);
                 else
                     Log(item.name + ": " + price + "c -> " + newPrice + "c", 0);
 
-                // Send text only if checkbox is checked
+                // Copy the buyout note to the clipboard if checkbox is checked (The clipboard event
+                // handler will handle that aswell)
                 if (flag_sendBuyNote) Clipboard.SetText(note); ;
             }));
         }
@@ -165,7 +204,7 @@ namespace Pricer {
                 return;
 
             // TODO: make this modifiable by the user
-            Thread.Sleep(100);
+            Thread.Sleep(userInput_delay);
 
             // Paste clipboard contents
             System.Windows.Forms.SendKeys.SendWait("^v");
@@ -225,10 +264,10 @@ namespace Pricer {
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void button_update_Click(object sender, RoutedEventArgs e) {
+        private void button_download_Click(object sender, RoutedEventArgs e) {
             // Disable update button
-            button_update.IsEnabled = false;
-            Log("Downloading price data for " + leagueSelector2.SelectedValue, 0);
+            button_download.IsEnabled = false;
+            Log("Downloading price data for " + leagueSelector.SelectedValue, 0);
 
             // Run as task so it does not freeze the program
             Task.Run(() => {
@@ -265,11 +304,11 @@ namespace Pricer {
         private void button_meanMedSel_Click(object sender, RoutedEventArgs e) {
             if (button_meanMedSel.Content.ToString() == "Mean") {
                 button_meanMedSel.Content = "Median";
-                priceManager.trueIfMeanFalseIfMedian = true;
+                flag_useMedianWhenTrue = false;
                 Log("Using mean prices", 0);
             } else {
                 button_meanMedSel.Content = "Mean";
-                priceManager.trueIfMeanFalseIfMedian = false;
+                flag_useMedianWhenTrue = true;
                 Log("Using median prices", 0);
             }
         }
@@ -292,24 +331,39 @@ namespace Pricer {
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void leagueSelector2_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+        private void leagueSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             // On first launch, enable Update button only after user has picked a league
             if (!flag_hasLeagueSelected) {
                 flag_hasLeagueSelected = true;
-                button_update.IsEnabled = true;
+                button_download.IsEnabled = true;
             }
 
             // Set league value in priceManager according to the leagueSelector
-            priceManager.league = (string)leagueSelector2.SelectedItem;
+            priceManager.league = (string)leagueSelector.SelectedItem;
 
             // Enable update button
-            if (!button_update.IsEnabled) button_update.IsEnabled = true;
+            if (!button_download.IsEnabled) button_download.IsEnabled = true;
 
             // Stop service and disable run button when user changes league
             if (button_run.IsEnabled) {
                 button_run.Content = "Run";
                 flag_userControl_run = false;
                 button_run.IsEnabled = false;
+            }
+        }
+
+        private void textBox_delay_LostFocus(object sender, RoutedEventArgs e) {
+            Int32.TryParse(textBox_delay.Text, out int result);
+
+            // Don't announce when there's no change
+            if (result == userInput_delay) return;
+
+            if (result < 1 || result > 500) {
+                Log("Invalid input (allowed: 1 - 500)", 2);
+                textBox_delay.Text = userInput_delay.ToString();
+            } else {
+                Log("Changed delay " + userInput_delay + " -> " + result, 0);
+                userInput_delay = result;
             }
         }
     }
