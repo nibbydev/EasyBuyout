@@ -11,11 +11,11 @@ using System.Windows.Threading;
 
 /*
  * TODO:
- *     1) Add special item detection
- *     2) Add 6L base detection
- *     3) Outoput price should use "." not ","
+ *     *) Add special item detection
+ *     *) Add 6L base detection
+ *     *) Outoput price should use "." not ","
  *     -) Demo version should have [demo] in places (buyout note) title
- *     5) if price has ",0" the game can't auto-assign note and ^a can be used
+ *     *) if price has ",0" the game can't auto-assign note and ^a can be used
  */
 
 namespace Pricer {
@@ -28,7 +28,7 @@ namespace Pricer {
         private PriceManager priceManager;
         private WebClient client;
 
-        private const string program_MOTD = "Item pricer v0.6";
+        private const string program_MOTD = "Item pricer v0.7";
         private const string activeWindowTitle = "Path of Exile";
         private volatile bool flag_userControl_run = false;
         private volatile bool flag_hasLeagueSelected = false;
@@ -36,6 +36,7 @@ namespace Pricer {
         private volatile bool flag_sendEnterKey = true;
         private volatile bool flag_clipBoardPaste = true;
         private volatile bool flag_useMedianWhenTrue = true;
+        private volatile bool flag_sourceSelected = false;
         private volatile int userInput_delay = 120;
 
         /// <summary>
@@ -81,6 +82,10 @@ namespace Pricer {
                     Log("League list updated", 0);
                 }));
             });
+
+            // Add source list
+            sourceSelector.Items.Add("Poe.ovh");
+            sourceSelector.Items.Add("Poe.ninja");
         }
 
         //
@@ -265,14 +270,23 @@ namespace Pricer {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void button_download_Click(object sender, RoutedEventArgs e) {
+            if (!flag_sourceSelected) {
+                Log("No source selected", 1);
+                return;
+            }
+            
             // Disable update button
             button_download.IsEnabled = false;
-            Log("Downloading price data for " + leagueSelector.SelectedValue, 0);
+            string source = sourceSelector.SelectedValue.ToString();
+            Log("Downloading price data for " + leagueSelector.SelectedValue + " from " + source, 0);
 
             // Run as task so it does not freeze the program
             Task.Run(() => {
                 // Download, parse, update the data
-                priceManager.DownloadPriceData();
+                if (source == "Poe.ninja")
+                    priceManager.DownloadPoeNinjaData();
+                else
+                    priceManager.DownloadPriceData();
 
                 // Invoke dispatcher, allowing UI element updates
                 Dispatcher.Invoke(new Action(() => {
@@ -352,6 +366,11 @@ namespace Pricer {
             }
         }
 
+        /// <summary>
+        /// Event that occurs whenever the user loses focus from the delay box
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void textBox_delay_LostFocus(object sender, RoutedEventArgs e) {
             Int32.TryParse(textBox_delay.Text, out int result);
 
@@ -364,6 +383,28 @@ namespace Pricer {
             } else {
                 Log("Changed delay " + userInput_delay + " -> " + result, 0);
                 userInput_delay = result;
+            }
+        }
+
+        /// <summary>
+        /// Fires when the source selector's currently selected object changes
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void sourceSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            flag_sourceSelected = true;
+
+            if (sourceSelector.SelectedItem.ToString() == "Poe.ninja")
+                Log("Poe.ninja has no separate mean/median prices", 1);
+
+            // Enable update button
+            if (!button_download.IsEnabled) button_download.IsEnabled = true;
+
+            // Stop service and disable run button when user changes league
+            if (button_run.IsEnabled) {
+                button_run.Content = "Run";
+                flag_userControl_run = false;
+                button_run.IsEnabled = false;
             }
         }
     }

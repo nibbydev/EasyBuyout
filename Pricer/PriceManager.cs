@@ -13,6 +13,11 @@ namespace Pricer {
         public string league { get; set; }
         public string prefix { get; set; }
         public int lowerPercentage { get; set; }
+        private static string[] poeNinjaURLs = {
+            "Currency", "UniqueArmour", "Fragment", "Essence", "DivinationCards", "Prophecy",
+            "UniqueMap", "Map", "UniqueJewel", "UniqueFlask", "UniqueWeapon", "UniqueAccessory",
+            "SkillGem"
+        };
 
         /// <summary>
         /// Initializes the instance. Must be given a WebClient instance
@@ -48,6 +53,114 @@ namespace Pricer {
                 }
             } catch (Exception ex) {
                 Console.WriteLine(ex);
+            }
+        }
+
+        public void DownloadPoeNinjaData() {
+            // Clear previous data
+            priceDataDict.Clear();
+
+            foreach(string key in poeNinjaURLs) {
+                try {
+                    // Download JSON-encoded string
+                    string jsonString = client.DownloadString("http://poe.ninja/api/Data/Get" + key + "Overview?league=" + league);
+
+                    // Deserialize JSON string
+                    Dictionary<string, List<PoeNinjaEntry>> temp_deSerDict = 
+                        new JavaScriptSerializer().Deserialize<Dictionary<string, List<PoeNinjaEntry>>>(jsonString);
+
+                    if (temp_deSerDict == null) continue;
+
+                    temp_deSerDict.TryGetValue("lines", out List<PoeNinjaEntry> entryList);
+
+                    if (entryList == null) continue;
+
+                    foreach(PoeNinjaEntry ninjaEntry in entryList) {
+                        // Quick and dirty workarounds
+                        Entry entry = new Entry { count = 300 };
+                        string itemKey;
+
+                        switch(key) {
+                            case "Currency":
+                                entry.mean = ninjaEntry.value;
+                                entry.median = ninjaEntry.value;
+
+                                itemKey = ninjaEntry.currencyTypeName + "|5";
+                                if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
+                                break;
+
+                            case "Fragment":
+                                entry.mean = ninjaEntry.value;
+                                entry.median = ninjaEntry.value;
+
+                                itemKey = ninjaEntry.currencyTypeName + "|0";
+                                if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
+                                break;
+
+                            case "UniqueArmour":
+                            case "UniqueWeapon":
+                                entry.mean = ninjaEntry.chaosValue;
+                                entry.median = ninjaEntry.chaosValue;
+
+                                switch (ninjaEntry.links) {
+                                    case 6:
+                                        itemKey = ninjaEntry.name + "|" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass + "|6L";
+                                        break;
+                                    case 5:
+                                        itemKey = ninjaEntry.name + "|" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass + "|5L";
+                                        break;
+                                    default:
+                                        itemKey = ninjaEntry.name + "|" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass;
+                                        break;
+                                }
+                                
+                                if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
+                                break;
+
+                            case "UniqueMap":
+                            case "UniqueJewel":
+                            case "UniqueFlask":
+                            case "UniqueAccessory":
+                                entry.mean = ninjaEntry.chaosValue;
+                                entry.median = ninjaEntry.chaosValue;
+
+                                itemKey = ninjaEntry.name + "|" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass;
+                                if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
+                                break;
+
+                            case "Essence":
+                            case "DivinationCards":
+                            case "Prophecy":
+                                entry.mean = ninjaEntry.chaosValue;
+                                entry.median = ninjaEntry.chaosValue;
+
+                                itemKey = ninjaEntry.name + "|" + ninjaEntry.itemClass;
+                                if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
+                                break;
+
+                            case "Map":
+                                entry.mean = ninjaEntry.chaosValue;
+                                entry.median = ninjaEntry.chaosValue;
+
+                                itemKey = ninjaEntry.name + "|0";
+                                if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
+                                break;
+
+                            case "SkillGem":
+                                entry.mean = ninjaEntry.chaosValue;
+                                entry.median = ninjaEntry.chaosValue;
+                                itemKey = ninjaEntry.name + "|" + ninjaEntry.itemClass + "|" + ninjaEntry.gemLevel + "|" + ninjaEntry.gemQuality;
+                                if (ninjaEntry.corrupted) itemKey += "|1";
+                                else itemKey += "|0";
+
+                                if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
+                                break;
+                        }
+                    }
+
+                } catch (Exception ex) {
+                    Console.WriteLine(ex);
+                }
             }
         }
 
@@ -92,5 +205,19 @@ namespace Pricer {
         public double mean { get; set; }
         public double median { get; set; }
         public int count { get; set; }
+    }
+
+    public class PoeNinjaEntry {
+        public string name { get; set; }
+        public string baseType { get; set; }
+        public double chaosValue { get; set; }
+        public int itemClass { get; set; }
+        public string currencyTypeName { get; set; }
+        public double value { get; set; }
+        public int links { get; set; }
+
+        public bool corrupted { get; set; }
+        public int gemLevel { get; set; }
+        public int gemQuality { get; set; }
     }
 }

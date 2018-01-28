@@ -5,22 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Pricer"
         mc:Ignorable="d"
-        Title="MainWindow" Height="240" Width="750" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" Margin="0" Padding="0" Closing="Window_Closing">
+        Title="MainWindow" Height="300" Width="750" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" Margin="0" Padding="0" Closing="Window_Closing">
     <Grid Background="#FFF0F0F0" Margin="0,0,0,0" UseLayoutRounding="False" ScrollViewer.VerticalScrollBarVisibility="Disabled">
         <TextBox x:Name="console_window" AllowDrop="False" IsReadOnly="True" VerticalScrollBarVisibility="Visible" IsUndoEnabled="False" TextWrapping="Wrap" Padding="0" FontFamily="Courier New" HorizontalAlignment="Left" Width="540" Margin="10,10,0,10"/>
         <Grid HorizontalAlignment="Right" Width="160" Margin="0,10,10,9" >
-            <Button x:Name="button_run" Content="Run" Width="75" Click="button_run_Click" Height="20" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" VerticalAlignment="Top" HorizontalAlignment="Left" IsEnabled="False" Margin="80,157,0,0" ToolTip="Listen to mouse/clipboard events"/>
-            <Button x:Name="button_download" Content="Download" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" IsEnabled="False" Margin="0,157,0,0" Click="button_download_Click" ToolTip="Download the datapackage associated with the selected league" />
-            <RadioButton x:Name="radio_bo" Content="~b/o" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" Checked="radio_bo_Checked" Margin="102,92,0,0" />
-            <RadioButton x:Name="radio_price" Content="~price" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="radio_price_Checked" Margin="102,112,0,0" />
-            <Button x:Name="button_meanMedSel" Content="Mean" Click="button_meanMedSel_Click" VerticalAlignment="Top" HorizontalAlignment="Left" Width="75" Margin="0,132,0,0" ToolTip="Swap prices between mean and median" />
-            <CheckBox x:Name="checkBox_enter" Content="Send Enter" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" Click="checkBox_enter_Click" Margin="0,112,0,0" ToolTip="Press enter after sending the note"/>
-            <CheckBox x:Name="checkBox_outputNote" Content="Send Note" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" Click="checkBox_outputNote_Click" Margin="0,92,0,0" ToolTip="Send the note"/>
-            <Label Content="Pick a league" Padding="0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            <ComboBox x:Name="leagueSelector" Width="155" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,21,0,0" SelectionChanged="leagueSelector_SelectionChanged" />
-            <Slider x:Name="slider_lowerPrice" Width="155" Maximum="100" SmallChange="0" ValueChanged="slider_lowerPrice_ValueChanged" IsSnapToTickEnabled="True" LargeChange="0" Height="18" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,69,0,0" ToolTip="How much % of the price should be reduced?"/>
-            <Label x:Name="label_lowerPrice" Content="Lower price by 0%" HorizontalAlignment="Left" VerticalAlignment="Top" Padding="0" Margin="0,48,0,0"/>
-            <TextBox x:Name="textBox_delay" HorizontalAlignment="Left" Height="20" Margin="80,132,0,0" TextWrapping="Wrap" Text="120" VerticalAlignment="Top" Width="75" LostFocus="textBox_delay_LostFocus" ToolTip="Delay in MS that occurs between right clicking and pasting text"/>
+            <Button x:Name="button_run" Content="Run" Width="75" Click="button_run_Click" Height="20" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" VerticalAlignment="Top" HorizontalAlignment="Left" IsEnabled="False" Margin="80,222,0,0" ToolTip="Listen to mouse/clipboard events"/>
+            <Button x:Name="button_download" Content="Download" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" IsEnabled="False" Margin="0,222,0,0" Click="button_download_Click" ToolTip="Download the datapackage associated with the selected league" />
+            <RadioButton x:Name="radio_bo" Content="~b/o" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" Checked="radio_bo_Checked" Margin="102,137,0,0" />
+            <RadioButton x:Name="radio_price" Content="~price" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="radio_price_Checked" Margin="102,157,0,0" />
+            <Button x:Name="button_meanMedSel" Content="Mean" Click="button_meanMedSel_Click" VerticalAlignment="Top" HorizontalAlignment="Left" Width="75" Margin="0,197,0,0" ToolTip="Swap prices between mean and median" />
+            <CheckBox x:Name="checkBox_enter" Content="Send Enter" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" Click="checkBox_enter_Click" Margin="0,157,0,0" ToolTip="Press enter after sending the note"/>
+            <CheckBox x:Name="checkBox_outputNote" Content="Send Note" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" Click="checkBox_outputNote_Click" Margin="0,137,0,0" ToolTip="Send the note"/>
+            <Label Content="League" Padding="0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <ComboBox x:Name="leagueSelector" Width="150" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,21,0,0" SelectionChanged="leagueSelector_SelectionChanged" />
+            <Slider x:Name="slider_lowerPrice" Width="155" Maximum="100" SmallChange="0" ValueChanged="slider_lowerPrice_ValueChanged" IsSnapToTickEnabled="True" LargeChange="0" Height="18" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,114,0,0" ToolTip="How much % of the price should be reduced?"/>
+            <Label x:Name="label_lowerPrice" Content="Lower price by 0%" HorizontalAlignment="Left" VerticalAlignment="Top" Padding="0" Margin="0,93,0,0"/>
+            <TextBox x:Name="textBox_delay" HorizontalAlignment="Left" Height="20" Margin="80,197,0,0" TextWrapping="Wrap" Text="120" VerticalAlignment="Top" Width="75" LostFocus="textBox_delay_LostFocus" ToolTip="Delay in MS that occurs between right clicking and pasting text"/>
+            <ComboBox x:Name="sourceSelector" HorizontalAlignment="Left" Margin="0,66,0,0" VerticalAlignment="Top" Width="150" SelectionChanged="sourceSelector_SelectionChanged"/>
+            <Label Content="Source" Padding="0" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,48,0,0"/>
         </Grid>
     </Grid>
 </Window>
