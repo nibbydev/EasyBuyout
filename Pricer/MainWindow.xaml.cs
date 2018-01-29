@@ -16,6 +16,7 @@ using System.Windows.Threading;
  *     *) Outoput price should use "." not ","
  *     -) Demo version should have [demo] in places (buyout note) title
  *     *) if price has ",0" the game can't auto-assign note and ^a can be used
+ *     -) PoePrices support
  */
 
 namespace Pricer {
@@ -28,7 +29,7 @@ namespace Pricer {
         private PriceManager priceManager;
         private WebClient client;
 
-        private const string program_MOTD = "Item pricer v0.7";
+        private const string program_MOTD = "Item pricer v0.8";
         private const string activeWindowTitle = "Path of Exile";
         private volatile bool flag_userControl_run = false;
         private volatile bool flag_hasLeagueSelected = false;
