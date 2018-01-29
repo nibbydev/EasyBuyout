@@ -9,16 +9,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
-/*
- * TODO:
- *     *) Add special item detection
- *     *) Add 6L base detection
- *     *) Outoput price should use "." not ","
- *     -) Demo version should have [demo] in places (buyout note) title
- *     *) if price has ",0" the game can't auto-assign note and ^a can be used
- *     -) PoePrices support
- */
-
 namespace Pricer {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -29,13 +19,13 @@ namespace Pricer {
         private PriceManager priceManager;
         private WebClient client;
 
-        private const string program_MOTD = "Item pricer v0.8";
+        private const string program_MOTD = "Item pricer v0.8.3";
         private const string activeWindowTitle = "Path of Exile";
         private volatile bool flag_userControl_run = false;
-        private volatile bool flag_hasLeagueSelected = false;
         private volatile bool flag_sendBuyNote = true;
         private volatile bool flag_sendEnterKey = true;
         private volatile bool flag_clipBoardPaste = true;
+        private volatile bool flag_enableFallback = true;
         private volatile int userInput_delay = 120;
 
         /// <summary>
@@ -87,9 +77,9 @@ namespace Pricer {
             sourceSelector.Items.Add("Poe.ninja");
         }
 
-        //
-        // Event handlers
-        //
+        /*
+         * Major event handlers
+         */
 
         /// <summary>
         /// Mouse event handler
@@ -150,9 +140,16 @@ namespace Pricer {
             if (item.discard) {
                 System.Media.SystemSounds.Asterisk.Play();
 
-                // Invoke dispatcher, allowing UI element updates (and access to elements outside)
-                Dispatcher.Invoke(new Action(() => { Log("Unable to price that item", 2); }));
-
+                switch (item.errorCode) {
+                    case -1:
+                        // Invoke dispatcher, allowing UI element updates (and access to elements outside)
+                        Dispatcher.Invoke(new Action(() => { Log("Unable to price unidentified items", 2); }));
+                        break;
+                    case -2:
+                        // Invoke dispatcher, allowing UI element updates (and access to elements outside)
+                        Dispatcher.Invoke(new Action(() => { Log("Unable to price items with notes", 2); }));
+                        break;
+                }
                 return;
             }
 
@@ -160,7 +157,7 @@ namespace Pricer {
             Entry entry = priceManager.Search(item);
 
             // Last-case scenario, use poeprices to get price
-            if (entry == null) {
+            if (entry == null && flag_enableFallback) {
                 // Invoke dispatcher, allowing UI element updates (and access to elements outside)
                 Dispatcher.Invoke(new Action(() => { Log("No database entry found. Feeding item to PoePrices...", 2); }));
 
@@ -169,6 +166,14 @@ namespace Pricer {
                     count = 200,
                     source = "PoePrices"
                 };
+            }
+
+            // If PoePrices was disabled and no match was found, display an error
+            if (entry == null) {
+                // Invoke dispatcher, allowing UI element updates (and access to elements outside)
+                Dispatcher.Invoke(new Action(() => { Log("No match for: " + item.key, 2); }));
+
+                return;
             }
 
             // Display some info about some error codes, if any
@@ -251,21 +256,19 @@ namespace Pricer {
         }
 
         /// <summary>
-        /// Run button event handler
+        /// Unhooks hooks on program exit
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void button_run_Click(object sender, RoutedEventArgs e) {
-            if (button_run.Content.ToString() == "Run") {
-                button_run.Content = "Stop";
-                flag_userControl_run = true;
-                Log("Service started", 0);
-            } else {
-                button_run.Content = "Run";
-                flag_userControl_run = false;
-                Log("Service stopped", 0);
-            }
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
+            ClipboardNotification.ClipboardUpdate -= eventHandler_clip;
+            MouseHook.MouseAction -= eventHandler_mouse;
+            MouseHook.Stop();
         }
+
+        /*
+         * General methods
+         */
 
         /// <summary>
         /// Prints text to window in console-like fashion, prefixes a timestamp
@@ -294,6 +297,27 @@ namespace Pricer {
             string time = string.Format("{0:HH:mm:ss}", DateTime.Now);
             console_window.AppendText("[" + time + "]" + prefix + str + "\n");
             console_window.ScrollToEnd();
+        }
+
+        /*
+         * WFP control events
+         */
+
+        /// <summary>
+        /// Run button event handler
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button_run_Click(object sender, RoutedEventArgs e) {
+            if (button_run.Content.ToString() == "Run") {
+                button_run.Content = "Stop";
+                flag_userControl_run = true;
+                Log("Service started", 0);
+            } else {
+                button_run.Content = "Run";
+                flag_userControl_run = false;
+                Log("Service stopped", 0);
+            }
         }
 
         /// <summary>
@@ -326,24 +350,28 @@ namespace Pricer {
         }
 
         /// <summary>
-        /// Unhooks hooks on program exit
+        /// Run when user changes radio button selection
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
-            ClipboardNotification.ClipboardUpdate -= eventHandler_clip;
-            MouseHook.MouseAction -= eventHandler_mouse;
-            MouseHook.Stop();
-        }
-
         private void radio_bo_Checked(object sender, RoutedEventArgs e) {
             priceManager.prefix = "~b/o";
         }
 
+        /// <summary>
+        /// Run when user changes radio button selection
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void radio_price_Checked(object sender, RoutedEventArgs e) {
             priceManager.prefix = "~price";
         }
 
+        /// <summary>
+        /// Run when user clicks on mead/median selection button
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button_meanMedSel_Click(object sender, RoutedEventArgs e) {
             if (button_meanMedSel.Content.ToString() == "Mean") {
                 button_meanMedSel.Content = "Median";
@@ -356,15 +384,36 @@ namespace Pricer {
             }
         }
 
+        /// <summary>
+        /// Run when user changes slider position
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void slider_lowerPrice_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
             label_lowerPrice.Content = "Lower price by " + slider_lowerPrice.Value + "%";
         }
 
+        /// <summary>
+        /// Run when user clicks on checkbox that controls whether to output note via clipboard
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void checkBox_outputNote_Click(object sender, RoutedEventArgs e) {
+            // Set global flag
             flag_sendBuyNote = (bool)checkBox_outputNote.IsChecked;
+
+            // Disable/enable all related controls
             checkBox_enter.IsEnabled = flag_sendBuyNote;
+            radio_bo.IsEnabled = flag_sendBuyNote;
+            radio_price.IsEnabled = flag_sendBuyNote;
+            textBox_delay.IsEnabled = flag_sendBuyNote;
         }
 
+        /// <summary>
+        /// Run when clicks on checkbox that controls whether to send enter after sending note
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void checkBox_enter_Click(object sender, RoutedEventArgs e) {
             flag_sendEnterKey = (bool)checkBox_enter.IsChecked;
         }
@@ -375,17 +424,12 @@ namespace Pricer {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void leagueSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            // On first launch, enable Update button only after user has picked a league
-            if (!flag_hasLeagueSelected) {
-                flag_hasLeagueSelected = true;
-                button_download.IsEnabled = true;
-            }
-
             // Set league value in priceManager according to the leagueSelector
             priceManager.league = (string)leagueSelector.SelectedItem;
 
             // Enable update button
-            if (!button_download.IsEnabled) button_download.IsEnabled = true;
+            if (leagueSelector.SelectedItem != null && sourceSelector.SelectedItem != null)
+                button_download.IsEnabled = true;
 
             // Stop service and disable run button when user changes league
             if (button_run.IsEnabled) {
@@ -425,7 +469,8 @@ namespace Pricer {
             priceManager.source = sourceSelector.SelectedItem.ToString();
 
             // Enable update button
-            if (!button_download.IsEnabled) button_download.IsEnabled = true;
+            if (leagueSelector.SelectedItem != null && sourceSelector.SelectedItem != null)
+                button_download.IsEnabled = true;
 
             // Stop service and disable run button when user changes league
             if (button_run.IsEnabled) {
@@ -433,6 +478,21 @@ namespace Pricer {
                 flag_userControl_run = false;
                 button_run.IsEnabled = false;
             }
+
+            // Disable mean/median selection button for poe.ninja
+            if (priceManager.source == "Poe.ninja") 
+                button_meanMedSel.IsEnabled = false;
+            else
+                button_meanMedSel.IsEnabled = true;
+        }
+
+        /// <summary>
+        /// Fires whenever the state of the "PoePrices Fallback" checkbox is changed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void checkBox_fallBack_Click(object sender, RoutedEventArgs e) {
+            flag_enableFallback = (bool)checkBox_fallBack.IsChecked;
         }
     }
 
@@ -449,6 +509,11 @@ namespace Pricer {
         /// <returns>True if string contains "SSF"</returns>
         private static bool ContainsSSF(LeagueObject obj) { return obj.id.Contains("SSF"); }
 
+        /// <summary>
+        /// Get list of active leagues from the official PoE website
+        /// </summary>
+        /// <param name="client"></param>
+        /// <returns>List of active leagues that do not contain "SSF"</returns>
         public static string[] GetLeagueList(WebClient client) {
             try {
                 // Download JSON-encoded string

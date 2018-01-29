@@ -5,11 +5,11 @@ namespace Pricer {
     class Item {
         public string rarity, name, type, key = "";
         public string[] splitRaw;
-        public int[] sockets; // socket data: 0=red 1=green 2=blue 3=white 4=abyss 5=misc
         public int stackSize;
         public volatile bool discard = false;
         public int gem_q; // Only available for gems
         public string raw;
+        public int errorCode;
 
         public Item(string raw) {
             // All Ctrl+C'd item data must contain "--------" or "Rarity:"
@@ -71,23 +71,18 @@ namespace Pricer {
             ParseData_Rarity(splitRaw[0]);
 
             // Can't price unidentified items atm
-            foreach(string line in splitRaw) { 
+            foreach (string line in splitRaw) { 
                 if (line.Contains("Unidentified")) {
                     discard = true;
+                    errorCode = -1;
                     return;
                 }
-            }
-
-            // It's pretty difficult to overwrite an existing note/price
-            if (splitRaw[splitRaw.Length - 1].Contains("Note:")) {
-                discard = true;
-                return;
             }
 
             // Call methods based on item type
             switch (rarity) {
                 case "Gem":
-                    Parse_GemData2();
+                    Parse_GemData();
                     break;
                 case "Divination Card":
                     Parse_DivinationData();
@@ -102,50 +97,10 @@ namespace Pricer {
                     Parse_Default();
                     break;
             }
-
-            // Add itemtype to key if needed
-            if (type != null) key += "|" + type;
         }
 
         // Makes specific key when item is a gem
         private void Parse_GemData() {
-            int level = 0, quality = 0, corrupted = 0;
-            
-            // Index 2 in data will contain gem info (if its a gem)
-            foreach (string s in splitRaw[1].Split('|')) {
-                if (s.Contains("Level:")) {
-                    level = Int32.Parse(new Regex(@"\d+").Match(s).Value);
-                } else if (s.Contains("Quality:")) {
-                    quality = Int32.Parse(new Regex(@"\d+").Match(s).Value);
-                }
-            }
-
-            // Last line will contain "Note:" if item has a note
-            if (splitRaw[splitRaw.Length - 1].Contains("Corrupted")) corrupted = 1;
-
-            // 19,20 = 20
-            if (level < 20 && level > 18)
-                level = 20;
-            // 18,17,16.. = 0
-            else if (level < 19)
-                level = 0;
-
-            // 21,20,19,18 = 20
-            if (quality < 22 && quality > 17)
-                quality = 20;
-            // 22,23 = 23
-            else if (quality > 21)
-                quality = 23;
-            // 17,16,15.. = 0
-            else
-                quality = 0;
-
-            // Build key in the format of "Abyssal Cry|4|0|20|0"
-            key = name + "|4|" + level + "|" + quality + "|" + corrupted;
-        }
-
-        // Makes specific key when item is a gem
-        private void Parse_GemData2() {
             int level = 0, quality = 0, corrupted = 0;
 
             // Index 2 in data will contain gem info (if its a gem)
@@ -201,8 +156,21 @@ namespace Pricer {
 
         // Makes specific key when item is unique
         private void Parse_Unique() {
+            // Format base key
             key = name + "|" + type + "|3";
-            type = null;
+
+            // Find what index socket data has
+            int i;
+            for (i = 0; i < splitRaw.Length; i++) if (splitRaw[i].StartsWith("Sockets:")) break;
+
+            // Decide whether to add link suffix or not
+            if (splitRaw.Length > i) {
+                int links = ParseData_Links(splitRaw[i]);
+                if (links > 4) key += "|" + links + "L";
+            }
+
+            // Check if the item has special variants
+            key += ParseData_Variant();
         }
 
         // Makes specific key when item is of normal rarity
@@ -213,7 +181,13 @@ namespace Pricer {
             // Loop through lines, checking if the item contains prophecy text
             // (They have frameType 8 but Ctrl+C shows them as "Normal")
             for (int i = splitRaw.Length - 1; i > 0; i--) {
-                if (splitRaw[i].Contains("Right-click to add this prophecy to your character")) {
+                if (rarity == "Normal") {
+                    frameType = 0;
+                } else if (rarity == "Magic") {
+                    frameType = 1;
+                } else if (rarity == "Rare") {
+                    frameType = 2;
+                } else if (splitRaw[i].Contains("Right-click to add this prophecy to your character")) {
                     frameType = 8;
                     break;
                 } else if (splitRaw[i].Contains("Travel to this Map by using it in the Templar Laboratory or a personal Map Device")) {
@@ -230,8 +204,14 @@ namespace Pricer {
                 }
             }
 
-            // Seems like it was a prophecy afterall. Build key in the format of "A Call into the Void|8"
-            key = name + "|" + frameType;
+            // Start building the database key
+            key = name;
+
+            // If the item has a type, add it to the key
+            if (type != null) key += "|" + type;
+
+            // Append frameType to the key
+            key += "|" + frameType;
         }
 
         // Takes input as "Item Level: 55" or "Sockets: B - B B " and returns "55" or "B - B B"
@@ -266,35 +246,59 @@ namespace Pricer {
         }
 
         // Expects input in the form of "Sockets: B - B B "
-        private void ParseData_Socket(string str) {
+        private void ParseData_Socket2(string str) {
             // Converts "Sockets: B - B B " -> "B - B B"
             str = TrimProperty(str);
 
-            this.sockets = new int[6];
+            int[] sockets = new int[6]; ; // socket data: 0=red 1=green 2=blue 3=white 4=abyss 5=misc
 
             // Loop through "B - B B", counting socket colors
             for (int i = 0; i < (str.Length + 1); i += 2) {
                 switch (str[i]) {
                     case 'R':
-                        this.sockets[0]++;
+                        sockets[0]++;
                         break;
                     case 'G':
-                        this.sockets[1]++;
+                        sockets[1]++;
                         break;
                     case 'B':
-                        this.sockets[2]++;
+                        sockets[2]++;
                         break;
                     case 'W':
-                        this.sockets[3]++;
+                        sockets[3]++;
                         break;
                     case 'A':
-                        this.sockets[4]++;
+                        sockets[4]++;
                         break;
                     default:
-                        this.sockets[5]++;
+                        sockets[5]++;
                         break;
                 }
             }
+        }
+
+        // Converts "Sockets: B G-R-R-G-R " -> "B G-R-R-G-R"
+        private int ParseData_Links(string str) {
+            // Remove useless info from socket data
+            str = TrimProperty(str);
+
+            int[] links = { 1, 1, 1, 1, 1 };
+            int counter = 0;
+
+            // Loop through, counting links
+            for (int i = 1; i < str.Length; i += 2) {
+                if (str[i] != '-') counter++;
+                else links[counter]++;
+            }
+
+            // Reuse, reduce, recycle
+            counter = 0;
+
+            // Find largest element
+            foreach (int link in links) if (link > counter) counter = link;
+
+            // Return largest link
+            return counter;
         }
 
         // Expects input in the form of "Stack Size: 2/20"
@@ -309,6 +313,144 @@ namespace Pricer {
             string stackSize = str.Substring(str.IndexOf(':') + 1, str.IndexOf('/') - str.IndexOf(':') - 1);
 
             this.stackSize = Int32.Parse(stackSize);
+        }
+
+        // Special items have multiple variants, distinguish them
+        private string ParseData_Variant() {
+            // Find the index of "Item Level:"
+            int exModIndex;
+            for (exModIndex = 0; exModIndex < splitRaw.Length; exModIndex++)
+                if (splitRaw[exModIndex].StartsWith("Item Level:")) break;
+
+
+            // Check variation
+            switch (name) {
+                case "Atziri's Splendour":
+                    string[] splitExplicitMods = splitRaw[exModIndex + 1].Split('|');
+                    
+                    // Do some magic :)
+                    switch (String.Join("#", Regex.Split(splitExplicitMods[0], @"\d+"))) {
+                        case "#% increased Armour, Evasion and Energy Shield":
+                            return "|var:ar/ev/es";
+                        case "#% increased Armour and Energy Shield":
+                            if (splitExplicitMods[1].Contains("Life")) return "|var:ar/es/li";
+                            else return "|var:ar/es";
+                        case "#% increased Evasion and Energy Shield":
+                            if (splitExplicitMods[1].Contains("Life")) return "|var:ev/es/li";
+                            else return "|var:ev/es";
+                        case "#% increased Armour and Evasion":
+                            return  "|var:ar/ev";
+                        case "#% increased Armour":
+                            return "|var:ar";
+                        case "#% increased Evasion Rating":
+                            return "|var:ev";
+                        case "+# to maximum Energy Shield":
+                            return "|var:es";
+                        default:
+                            break;
+                    }
+                    break;
+
+                case "Vessel of Vinktar":
+                    foreach (string mod in splitRaw[exModIndex + 1].Split('|')) {
+                        if (mod.Contains("to Spells"))
+                            return "|var:spells";
+                        else if (mod.Contains("to Attacks"))
+                            return "|var:attacks";
+                        else if (mod.Contains("Converted to"))
+                            return "|var:conversion";
+                        else if (mod.Contains("Penetrates"))
+                            return "|var:penetration";
+                    }
+                    break;
+
+                case "Doryani's Invitation":
+                    foreach (string mod in splitRaw[exModIndex + 2].Split('|')) {
+                        if (mod.Contains("Lightning Damage"))
+                            return "|var:lightning";
+                        else if (mod.Contains("Fire Damage"))
+                            return "|var:fire";
+                        else if (mod.Contains("Cold Damage"))
+                            return "|var:cold";
+                        else if (mod.Contains("Physical Damage"))
+                            return "|var:physical";
+                    }
+                    break;
+
+                case "Yriel's Fostering":
+                    foreach (string mod in splitRaw[exModIndex + 1].Split('|')) {
+                        if (mod.Contains("Chaos Damage"))
+                            return "|var:chaos";
+                        else if (mod.Contains("Physical Damage"))
+                            return "|var:physical";
+                        else if (mod.Contains("Attack and Movement"))
+                            return "|var:speed";
+                    }
+                    break;
+
+                case "Volkuur's Guidance":
+                    // Figure out under what index are explicit mods located (cause of enchantments)
+                    for (int i = exModIndex; i < splitRaw.Length; i++) {
+                        if (splitRaw[i].Contains("to maximum Life")) {
+                            exModIndex = i;
+                            break;
+                        }
+                    }
+
+                    // Figure out item variant
+                    foreach (string mod in splitRaw[exModIndex].Split('|')) {
+                        if (mod.Contains("Lightning Damage"))
+                            return "|var:lightning";
+                        else if (mod.Contains("Fire Damage"))
+                            return "|var:fire";
+                        else if (mod.Contains("Cold Damage"))
+                            return "|var:cold";
+                    }
+                    break;
+
+                case "Impresence":
+                    foreach (string mod in splitRaw[exModIndex + 2].Split('|')) {
+                        if (mod.Contains("Lightning Damage"))
+                            return "|var:lightning";
+                        else if (mod.Contains("Fire Damage"))
+                            return "|var:fire";
+                        else if (mod.Contains("Cold Damage"))
+                            return "|var:cold";
+                        else if (mod.Contains("Physical Damage"))
+                            return "|var:physical";
+                        else if (mod.Contains("Chaos Damage"))
+                            return "|var:chaos";
+                    }
+                    break;
+
+                case "Lightpoacher":
+                case "Shroud of the Lightless":
+                case "Bubonic Trail":
+                case "Tombfist":
+                    // Figure out under what index are explicit mods located (cause of enchantments)
+                    for (int i = exModIndex; i < splitRaw.Length; i++) {
+                        if (splitRaw[i].Contains("Abyssal Sockets")) {
+                            exModIndex = i;
+                            break;
+                        }
+                    }
+
+                    // Check how many abyssal sockets the item has
+                    switch (splitRaw[exModIndex].Split('|')[0]) {
+                        case "Has 2 Abyssal Sockets":
+                            return "|var:2";
+                        case "Has 1 Abyssal Socket":
+                            return "|var:1";
+                    }
+
+                    break;
+                default:
+                    return "";
+            }
+
+            // Nothing matched, eh?
+            Console.WriteLine("Unmatched variant item: " + raw);
+            return "";
         }
     }
 }

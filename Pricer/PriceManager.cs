@@ -16,8 +16,11 @@ namespace Pricer {
         public int lowerPercentage { get; set; }
         public volatile bool flag_useMedianWhenTrue = true;
         private static string[] poeNinjaURLs = {
-            "Currency", "UniqueArmour", "Fragment", "Essence", "DivinationCards", "Prophecy", "UniqueMap",
-            "Map", "UniqueJewel", "UniqueFlask", "UniqueWeapon", "UniqueAccessory", "SkillGem"
+            "Currency", "UniqueArmour", "Fragment",
+            "Essence", "DivinationCards", "Prophecy",
+            "UniqueMap", "Map", "UniqueJewel",
+            "UniqueFlask", "UniqueWeapon", "UniqueAccessory",
+            "SkillGem"
         };
 
         /// <summary>
@@ -253,18 +256,27 @@ namespace Pricer {
         }
     }
 
+    /// <summary>
+    /// Used to populate local database
+    /// </summary>
     public class Entry {
         public double value { get; set; }
         public string source { get; set; }
         public int count { get; set; }
     }
 
+    /// <summary>
+    /// Used to desierialize http://poe.ovh API calls
+    /// </summary>
     public class PoeOvhEntry {
         public double mean { get; set; }
         public double median { get; set; }
         public int count { get; set; }
     }
 
+    /// <summary>
+    /// Used to desierialize http://poe.ninja API calls
+    /// </summary>
     public class PoeNinjaEntry {
         public string name { get; set; }
         public string baseType { get; set; }
@@ -280,6 +292,9 @@ namespace Pricer {
         public int gemQuality { get; set; }
     }
 
+    /// <summary>
+    /// Used to desierialize http://poeprices.com API calls
+    /// </summary>
     public class PoePricesReply {
         public string currency { get; set; }
         public string error { get; set; }
