@@ -4,21 +4,23 @@ using System.Text.RegularExpressions;
 namespace Pricer {
     class Item {
         public string rarity, name, type, key = "";
-        public string[] data;
+        public string[] splitRaw;
         public int[] sockets; // socket data: 0=red 1=green 2=blue 3=white 4=abyss 5=misc
         public int stackSize;
         public volatile bool discard = false;
         public int gem_q; // Only available for gems
+        public string raw;
 
         public Item(string raw) {
-            // All Ctrl+C'd item data must contain "--------" or "Rarity:", otherwise it is not an item
-            if (!raw.Contains("--------"))
-                return;
-            else if (!raw.Contains("Rarity:"))
-                return;
+            // All Ctrl+C'd item data must contain "--------" or "Rarity:"
+            if (!raw.Contains("--------")) return;
+            if (!raw.Contains("Rarity: ")) return;
+
+            // Add to raw
+            this.raw = raw;
 
             // Format the data and split it into an array
-            ParseInput(raw);
+            ParseRaw();
 
             // Checks what type of item is present and calls appropriate methods
             ParseData();
@@ -29,7 +31,7 @@ namespace Pricer {
         **/
 
         // Converts input into an array, replaces newlines with delimiters, splits groups
-        private void ParseInput(string raw) {
+        private void ParseRaw() {
             // Expects input in the form of (whatever copied itemdata looks like):
             //     Rarity: Normal
             //     Majestic Plate
@@ -44,14 +46,14 @@ namespace Pricer {
             //     --------
             //     Item Level: 100
 
-            raw = raw.Replace("--------", "::");
-            raw = raw.Replace("\r\n", "|");
-            raw = raw.Remove(raw.Length - 1);
+            string formattedRaw = raw.Replace("--------", "::");
+            formattedRaw = formattedRaw.Replace("\r\n", "|");
+            formattedRaw = formattedRaw.Remove(formattedRaw.Length - 1);
 
             // At this point the input looks like this:
             // "Rarity: Normal|Majestic Plate|::|Armour: 530|::|Requirements:|Level: 53|Str: 144|::|Sockets: B-R |::|Item Level: 100"
 
-            data = raw.Split(new string[] { "|::|" }, StringSplitOptions.None);
+            splitRaw = formattedRaw.Split(new string[] { "|::|" }, StringSplitOptions.None);
 
             // Then we get something like this:
             // {
@@ -66,10 +68,10 @@ namespace Pricer {
         // Checks what data is present and then calls parse methods
         private void ParseData() {
             // Index 0 will always contain rarity/name/type info
-            ParseData_Rarity(data[0]);
+            ParseData_Rarity(splitRaw[0]);
 
             // Can't price unidentified items atm
-            foreach(string line in data) { 
+            foreach(string line in splitRaw) { 
                 if (line.Contains("Unidentified")) {
                     discard = true;
                     return;
@@ -77,7 +79,7 @@ namespace Pricer {
             }
 
             // It's pretty difficult to overwrite an existing note/price
-            if (data[data.Length - 1].Contains("Note:")) {
+            if (splitRaw[splitRaw.Length - 1].Contains("Note:")) {
                 discard = true;
                 return;
             }
@@ -110,7 +112,7 @@ namespace Pricer {
             int level = 0, quality = 0, corrupted = 0;
             
             // Index 2 in data will contain gem info (if its a gem)
-            foreach (string s in data[1].Split('|')) {
+            foreach (string s in splitRaw[1].Split('|')) {
                 if (s.Contains("Level:")) {
                     level = Int32.Parse(new Regex(@"\d+").Match(s).Value);
                 } else if (s.Contains("Quality:")) {
@@ -119,7 +121,7 @@ namespace Pricer {
             }
 
             // Last line will contain "Note:" if item has a note
-            if (data[data.Length - 1].Contains("Corrupted")) corrupted = 1;
+            if (splitRaw[splitRaw.Length - 1].Contains("Corrupted")) corrupted = 1;
 
             // 19,20 = 20
             if (level < 20 && level > 18)
@@ -147,7 +149,7 @@ namespace Pricer {
             int level = 0, quality = 0, corrupted = 0;
 
             // Index 2 in data will contain gem info (if its a gem)
-            foreach (string s in data[1].Split('|')) {
+            foreach (string s in splitRaw[1].Split('|')) {
                 if (s.Contains("Level:")) {
                     level = Int32.Parse(new Regex(@"\d+").Match(s).Value);
                 } else if (s.Contains("Quality:")) {
@@ -159,7 +161,7 @@ namespace Pricer {
             gem_q = quality;
 
             // Last line will contain "Note:" if item has a note
-            if (data[data.Length - 1].Contains("Corrupted")) corrupted = 1;
+            if (splitRaw[splitRaw.Length - 1].Contains("Corrupted")) corrupted = 1;
 
             // 22,23 = 23
             if (quality > 21)
@@ -210,11 +212,11 @@ namespace Pricer {
 
             // Loop through lines, checking if the item contains prophecy text
             // (They have frameType 8 but Ctrl+C shows them as "Normal")
-            for (int i = data.Length - 1; i > 0; i--) {
-                if (data[i].Contains("Right-click to add this prophecy to your character")) {
+            for (int i = splitRaw.Length - 1; i > 0; i--) {
+                if (splitRaw[i].Contains("Right-click to add this prophecy to your character")) {
                     frameType = 8;
                     break;
-                } else if (data[i].Contains("Travel to this Map by using it in the Templar Laboratory or a personal Map Device")) {
+                } else if (splitRaw[i].Contains("Travel to this Map by using it in the Templar Laboratory or a personal Map Device")) {
                     frameType = 0;
                     
                     if (rarity == "Rare") {

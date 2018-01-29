@@ -35,8 +35,6 @@ namespace Pricer {
         private volatile bool flag_sendBuyNote = true;
         private volatile bool flag_sendEnterKey = true;
         private volatile bool flag_clipBoardPaste = true;
-        private volatile bool flag_useMedianWhenTrue = true;
-        private volatile bool flag_sourceSelected = false;
         private volatile int userInput_delay = 120;
 
         /// <summary>
@@ -147,26 +145,63 @@ namespace Pricer {
             // Create Item instance
             Item item = new Item(clipboardString);
 
-            // If the item was shit, discard it
+            // If the item was shite, discard it
             if (item.discard) {
-                System.Media.SystemSounds.Asterisk.Play();
-                return;
-            }
-            
-            // Get object from database
-            Entry entry = priceManager.Search(item);
-
-            // Make sure return value was not null (i.e. there was no entry with that key)
-            if (entry == null) {
-                // Play a warning sound
                 System.Media.SystemSounds.Asterisk.Play();
 
                 // Invoke dispatcher, allowing UI element updates (and access to elements outside)
-                Dispatcher.Invoke(new Action(() => { Log("No item with key \"" + item.key + "\"", 2); }));
+                Dispatcher.Invoke(new Action(() => { Log("Unable to price that item", 2); }));
 
                 return;
-            // Send a warning message when count is less than 200 as those items probably have an inaccurate price
-            } else if (entry.count < 200) {
+            }
+
+            // Get object from database
+            Entry entry = priceManager.Search(item);
+
+            // Last-case scenario, use poeprices to get price
+            if (entry == null) {
+                // Invoke dispatcher, allowing UI element updates (and access to elements outside)
+                Dispatcher.Invoke(new Action(() => { Log("No database entry found. Feeding item to PoePrices...", 2); }));
+
+                entry = new Entry() {
+                    value = priceManager.SearchPoePrices(item.raw),
+                    count = 200,
+                    source = "PoePrices"
+                };
+            }
+
+            // Display some info about some error codes, if any
+            if (entry.value < 0) {
+                // Play a warning sound
+                System.Media.SystemSounds.Asterisk.Play();
+
+                string errorMessage;
+                switch(entry.value) {
+                    case -1:
+                        errorMessage = "Empty HTTP reply from PoePrices";
+                        break;
+                    case -2:
+                        errorMessage = "Invalid item for PoePrices";
+                        break;
+                    case -3:
+                        errorMessage = "No exalted conversion rate found for PoePrices";
+                        break;
+                    case -4:
+                        errorMessage = "Unable to send request to PoePrices";
+                        break;
+                    default:
+                        errorMessage = "Something went wrong with PoePrices";
+                        break;
+                }
+
+                // Invoke dispatcher, allowing UI element updates (and access to elements outside)
+                Dispatcher.Invoke(new Action(() => { Log(errorMessage, 2); }));
+
+                return;
+            }
+
+            // Send a warning message when count is less than 10 as these items probably have inaccurate prices
+            if (entry.count < 10) {
                 // Play a warning sound
                 System.Media.SystemSounds.Asterisk.Play();
 
@@ -174,12 +209,8 @@ namespace Pricer {
                 Dispatcher.Invoke(new Action(() => { Log("Likely incorrect price (count: " + entry.count + ")", 1); }));
             }
 
-            // Pick either mean or median price
-            double price = 0;
-            if (flag_useMedianWhenTrue)
-                price = Math.Round(entry.median, 2);
-            else
-                price = Math.Round(entry.mean, 2);
+            // Round the result
+            double price = Math.Round(entry.value, 2);
 
             // Invoke dispatcher, allowing UI element updates (and access to elements outside)
             // Needed for: slider_lowerPrice.Value, Log(), Clipboard.SetText()
@@ -189,9 +220,9 @@ namespace Pricer {
 
                 // If the LowerPriceByPercentage slider is more than 0, change output message
                 if (slider_lowerPrice.Value == 0)
-                    Log(item.name + ": " + price + "c", 0);
+                    Log("[" + entry.source + "] " + item.key + ": " + price + "c", 0);
                 else
-                    Log(item.name + ": " + price + "c -> " + newPrice + "c", 0);
+                    Log("[" + entry.source + "] " +  item.key + ": " + price + "c -> " + newPrice + "c", 0);
 
                 // Copy the buyout note to the clipboard if checkbox is checked (The clipboard event
                 // handler will handle that aswell)
@@ -270,23 +301,20 @@ namespace Pricer {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void button_download_Click(object sender, RoutedEventArgs e) {
-            if (!flag_sourceSelected) {
+            // Disallow download button while source is not selected
+            if (priceManager.source == null) {
                 Log("No source selected", 1);
                 return;
             }
             
             // Disable update button
             button_download.IsEnabled = false;
-            string source = sourceSelector.SelectedValue.ToString();
-            Log("Downloading price data for " + leagueSelector.SelectedValue + " from " + source, 0);
+            Log("Downloading price data for " + priceManager.league + " from " + priceManager.source, 0);
 
             // Run as task so it does not freeze the program
             Task.Run(() => {
                 // Download, parse, update the data
-                if (source == "Poe.ninja")
-                    priceManager.DownloadPoeNinjaData();
-                else
-                    priceManager.DownloadPriceData();
+                priceManager.UpdateDatabase();
 
                 // Invoke dispatcher, allowing UI element updates
                 Dispatcher.Invoke(new Action(() => {
@@ -318,11 +346,11 @@ namespace Pricer {
         private void button_meanMedSel_Click(object sender, RoutedEventArgs e) {
             if (button_meanMedSel.Content.ToString() == "Mean") {
                 button_meanMedSel.Content = "Median";
-                flag_useMedianWhenTrue = false;
+                priceManager.flag_useMedianWhenTrue = false;
                 Log("Using mean prices", 0);
             } else {
                 button_meanMedSel.Content = "Mean";
-                flag_useMedianWhenTrue = true;
+                priceManager.flag_useMedianWhenTrue = true;
                 Log("Using median prices", 0);
             }
         }
@@ -392,10 +420,8 @@ namespace Pricer {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void sourceSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            flag_sourceSelected = true;
-
-            if (sourceSelector.SelectedItem.ToString() == "Poe.ninja")
-                Log("Poe.ninja has no separate mean/median prices", 1);
+            // Add source to priceManager instance
+            priceManager.source = sourceSelector.SelectedItem.ToString();
 
             // Enable update button
             if (!button_download.IsEnabled) button_download.IsEnabled = true;
@@ -450,6 +476,16 @@ namespace Pricer {
 
             // If an error occured return null
             return null;
+        }
+
+        /// <summary>
+        /// Encodes text in base64, used for https://poeprices.info API calls
+        /// </summary>
+        /// <param name="text">Raw item data</param>
+        /// <returns>Base64 encoded raw item data</returns>
+        public static string Base64Encode(string text) {
+            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(text);
+            return System.Convert.ToBase64String(plainTextBytes);
         }
     }
 }
