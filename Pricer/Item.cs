@@ -397,7 +397,7 @@ namespace Pricer {
                 case "Tombfist":
                     // Figure out under what index are explicit mods located (cause of enchantments)
                     for (int i = exModIndex; i < splitRaw.Length; i++) {
-                        if (splitRaw[i].Contains("Abyssal Sockets")) {
+                        if (splitRaw[i].Contains("Abyssal Socket")) {
                             exModIndex = i;
                             break;
                         }

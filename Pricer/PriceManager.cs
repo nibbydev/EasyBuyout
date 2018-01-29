@@ -380,7 +380,17 @@ namespace Pricer {
         /// <returns>Median value in chaos</returns>
         public Entry Search(Item item) {
             // Get the database entry
-            priceDataDict.TryGetValue(item.key, out Entry entry);
+            priceDataDict.TryGetValue(item.key, out Entry tempEntry);
+
+            // Quick hack fix
+            if (tempEntry == null) return null;
+
+            // Hack // copy the values
+            Entry entry = new Entry() {
+                value = tempEntry.value,
+                source = tempEntry.source,
+                count = tempEntry.count
+            };
 
             // If item is a gem and has quality more than 10, get price by missing GCP
             if (item.rarity == "Gem" && item.gem_q > 10 && item.gem_q < 22) {
@@ -391,7 +401,7 @@ namespace Pricer {
                 entry.value = entry.value - (20 - item.gem_q) * gcpCost.value;
 
                 // If we went into the negatives, get help from poeprices
-                if (entry.value < 0) entry = null;
+                if (entry.value < 0) return null;
             }
 
             // Return match, can be null

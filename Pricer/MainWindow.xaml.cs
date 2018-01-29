@@ -19,7 +19,7 @@ namespace Pricer {
         private PriceManager priceManager;
         private WebClient client;
 
-        private const string program_MOTD = "Item pricer v0.8.4";
+        private const string program_MOTD = "Item pricer v0.8.5";
         private const string activeWindowTitle = "Path of Exile";
         private volatile bool flag_userControl_run = false;
         private volatile bool flag_sendBuyNote = true;
@@ -215,20 +215,21 @@ namespace Pricer {
                 Dispatcher.Invoke(new Action(() => { Log("Likely incorrect price (count: " + entry.count + ")", 1); }));
             }
 
-            // Round the result
-            double price = Math.Round(entry.value, 2);
-
             // Invoke dispatcher, allowing UI element updates (and access to elements outside)
             // Needed for: slider_lowerPrice.Value, Log(), Clipboard.SetText()
             Dispatcher.Invoke(new Action(() => {
-                double newPrice = price * (100 - slider_lowerPrice.Value) / 100.0;
+                double oldPrice = Math.Round(entry.value, 1); ;
+                double newPrice = entry.value * (100 - slider_lowerPrice.Value) / 100.0;
+                
+                // Round the result
+                newPrice = Math.Round(newPrice, 1);
                 string note = priceManager.MakeNote(newPrice);
 
                 // If the LowerPriceByPercentage slider is more than 0, change output message
                 if (slider_lowerPrice.Value == 0)
-                    Log("[" + entry.source + "] " + item.key + ": " + price + "c", 0);
+                    Log("[" + entry.source + "] " + item.key + ": " + oldPrice + "c", 0);
                 else
-                    Log("[" + entry.source + "] " +  item.key + ": " + price + "c -> " + newPrice + "c", 0);
+                    Log("[" + entry.source + "] " +  item.key + ": " + oldPrice + "c -> " + newPrice + "c", 0);
 
                 // Copy the buyout note to the clipboard if checkbox is checked (The clipboard event
                 // handler will handle that aswell)
