@@ -19,7 +19,7 @@ namespace Pricer {
         private PriceManager priceManager;
         private WebClient client;
 
-        private const string program_MOTD = "Item pricer v0.8.3";
+        private const string program_MOTD = "Item pricer v0.8.4";
         private const string activeWindowTitle = "Path of Exile";
         private volatile bool flag_userControl_run = false;
         private volatile bool flag_sendBuyNote = true;

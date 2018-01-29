@@ -245,38 +245,6 @@ namespace Pricer {
             if (splitStr.Length > 2) type = splitStr[2];
         }
 
-        // Expects input in the form of "Sockets: B - B B "
-        private void ParseData_Socket2(string str) {
-            // Converts "Sockets: B - B B " -> "B - B B"
-            str = TrimProperty(str);
-
-            int[] sockets = new int[6]; ; // socket data: 0=red 1=green 2=blue 3=white 4=abyss 5=misc
-
-            // Loop through "B - B B", counting socket colors
-            for (int i = 0; i < (str.Length + 1); i += 2) {
-                switch (str[i]) {
-                    case 'R':
-                        sockets[0]++;
-                        break;
-                    case 'G':
-                        sockets[1]++;
-                        break;
-                    case 'B':
-                        sockets[2]++;
-                        break;
-                    case 'W':
-                        sockets[3]++;
-                        break;
-                    case 'A':
-                        sockets[4]++;
-                        break;
-                    default:
-                        sockets[5]++;
-                        break;
-                }
-            }
-        }
-
         // Converts "Sockets: B G-R-R-G-R " -> "B G-R-R-G-R"
         private int ParseData_Links(string str) {
             // Remove useless info from socket data

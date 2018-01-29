@@ -140,6 +140,93 @@ namespace Pricer {
                                         itemKey = ninjaEntry.name + "|" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass;
                                         break;
                                 }
+
+                                switch (ninjaEntry.name) {
+                                    case "Atziri's Splendour":
+                                        switch(ninjaEntry.variant) {
+                                            case "Armour/ES":
+                                                itemKey += "|var:ar/es";
+                                                break;
+                                            case "ES":
+                                                itemKey += "|var:es";
+                                                break;
+                                            case "Armour/Evasion":
+                                                itemKey += "|var:ar/ev";
+                                                break;
+                                            case "Armour/ES/Life":
+                                                itemKey += "|var:ar/es/li";
+                                                break;
+                                            case "Evasion/ES":
+                                                itemKey += "|var:ev/es";
+                                                break;
+                                            case "Armour/Evasion/ES":
+                                                itemKey += "|var:ar/ev/es";
+                                                break;
+                                            case "Evasion":
+                                                itemKey += "|var:ev";
+                                                break;
+                                            case "Evasion/ES/Life":
+                                                itemKey += "|var:ev/es/li";
+                                                break;
+                                            case "Armour":
+                                                itemKey += "|var:ar";
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                        break;
+
+                                    case "Yriel's Fostering":
+                                        switch (ninjaEntry.variant) {
+                                            case "Bleeding":
+                                                itemKey += "|var:physical";
+                                                break;
+                                            case "Poison":
+                                                itemKey += "|var:chaos";
+                                                break;
+                                            case "Maim":
+                                                itemKey += "|var:speed";
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                        break;
+
+                                    case "Volkuur's Guidance":
+                                        switch (ninjaEntry.variant) {
+                                            case "Lightning":
+                                                itemKey += "|var:lightning";
+                                                break;
+                                            case "Fire":
+                                                itemKey += "|var:fire";
+                                                break;
+                                            case "Cold":
+                                                itemKey += "|var:cold";
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                        break;
+
+                                    case "Lightpoacher":
+                                    case "Shroud of the Lightless":
+                                    case "Bubonic Trail":
+                                    case "Tombfist":
+                                        switch (ninjaEntry.variant) {
+                                            case "2 Jewels":
+                                                itemKey += "|var:2";
+                                                break;
+                                            case "1 Jewel":
+                                                itemKey += "|var:1";
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                        break;
+
+                                    default:
+                                        break;
+                                }
                                 
                                 if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
                                 break;
@@ -149,8 +236,74 @@ namespace Pricer {
                             case "UniqueFlask":
                             case "UniqueAccessory":
                                 entry.value = ninjaEntry.chaosValue;
-
                                 itemKey = ninjaEntry.name + "|" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass;
+
+                                switch (ninjaEntry.name) {
+                                    case "Vessel of Vinktar":
+                                        switch (ninjaEntry.variant) {
+                                            case "Added Attacks":
+                                                itemKey += "|var:attacks";
+                                                break;
+                                            case "Added Spells":
+                                                itemKey += "|var:spells";
+                                                break;
+                                            case "Penetration":
+                                                itemKey += "|var:penetration";
+                                                break;
+                                            case "Conversion":
+                                                itemKey += "|var:conversion";
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                        break;
+
+                                    case "Doryani's Invitation":
+                                        switch (ninjaEntry.variant) {
+                                            case null: // Bug on poe.ninja's end
+                                            case "Physical":
+                                                itemKey += "|var:physical";
+                                                break;
+                                            case "Fire":
+                                                itemKey += "|var:fire";
+                                                break;
+                                            case "Cold":
+                                                itemKey += "|var:cold";
+                                                break;
+                                            case "Lightning":
+                                                itemKey += "|var:lightning";
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                        break;
+
+                                    case "Impresence":
+                                        switch (ninjaEntry.variant) {
+                                            case "Chaos":
+                                                itemKey += "|var:chaos";
+                                                break;
+                                            case "Physical":
+                                                itemKey += "|var:physical";
+                                                break;
+                                            case "Fire":
+                                                itemKey += "|var:fire";
+                                                break;
+                                            case "Cold":
+                                                itemKey += "|var:cold";
+                                                break;
+                                            case "Lightning":
+                                                itemKey += "|var:lightning";
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                        break;
+
+                                    default:
+                                        break;
+                                }
+
                                 if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
                                 break;
 
@@ -282,6 +435,7 @@ namespace Pricer {
         public string baseType { get; set; }
         public int itemClass { get; set; }
         public string currencyTypeName { get; set; }
+        public string variant { get; set; }
         public int links { get; set; }
 
         public double chaosValue { get; set; }
