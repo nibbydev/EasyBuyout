@@ -393,10 +393,10 @@ namespace Pricer {
             // Get the database entry
             priceDataDict.TryGetValue(item.key, out Entry tempEntry);
 
-            // Quick hack fix
+            // Precaution
             if (tempEntry == null) return null;
 
-            // Hack // copy the values
+            // Manual copy so the original database entry is not affected
             Entry entry = new Entry() {
                 value = tempEntry.value,
                 source = tempEntry.source,
@@ -404,18 +404,18 @@ namespace Pricer {
             };
 
             // If item is a gem and has quality more than 10, get price by missing GCP
-            if (item.rarity == "Gem" && item.gem_q > 10 && item.gem_q < 22) {
+            if (item.rarity == "Gem" && item.gem_q > 15 && item.gem_q < 20) {
                 // Get GCP's chaos value
                 priceDataDict.TryGetValue("Gemcutter's Prism|5", out Entry gcpCost);
 
-                // Subtract the missing GCPChaosValue from the gem's price
-                entry.value = entry.value - (20 - item.gem_q) * gcpCost.value;
+                // Subtract the missing GCP chaos cost from the gem's price
+                entry.value -= (20 - item.gem_q) * gcpCost.value;
 
-                // If we went into the negatives, get help from poeprices
+                // If we went into the negatives return null
                 if (entry.value < 0) return null;
             }
 
-            // Return match, can be null
+            // Return match
            return entry;
         }
 
@@ -437,6 +437,7 @@ namespace Pricer {
         public double value { get; set; }
         public string source { get; set; }
         public int count { get; set; }
+        public int error { get; set; }
     }
 
     /// <summary>

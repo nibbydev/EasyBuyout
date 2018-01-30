@@ -20,7 +20,7 @@ namespace Pricer {
         private WebClient client;
 
         private string[] sources = { "Poe.ovh", "Poe.ninja" };
-        private const string program_MOTD = "Item pricer v0.8.7";
+        private const string program_MOTD = "Item pricer v0.8.9";
         private const string activeWindowTitle = "Path of Exile";
         private volatile bool flag_userControl_run = false;
         private volatile bool flag_sendBuyNote = true;
@@ -141,13 +141,17 @@ namespace Pricer {
                 System.Media.SystemSounds.Asterisk.Play();
 
                 switch (item.errorCode) {
-                    case -1:
+                    case 1:
                         // Invoke dispatcher, allowing UI element updates (and access to elements outside)
                         Dispatcher.Invoke(new Action(() => { Log("Unable to price unidentified items", 2); }));
                         break;
-                    case -2:
+                    case 2:
                         // Invoke dispatcher, allowing UI element updates (and access to elements outside)
                         Dispatcher.Invoke(new Action(() => { Log("Unable to price items with notes", 2); }));
+                        break;
+                    case 3:
+                        // Invoke dispatcher, allowing UI element updates (and access to elements outside)
+                        Dispatcher.Invoke(new Action(() => { Log("Unable to price magic items", 2); }));
                         break;
                 }
                 return;
@@ -163,7 +167,7 @@ namespace Pricer {
 
                 entry = new Entry() {
                     value = priceManager.SearchPoePrices(item.raw),
-                    count = 200,
+                    count = 20,
                     source = "PoePrices"
                 };
             }
@@ -207,7 +211,7 @@ namespace Pricer {
             }
 
             // Send a warning message when count is less than 10 as these items probably have inaccurate prices
-            if (entry.count < 10) {
+            if (entry.count < 20) {
                 // Play a warning sound
                 System.Media.SystemSounds.Asterisk.Play();
 
@@ -218,12 +222,10 @@ namespace Pricer {
             // Invoke dispatcher, allowing UI element updates (and access to elements outside)
             // Needed for: slider_lowerPrice.Value, Log(), Clipboard.SetText()
             Dispatcher.Invoke(new Action(() => {
-                //double oldPrice = Math.Round(entry.value, 1);
                 double oldPrice = Math.Ceiling(entry.value * 2) / 2.0;
                 double newPrice = entry.value * (100 - slider_lowerPrice.Value) / 100.0;
 
                 // Round the result
-                //newPrice = Math.Round(newPrice, 1);
                 newPrice = Math.Ceiling(newPrice * 2) / 2.0;
                 string note = priceManager.MakeNote(newPrice);
 
@@ -233,9 +235,15 @@ namespace Pricer {
                 else
                     Log("[" + entry.source + "] " +  item.key + ": " + oldPrice + "c -> " + newPrice + "c", 0);
 
+                // Error code 2 means items already has a note. Can't overwrite it
+                if (item.errorCode == 2) {
+                    Log("Item already has a note", 2);
+                    return;
+                }
+
                 // Copy the buyout note to the clipboard if checkbox is checked (The clipboard event
                 // handler will handle that aswell)
-                if (flag_sendBuyNote) Clipboard.SetText(note); ;
+                if (flag_sendBuyNote) Clipboard.SetText(note);
             }));
         }
 

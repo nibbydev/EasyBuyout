@@ -70,12 +70,14 @@ namespace Pricer {
             // Index 0 will always contain rarity/name/type info
             ParseData_Rarity(splitRaw[0]);
 
-            // Can't price unidentified items atm
+            // Do some error code assignment
             foreach (string line in splitRaw) { 
                 if (line.Contains("Unidentified")) {
-                    discard = true;
-                    errorCode = -1;
-                    return;
+                    errorCode = 1;
+                    break;
+                } else if (line.Contains("Note: ")) {
+                    errorCode = 2;
+                    break;
                 }
             }
 
@@ -101,7 +103,7 @@ namespace Pricer {
 
         // Makes specific key when item is a gem
         private void Parse_GemData() {
-            int level = 0, quality = 0, corrupted = 0;
+            int level = 0, quality = 0;
 
             // Index 2 in data will contain gem info (if its a gem)
             foreach (string s in splitRaw[1].Split('|')) {
@@ -116,30 +118,32 @@ namespace Pricer {
             gem_q = quality;
 
             // Last line will contain "Note:" if item has a note
-            if (splitRaw[splitRaw.Length - 1].Contains("Corrupted")) corrupted = 1;
+            bool isCorrupted = splitRaw[splitRaw.Length - 1].Contains("Corrupted");
 
-            // 22,23 = 23
-            if (quality > 21)
-                quality = 23;
-            // 17,16,15..11 = 20
-            else if (quality > 10)
-                quality = 20;
-            // 10,9,8...0 = 0
-            else
-                quality = 0;
-            
-            // No need to round levels for special gems
-            if (!name.Contains("Empower") && !name.Contains("Enlighten") && !name.Contains("Enhance")) {
-                // 19,20 = 20
-                if (level > 18 && level < 21)
-                    level = 20;
-                // 18,17,16.. = 0
-                else if (level < 19)
-                    level = 1;
+            // Special gems have special needs
+            if (name.Contains("Empower") || name.Contains("Enlighten") || name.Contains("Enhance")) {
+                if (isCorrupted) quality = 0;
+                else if (quality < 10) quality = 0;
+                else if (quality < 20) quality = 10;
+                else if (quality > 20) quality = 20;
+
+                if (level == 3) quality = 0;
+            } else {
+                if (level < 10) level = 1;
+                else if (level < 20) level = 10;
+
+                if (quality < 10) quality = 0;
+                else if (quality < 20) quality = 10;
+                else if (quality == 21) quality = 20;
+                else if (quality > 21) quality = 23;
             }
 
-            // Build key in the format of "Abyssal Cry|4|0|20|0"
-            key = name + "|4|" + level + "|" + quality + "|" + corrupted;
+            // Build key in the format of "<gem name>|4|<lvl>|<quality>"
+            key = name + "|4|" + level + "|" + quality;
+
+            // Add corruption to key
+            if (isCorrupted) key += "|1";
+            else key += "|0";
         }
 
         // Makes specific key when item is a divination card
@@ -156,6 +160,12 @@ namespace Pricer {
 
         // Makes specific key when item is unique
         private void Parse_Unique() {
+            // Can't price unidentified uniques
+            if (errorCode == 1) {
+                discard = true;
+                return;
+            }
+            
             // Format base key
             key = name + "|" + type + "|3";
 
@@ -181,13 +191,7 @@ namespace Pricer {
             // Loop through lines, checking if the item contains prophecy text
             // (They have frameType 8 but Ctrl+C shows them as "Normal")
             for (int i = splitRaw.Length - 1; i > 0; i--) {
-                if (rarity == "Normal") {
-                    frameType = 0;
-                } else if (rarity == "Magic") {
-                    frameType = 1;
-                } else if (rarity == "Rare") {
-                    frameType = 2;
-                } else if (splitRaw[i].Contains("Right-click to add this prophecy to your character")) {
+                if (splitRaw[i].Contains("Right-click to add this prophecy to your character")) {
                     frameType = 8;
                     break;
                 } else if (splitRaw[i].Contains("Travel to this Map by using it in the Templar Laboratory or a personal Map Device")) {
@@ -201,6 +205,12 @@ namespace Pricer {
                     if (name.Contains("Superior ")) name = name.Remove(0, 9);
 
                     break;
+                } else if (rarity == "Normal") {
+                    frameType = 0;
+                } else if (rarity == "Magic") {
+                    frameType = 1;
+                } else if (rarity == "Rare") {
+                    frameType = 2;
                 }
             }
 
