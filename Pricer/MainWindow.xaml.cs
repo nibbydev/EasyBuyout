@@ -19,7 +19,8 @@ namespace Pricer {
         private PriceManager priceManager;
         private WebClient client;
 
-        private const string program_MOTD = "Item pricer v0.8.5";
+        private string[] sources = { "Poe.ovh", "Poe.ninja" };
+        private const string program_MOTD = "Item pricer v0.8.7";
         private const string activeWindowTitle = "Path of Exile";
         private volatile bool flag_userControl_run = false;
         private volatile bool flag_sendBuyNote = true;
@@ -72,9 +73,8 @@ namespace Pricer {
                 }));
             });
 
-            // Add source list
-            sourceSelector.Items.Add("Poe.ovh");
-            sourceSelector.Items.Add("Poe.ninja");
+            // Add sources to source selector
+            foreach(string source in sources) sourceSelector.Items.Add(source);
         }
 
         /*
@@ -218,11 +218,13 @@ namespace Pricer {
             // Invoke dispatcher, allowing UI element updates (and access to elements outside)
             // Needed for: slider_lowerPrice.Value, Log(), Clipboard.SetText()
             Dispatcher.Invoke(new Action(() => {
-                double oldPrice = Math.Round(entry.value, 1); ;
+                //double oldPrice = Math.Round(entry.value, 1);
+                double oldPrice = Math.Ceiling(entry.value * 2) / 2.0;
                 double newPrice = entry.value * (100 - slider_lowerPrice.Value) / 100.0;
-                
+
                 // Round the result
-                newPrice = Math.Round(newPrice, 1);
+                //newPrice = Math.Round(newPrice, 1);
+                newPrice = Math.Ceiling(newPrice * 2) / 2.0;
                 string note = priceManager.MakeNote(newPrice);
 
                 // If the LowerPriceByPercentage slider is more than 0, change output message
@@ -335,6 +337,7 @@ namespace Pricer {
             
             // Disable update button
             button_download.IsEnabled = false;
+            button_meanMedSel.IsEnabled = false;
             Log("Downloading price data for " + priceManager.league + " from " + priceManager.source, 0);
 
             // Run as task so it does not freeze the program
@@ -369,19 +372,23 @@ namespace Pricer {
         }
 
         /// <summary>
-        /// Run when user clicks on mead/median selection button
+        /// Run when user clicks on mead/median/mode selection button
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void button_meanMedSel_Click(object sender, RoutedEventArgs e) {
             if (button_meanMedSel.Content.ToString() == "Mean") {
                 button_meanMedSel.Content = "Median";
-                priceManager.flag_useMedianWhenTrue = false;
+                priceManager.ovhPriceMode = 0;
                 Log("Using mean prices", 0);
-            } else {
-                button_meanMedSel.Content = "Mean";
-                priceManager.flag_useMedianWhenTrue = true;
+            } else if (button_meanMedSel.Content.ToString() == "Median") {
+                button_meanMedSel.Content = "Mode";
+                priceManager.ovhPriceMode = 1;
                 Log("Using median prices", 0);
+            } else if (button_meanMedSel.Content.ToString() == "Mode") {
+                button_meanMedSel.Content = "Mean";
+                priceManager.ovhPriceMode = 2;
+                Log("Using mode prices", 0);
             }
         }
 
@@ -429,8 +436,11 @@ namespace Pricer {
             priceManager.league = (string)leagueSelector.SelectedItem;
 
             // Enable update button
-            if (leagueSelector.SelectedItem != null && sourceSelector.SelectedItem != null)
+            if (leagueSelector.SelectedItem != null && sourceSelector.SelectedItem != null) {
                 button_download.IsEnabled = true;
+                button_meanMedSel.IsEnabled = true;
+            }
+                
 
             // Stop service and disable run button when user changes league
             if (button_run.IsEnabled) {
@@ -467,11 +477,13 @@ namespace Pricer {
         /// <param name="e"></param>
         private void sourceSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             // Add source to priceManager instance
-            priceManager.source = sourceSelector.SelectedItem.ToString();
+            priceManager.source = sourceSelector.SelectedItem.ToString().ToLower();
 
             // Enable update button
-            if (leagueSelector.SelectedItem != null && sourceSelector.SelectedItem != null)
+            if (leagueSelector.SelectedItem != null && sourceSelector.SelectedItem != null) {
                 button_download.IsEnabled = true;
+                button_meanMedSel.IsEnabled = true;
+            }
 
             // Stop service and disable run button when user changes league
             if (button_run.IsEnabled) {
@@ -481,7 +493,7 @@ namespace Pricer {
             }
 
             // Disable mean/median selection button for poe.ninja
-            if (priceManager.source == "Poe.ninja") 
+            if (priceManager.source.ToLower() == "poe.ninja") 
                 button_meanMedSel.IsEnabled = false;
             else
                 button_meanMedSel.IsEnabled = true;

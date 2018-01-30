@@ -13,7 +13,7 @@
             <Button x:Name="button_download" Content="Download" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" IsEnabled="False" Margin="0,222,0,0" Click="button_download_Click" ToolTip="Download the datapackage associated with the selected league" />
             <RadioButton x:Name="radio_bo" Content="~b/o" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" Checked="radio_bo_Checked" Margin="102,137,0,0" />
             <RadioButton x:Name="radio_price" Content="~price" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="radio_price_Checked" Margin="102,157,0,0" />
-            <Button x:Name="button_meanMedSel" Content="Mean" Click="button_meanMedSel_Click" VerticalAlignment="Top" HorizontalAlignment="Left" Width="75" Margin="0,197,0,0" ToolTip="Swap prices between mean and median (Not supported by Poe.Ninja)" />
+            <Button x:Name="button_meanMedSel" Content="Mean" Click="button_meanMedSel_Click" VerticalAlignment="Top" HorizontalAlignment="Left" Width="75" Margin="0,197,0,0" ToolTip="Swap prices between mean and median (Not supported by Poe.Ninja)" IsEnabled="False" />
             <CheckBox x:Name="checkBox_enter" Content="Send Enter" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" Click="checkBox_enter_Click" Margin="0,157,0,0" ToolTip="Press enter after sending note"/>
             <CheckBox x:Name="checkBox_outputNote" Content="Send Note" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" Click="checkBox_outputNote_Click" Margin="0,137,0,0" ToolTip="Send the note"/>
             <Label Content="League" Padding="0" HorizontalAlignment="Left" VerticalAlignment="Top"/>

@@ -14,7 +14,7 @@ namespace Pricer {
         public string prefix { get; set; }
         public string source { get; set; }
         public int lowerPercentage { get; set; }
-        public volatile bool flag_useMedianWhenTrue = true;
+        public int ovhPriceMode = 0;
         private static string[] poeNinjaURLs = {
             "Currency", "UniqueArmour", "Fragment",
             "Essence", "DivinationCards", "Prophecy",
@@ -33,8 +33,8 @@ namespace Pricer {
         /// Picks download source depending on source selection
         /// </summary>
         public void UpdateDatabase() {
-            if (source == "Poe.ninja") DownloadPoeNinjaData();
-            else DownloadPoeOvhData();
+            if (source.ToLower() == "poe.ninja") DownloadPoeNinjaData();
+            else if (source.ToLower() == "poe.ovh") DownloadPoeOvhData();
         }
 
         /// <summary>
@@ -66,8 +66,19 @@ namespace Pricer {
                         Entry entry = new Entry();
 
                         // Set Entry value
-                        if (flag_useMedianWhenTrue) entry.value = ovhEntry.median;
-                        else entry.value = ovhEntry.mean;
+                        switch (ovhPriceMode) {
+                            case 0:
+                                entry.value = ovhEntry.mean;
+                                break;
+                            case 1:
+                                entry.value = ovhEntry.median;
+                                break;
+                            case 2:
+                                entry.value = ovhEntry.mode;
+                                break;
+                            default:
+                                break;
+                        }
 
                         // Set misc data
                         entry.count = ovhEntry.count;
@@ -434,6 +445,7 @@ namespace Pricer {
     public class PoeOvhEntry {
         public double mean { get; set; }
         public double median { get; set; }
+        public double mode { get; set; }
         public int count { get; set; }
     }
 
