@@ -162,20 +162,30 @@ namespace Pricer {
 
             // Last-case scenario, use poeprices to get price
             if (entry == null && flag_enableFallback) {
-                // Invoke dispatcher, allowing UI element updates (and access to elements outside)
-                Dispatcher.Invoke(new Action(() => { Log("No database entry found. Feeding item to PoePrices...", 2); }));
+                if (item.rarity == "Rare" || item.rarity == "Magic" || item.rarity == "Normal") {
+                    // Invoke dispatcher, allowing UI element updates (and access to elements outside)
+                    Dispatcher.Invoke(new Action(() => { Log("No database entry found. Feeding item to PoePrices...", 2); }));
 
-                entry = new Entry() {
-                    value = priceManager.SearchPoePrices(item.raw),
-                    count = 20,
-                    source = "PoePrices"
-                };
+                    entry = new Entry() {
+                        value = priceManager.SearchPoePrices(item.raw),
+                        count = 20,
+                        source = "PoePrices"
+                    };
+                }
             }
 
             // If PoePrices was disabled and no match was found, display an error
             if (entry == null) {
                 // Invoke dispatcher, allowing UI element updates (and access to elements outside)
                 Dispatcher.Invoke(new Action(() => { Log("No match for: " + item.key, 2); }));
+
+                return;
+            }
+
+            // If the price is literally 0c
+            if (entry.value == 0) {
+                // Invoke dispatcher, allowing UI element updates (and access to elements outside)
+                Dispatcher.Invoke(new Action(() => { Log("Worth: 0c: " + item.key, 2); }));
 
                 return;
             }

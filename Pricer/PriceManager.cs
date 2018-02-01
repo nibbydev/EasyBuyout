@@ -403,18 +403,6 @@ namespace Pricer {
                 count = tempEntry.count
             };
 
-            // If item is a gem and has quality more than 10, get price by missing GCP
-            if (item.rarity == "Gem" && item.gem_q > 15 && item.gem_q < 20) {
-                // Get GCP's chaos value
-                priceDataDict.TryGetValue("Gemcutter's Prism|5", out Entry gcpCost);
-
-                // Subtract the missing GCP chaos cost from the gem's price
-                entry.value -= (20 - item.gem_q) * gcpCost.value;
-
-                // If we went into the negatives return null
-                if (entry.value < 0) return null;
-            }
-
             // Return match
            return entry;
         }
