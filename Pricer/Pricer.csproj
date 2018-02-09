@@ -79,9 +79,16 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="PriceBox.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="hooks\MouseHook.cs" />
+    <Compile Include="PriceBox.xaml.cs">
+      <DependentUpon>PriceBox.xaml</DependentUpon>
+    </Compile>
     <Compile Include="PriceManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>

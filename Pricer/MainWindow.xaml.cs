@@ -18,15 +18,17 @@ namespace Pricer {
         private EventHandler eventHandler_clip;
         private PriceManager priceManager;
         private WebClient client;
+        private PriceBox priceBox;
 
         private string[] sources = { "Poe.ovh", "Poe.ninja" };
-        private const string program_MOTD = "Item pricer v0.8.9";
+        private const string program_MOTD = "Item pricer v0.9.0";
         private const string activeWindowTitle = "Path of Exile";
         private volatile bool flag_userControl_run = false;
         private volatile bool flag_sendBuyNote = true;
         private volatile bool flag_sendEnterKey = true;
         private volatile bool flag_clipBoardPaste = true;
         private volatile bool flag_enableFallback = true;
+        private volatile bool flag_enablePriceBox = true;
         private volatile int userInput_delay = 120;
 
         /// <summary>
@@ -67,14 +69,17 @@ namespace Pricer {
                 string[] leagues = UtilityMethods.GetLeagueList(client);
 
                 // Invoke dispatcher, allowing UI element updates
-                Dispatcher.Invoke(new Action(() => {
+                Dispatcher.Invoke(() => {
                     foreach (string league in leagues) leagueSelector.Items.Add(league);
                     Log("League list updated", 0);
-                }));
+                });
             });
 
             // Add sources to source selector
-            foreach(string source in sources) sourceSelector.Items.Add(source);
+            foreach (string source in sources) sourceSelector.Items.Add(source);
+
+            // Init pricebox
+            priceBox = new PriceBox();
         }
 
         /*
@@ -143,15 +148,15 @@ namespace Pricer {
                 switch (item.errorCode) {
                     case 1:
                         // Invoke dispatcher, allowing UI element updates (and access to elements outside)
-                        Dispatcher.Invoke(new Action(() => { Log("Unable to price unidentified items", 2); }));
+                        Dispatcher.Invoke(() => { Log("Unable to price unidentified items", 2); });
                         break;
                     case 2:
                         // Invoke dispatcher, allowing UI element updates (and access to elements outside)
-                        Dispatcher.Invoke(new Action(() => { Log("Unable to price items with notes", 2); }));
+                        Dispatcher.Invoke(() => { Log("Unable to price items with notes", 2); });
                         break;
                     case 3:
                         // Invoke dispatcher, allowing UI element updates (and access to elements outside)
-                        Dispatcher.Invoke(new Action(() => { Log("Unable to price magic items", 2); }));
+                        Dispatcher.Invoke(() => { Log("Unable to price magic items", 2); });
                         break;
                 }
                 return;
@@ -164,7 +169,17 @@ namespace Pricer {
             if (entry == null && flag_enableFallback) {
                 if (item.rarity == "Rare" || item.rarity == "Magic" || item.rarity == "Normal") {
                     // Invoke dispatcher, allowing UI element updates (and access to elements outside)
-                    Dispatcher.Invoke(new Action(() => { Log("No database entry found. Feeding item to PoePrices...", 2); }));
+                    Dispatcher.Invoke(() => {
+                        Log("No database entry found. Feeding item to PoePrices...", 2);
+
+                        // If pricebox was enabled, display "Searching..." in it until a price is found
+                        if (flag_enablePriceBox) {
+                            priceBox.Content = "Searching...";
+                            priceBox.Left = System.Windows.Forms.Cursor.Position.X - priceBox.Width / 2;
+                            priceBox.Top = System.Windows.Forms.Cursor.Position.Y - priceBox.Height / 2;
+                            priceBox.Show();
+                        }
+                    });
 
                     entry = new Entry() {
                         value = priceManager.SearchPoePrices(item.raw),
@@ -177,7 +192,17 @@ namespace Pricer {
             // If PoePrices was disabled and no match was found, display an error
             if (entry == null) {
                 // Invoke dispatcher, allowing UI element updates (and access to elements outside)
-                Dispatcher.Invoke(new Action(() => { Log("No match for: " + item.key, 2); }));
+                Dispatcher.Invoke(() => {
+                    Log("No match for: " + item.key, 2);
+
+                    // If pricebox was enabled, display error in it
+                    if (flag_enablePriceBox) {
+                        priceBox.Content = "No match";
+                        priceBox.Left = System.Windows.Forms.Cursor.Position.X - priceBox.Width / 2;
+                        priceBox.Top = System.Windows.Forms.Cursor.Position.Y - priceBox.Height / 2;
+                        priceBox.Show();
+                    }
+                });
 
                 return;
             }
@@ -185,7 +210,17 @@ namespace Pricer {
             // If the price is literally 0c
             if (entry.value == 0) {
                 // Invoke dispatcher, allowing UI element updates (and access to elements outside)
-                Dispatcher.Invoke(new Action(() => { Log("Worth: 0c: " + item.key, 2); }));
+                Dispatcher.Invoke(() => {
+                    Log("Worth: 0c: " + item.key, 2);
+
+                    // If pricebox was enabled, display the value in it
+                    if (flag_enablePriceBox) {
+                        priceBox.Content = "Value: 0c";
+                        priceBox.Left = System.Windows.Forms.Cursor.Position.X - priceBox.Width / 2;
+                        priceBox.Top = System.Windows.Forms.Cursor.Position.Y - priceBox.Height / 2;
+                        priceBox.Show();
+                    }
+                });
 
                 return;
             }
@@ -215,7 +250,17 @@ namespace Pricer {
                 }
 
                 // Invoke dispatcher, allowing UI element updates (and access to elements outside)
-                Dispatcher.Invoke(new Action(() => { Log(errorMessage, 2); }));
+                Dispatcher.Invoke(() => {
+                    Log(errorMessage, 2);
+
+                    // If pricebox was enabled, display error in it
+                    if (flag_enablePriceBox) {
+                        priceBox.Content = errorMessage;
+                        priceBox.Left = System.Windows.Forms.Cursor.Position.X - priceBox.Width / 2;
+                        priceBox.Top = System.Windows.Forms.Cursor.Position.Y - priceBox.Height / 2;
+                        priceBox.Show();
+                    }
+                });
 
                 return;
             }
@@ -226,12 +271,12 @@ namespace Pricer {
                 System.Media.SystemSounds.Asterisk.Play();
 
                 // Invoke dispatcher, allowing UI element updates (and access to elements outside)
-                Dispatcher.Invoke(new Action(() => { Log("Likely incorrect price (count: " + entry.count + ")", 1); }));
+                Dispatcher.Invoke(() => { Log("Likely incorrect price (count: " + entry.count + ")", 1); });
             }
 
             // Invoke dispatcher, allowing UI element updates (and access to elements outside)
             // Needed for: slider_lowerPrice.Value, Log(), Clipboard.SetText()
-            Dispatcher.Invoke(new Action(() => {
+            Dispatcher.Invoke(() => {
                 double oldPrice = Math.Ceiling(entry.value * 2) / 2.0;
                 double newPrice = entry.value * (100 - slider_lowerPrice.Value) / 100.0;
 
@@ -245,6 +290,15 @@ namespace Pricer {
                 else
                     Log("[" + entry.source + "] " +  item.key + ": " + oldPrice + "c -> " + newPrice + "c", 0);
 
+                if (flag_enablePriceBox) {
+                    priceBox.Content = "Value: " + newPrice + "c";
+                    priceBox.Left = System.Windows.Forms.Cursor.Position.X - priceBox.Width / 2;
+                    priceBox.Top = System.Windows.Forms.Cursor.Position.Y - priceBox.Height / 2;
+
+                    //if (!priceBox.IsVisible) priceBox.ShowDialog();
+                    priceBox.ShowDialog();
+                }
+
                 // Error code 2 means items already has a note. Can't overwrite it
                 if (item.errorCode == 2) {
                     Log("Item already has a note", 2);
@@ -254,7 +308,7 @@ namespace Pricer {
                 // Copy the buyout note to the clipboard if checkbox is checked (The clipboard event
                 // handler will handle that aswell)
                 if (flag_sendBuyNote) Clipboard.SetText(note);
-            }));
+            });
         }
 
         /// <summary>
@@ -285,6 +339,12 @@ namespace Pricer {
             ClipboardNotification.ClipboardUpdate -= eventHandler_clip;
             MouseHook.MouseAction -= eventHandler_mouse;
             MouseHook.Stop();
+
+            // Remove pricebox
+            if (priceBox != null) priceBox.Close();
+
+            // Close app (not sure if the above close methods are even needed)
+            Application.Current.Shutdown();
         }
 
         /*
@@ -364,10 +424,10 @@ namespace Pricer {
                 priceManager.UpdateDatabase();
 
                 // Invoke dispatcher, allowing UI element updates
-                Dispatcher.Invoke(new Action(() => {
+                Dispatcher.Invoke(() => {
                     button_run.IsEnabled = true;
                     Log("Download finished", 0);
-                }));
+                });
             });
         }
 
@@ -433,6 +493,10 @@ namespace Pricer {
             radio_bo.IsEnabled = flag_sendBuyNote;
             radio_price.IsEnabled = flag_sendBuyNote;
             textBox_delay.IsEnabled = flag_sendBuyNote;
+
+            // Disable priceboxes
+            flag_enablePriceBox = false;
+            CheckBox_EnablePriceBox.IsChecked = false;
         }
 
         /// <summary>
@@ -524,6 +588,23 @@ namespace Pricer {
         /// <param name="e"></param>
         private void checkBox_fallBack_Click(object sender, RoutedEventArgs e) {
             flag_enableFallback = (bool)checkBox_fallBack.IsChecked;
+        }
+
+        /// <summary>
+        /// Fires whenever the state of the checkbox that enables/disabled priceboxes is changed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void CheckBox_EnablePriceBox_Click(object sender, RoutedEventArgs e) {
+            flag_enablePriceBox = (bool)CheckBox_EnablePriceBox.IsChecked;
+
+            // Disable/enable all related controls
+            flag_sendBuyNote = false;
+            checkBox_outputNote.IsChecked = false;
+            checkBox_enter.IsEnabled = false;
+            radio_bo.IsEnabled = false;
+            radio_price.IsEnabled = false;
+            textBox_delay.IsEnabled = false;
         }
     }
 
