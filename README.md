@@ -1,6 +1,6 @@
 # Path of Exile item pricer
 
-![Item pricer v0.9.0](screenshots/mainmenu.png)
+![Item pricer v0.9](screenshots/action.gif)
 
 ## What does it do
 When the user right-clicks an item in a premium tab (or any tab), this handy program instantly outputs a buyout note containing the average price for that type of item.
@@ -44,7 +44,7 @@ Alls you gotta do is right click and you got your price set!
 Three main sources: [poe.ovh](http://poe.ovh), [poe.ninja](http://poe.ninja) and [poeprices](https://www.poeprices.info/) (as a fallback).
 
 ## Words of warning
-The prices might are not always 100% accurate.
-This is especially evident in sparsely found items (i.e league-specific uniques or certain gems).
-PriceBoxes probably don't work well with full-screen mode
-Prices in hardcore are generally not accurate as nobody plays there
+* The prices might are not always 100% accurate
+* This is especially evident in sparsely found items (i.e league-specific uniques or certain gems)
+* PriceBoxes probably don't work well with full-screen mode
+* Prices in hardcore are generally not accurate as nobody plays there
