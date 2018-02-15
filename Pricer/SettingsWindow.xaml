@@ -37,9 +37,10 @@
         </GroupBox>
         <GroupBox Header="Universal settings" HorizontalAlignment="Left" Height="170" Margin="435,10,0,0" VerticalAlignment="Top" Width="180">
             <Grid>
-                <Slider x:Name="Slider_LowerPrice" Width="150" Maximum="100" SmallChange="0" IsSnapToTickEnabled="True" LargeChange="0" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,31,-22,0" ToolTip="How much % of the price should be reduced?" ValueChanged="Slider_LowerPrice_ValueChanged"/>
-                <Label x:Name="Label_LowerPrice" Content="Lower price by 0%" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="101"/>
-                <CheckBox x:Name="CheckBox_Fallback" Content="PoePrices Fallback" HorizontalAlignment="Left" Margin="10,61,0,0" VerticalAlignment="Top" ToolTip="Send item data to PoePrices API when there's no local match" IsChecked="True" Height="15" Width="116"/>
+                <Label Content="Lower price by" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="82"/>
+                <CheckBox x:Name="CheckBox_Fallback" Content="PoePrices Fallback" HorizontalAlignment="Left" Margin="10,38,0,0" VerticalAlignment="Top" ToolTip="Send item data to PoePrices API when there's no local match" IsChecked="True" Height="15" Width="116"/>
+                <TextBox x:Name="TextBox_LowerPrice" HorizontalAlignment="Left" Height="23" Margin="97,10,0,0" Text="0" VerticalAlignment="Top" Width="29" ToolTip="How much % of the price should be reduced?" AllowDrop="False" VerticalScrollBarVisibility="Disabled"/>
+                <Label Content="%" HorizontalAlignment="Left" Margin="126,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="15"/>
             </Grid>
         </GroupBox>
 

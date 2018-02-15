@@ -55,11 +55,23 @@ namespace Pricer {
             Int32.TryParse(TextBox_Delay.Text, out int delay);
             if (delay != Settings.pasteDelay) {
                 if (delay < 1 || delay > 500) {
-                    MainWindow.Log("Invalid input (allowed: 1 - 500)", 2);
+                    MainWindow.Log("Invalid input - delay (allowed: 1 - 500)", 2);
                     TextBox_Delay.Text = Settings.pasteDelay.ToString();
                 } else {
                     MainWindow.Log("Changed delay " + Settings.pasteDelay + " -> " + delay, 0);
                     Settings.pasteDelay = delay;
+                }
+            }
+
+            // Lower price % box
+            Int32.TryParse(TextBox_LowerPrice.Text, out int percentage);
+            if (percentage != Settings.lowerPricePercentage) {
+                if (percentage < 0 || percentage > 100) {
+                    MainWindow.Log("Invalid input - percentage (allowed: 0 - 100)", 2);
+                    TextBox_LowerPrice.Text = Settings.lowerPricePercentage.ToString();
+                } else {
+                    MainWindow.Log("Changed percentage " + Settings.lowerPricePercentage + " -> " + percentage, 0);
+                    Settings.lowerPricePercentage = percentage;
                 }
             }
 
@@ -72,9 +84,6 @@ namespace Pricer {
             // Radio buttons
             if ((bool)Radio_Buyout.IsChecked) Settings.prefix = Radio_Buyout.Content.ToString();
             else Settings.prefix = Radio_Price.Content.ToString();
-
-            // Slider
-            Settings.lowerPricePercentage = (int)Slider_LowerPrice.Value;
 
             Hide();
         }
@@ -109,13 +118,6 @@ namespace Pricer {
                 Settings.flag_leaguesDownloaded = true;
                 MainWindow.Log("Download finished", 0);
             });
-        }
-
-        /// <summary>
-        /// Updates label based on current slider value
-        /// </summary>
-        private void Slider_LowerPrice_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
-            Label_LowerPrice.Content = "Lower price by " + Slider_LowerPrice.Value + "%";
         }
 
         /// <summary>
@@ -159,7 +161,7 @@ namespace Pricer {
             ComboBox_Source.SelectedValue = Settings.source;
 
             TextBox_Delay.Text = Settings.pasteDelay.ToString();
-            Slider_LowerPrice.Value = Settings.lowerPricePercentage;
+            TextBox_LowerPrice.Text = Settings.lowerPricePercentage.ToString();
 
             CheckBox_Fallback.IsChecked = Settings.flag_fallback;
             CheckBox_SendEnter.IsChecked = Settings.flag_sendEnter;
