@@ -10,24 +10,23 @@ Check it in action [here](https://www.youtube.com/watch?v=Y0WsRWPG4P8).
 Players who have little time on their hands and want to make some $$ without having to look up prices for every single item.
 Be you a labrunner, who has dozens upon dozens of gems that need prices or a Uber Atziri farmer, who has amassed thousands of red tier maps, this program is perfect for you.
 
-## How to get it running (as of v0.9)
+## How to get it running (as of v1.0.2)
 1. Compile it yourself or download a compiled file from the [releases](https://github.com/siegrest/Pricer/releases/latest) page
-2. Run the program and apply the desired settings
-3. Pick a league
-4. Pick a source (poe.ninja is accurate but poe.ovh provides a lot more variation)
-5. Apply whatever settings
-6. Click download
-7. Click run
+2. Run the program and open settings
+3. Pick a league, source and method (poe.ninja is accurate but poe.ovh provides a lot more variation)
+5. Choose whatever settings
+6. Click Apply
+7. Click Run
 8. Right click or Ctrl+C an item (right click is advised)
 
-## Settings explained (as of v0.9)
+## Settings explained (as of v1.0.2)
 * "Lower price by #%" takes whatever price the item usually goes for and reduces its price by that % 
 * "Send note" copies a buyout tag (eg. "~b/o 5 chaos") to your clipboard and pastes it
 * "Send enter" sends enter after sending the note, applying the price instantly
 * "PoePrices Fallback" allows normal/magic/rare items to be prices with the help of [poeprices](https://www.poeprices.info/) if there were no matches in the local database
-* "Show pricebox" spawns a small window under the cursor containing the price of the item (can be closed by moved cursor away from window)
-* "Mean"/"Median"/"Mode" button is only supported by poe.ovh atm, it can be used to switch pricing modes (only works before you download)
-* Textbox with "120" in it is the delay in milliseconds that occurs between right clicking and pasting the buyout note. This is required as the price picking box in premium stash tabs takes some time to open. If your prices are not being pasted, try increasing this by 50ms
+* "Show overlay" spawns a small window under the cursor containing the price of the item (can be closed by moved cursor away from window)
+* "Price method" dropbox is only supported by poe.ovh atm, it can be used to switch pricing modes
+* "Paste delay" is the delay in milliseconds that occurs between right clicking and pasting the buyout note. This is required as the price picking box in premium stash tabs takes some time to open
 
 ## What can it price
 Uniques, gems, divination cards, maps, 6-links, currency, prophecies, essences, magic and rare items and pretty much everything.
