@@ -10,7 +10,7 @@ namespace Pricer {
         private static IntPtr _hookID = IntPtr.Zero;
         private const int WH_MOUSE_LL = 14;
 
-        public static void Start() { _hookID = SetHook(_proc); }
+        public static void Start() { if (_hookID == IntPtr.Zero) _hookID = SetHook(_proc); }
         public static void Stop() { UnhookWindowsHookEx(_hookID); }
 
         private static IntPtr SetHook(LowLevelMouseProc proc) {

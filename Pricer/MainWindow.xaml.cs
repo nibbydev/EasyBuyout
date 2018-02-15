@@ -36,7 +36,6 @@ namespace Pricer {
             eventHandler_clip = new EventHandler(Event_clipboard);
             ClipboardNotification.ClipboardUpdate += eventHandler_clip;
             MouseHook.MouseAction += eventHandler_mouse;
-            MouseHook.Start();
 
             // Initialize the UI components
             InitializeComponent();
@@ -296,6 +295,7 @@ namespace Pricer {
                 Button_Run.Content = "Pause";
                 Settings.flag_run = true;
                 Log("Service started", 0);
+                MouseHook.Start();
             } else {
                 Button_Run.Content = "Run";
                 Settings.flag_run = false;
