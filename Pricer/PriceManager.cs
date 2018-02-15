@@ -1,40 +1,29 @@
-﻿using System;
+﻿using Pricer.Utility;
+using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Web.Script.Serialization;
 
 namespace Pricer {
     /// <summary>
     /// PriceManager handles downlading, managing and translating price data from various websites
     /// </summary>
-    class PriceManager {
-        private Dictionary<string, Entry> priceDataDict = new Dictionary<string, Entry>();
-        private WebClient client;
-        public string league { get; set; }
-        public string prefix { get; set; }
-        public string source { get; set; }
-        public int lowerPercentage { get; set; }
-        public int ovhPriceMode = 0;
-        private static string[] poeNinjaURLs = {
-            "Currency", "UniqueArmour", "Fragment",
-            "Essence", "DivinationCards", "Prophecy",
-            "UniqueMap", "Map", "UniqueJewel",
-            "UniqueFlask", "UniqueWeapon", "UniqueAccessory",
-            "SkillGem"
-        };
-
-        /// <summary>
-        /// Initializes the instance. Must be given a WebClient instance
-        /// </summary>
-        /// <param name="client">WebClient to use for data connections</param>
-        public PriceManager (WebClient client) { this.client = client; }
+    public class PriceManager {
+        private Dictionary<string, Entry> prices = new Dictionary<string, Entry>();
 
         /// <summary>
         /// Picks download source depending on source selection
         /// </summary>
-        public void UpdateDatabase() {
-            if (source.ToLower() == "poe.ninja") DownloadPoeNinjaData();
-            else if (source.ToLower() == "poe.ovh") DownloadPoeOvhData();
+        public void Download() {
+            switch (Settings.source.ToLower()) {
+                case "poe.ninja":
+                    DownloadPoeNinjaData();
+                    break;
+                case "poe.ovh":
+                    DownloadPoeOvhData();
+                    break;
+                default:
+                    return;
+            }
         }
 
         /// <summary>
@@ -42,21 +31,21 @@ namespace Pricer {
         /// </summary>
         private void DownloadPoeOvhData() {
             // Clear previous data
-            priceDataDict.Clear();
+            prices.Clear();
 
             try {
                 // Download JSON-encoded string
-                string jsonString = client.DownloadString("http://api.poe.ovh/Stats?league=" + league);
+                string jsonString = MainWindow.webClient.DownloadString("http://api.poe.ovh/Stats?league=" + Settings.league);
 
-                // Deserialize JSON string
-                Dictionary<string, Dictionary<string, PoeOvhEntry>> temp_deSerDict = 
-                    new JavaScriptSerializer().Deserialize<Dictionary<string, Dictionary<string, PoeOvhEntry>>>(jsonString);
+                // Deserialize
+                Dictionary<string, Dictionary<string, PoeOvhEntry>> tempDict = new JavaScriptSerializer()
+                    .Deserialize<Dictionary<string, Dictionary<string, PoeOvhEntry>>>(jsonString);
 
-                if (temp_deSerDict == null) return;
+                if (tempDict == null) return;
 
                 // Add all values from temp dict to new dict (for ease of use)
-                foreach (string name_category in temp_deSerDict.Keys) {
-                    temp_deSerDict.TryGetValue(name_category, out Dictionary<string, PoeOvhEntry> category);
+                foreach (string name_category in tempDict.Keys) {
+                    tempDict.TryGetValue(name_category, out Dictionary<string, PoeOvhEntry> category);
 
                     foreach (string name_item in category.Keys) {
                         // Get OvhEntry from list
@@ -66,14 +55,14 @@ namespace Pricer {
                         Entry entry = new Entry();
 
                         // Set Entry value
-                        switch (ovhPriceMode) {
-                            case 0:
+                        switch (Settings.method.ToLower()) {
+                            case "mean":
                                 entry.value = ovhEntry.mean;
                                 break;
-                            case 1:
+                            case "median":
                                 entry.value = ovhEntry.median;
                                 break;
-                            case 2:
+                            case "mode":
                                 entry.value = ovhEntry.mode;
                                 break;
                             default:
@@ -82,14 +71,13 @@ namespace Pricer {
 
                         // Set misc data
                         entry.count = ovhEntry.count;
-                        entry.source = source;
 
                         // Add to database
-                        priceDataDict.Add(name_item, entry);
+                        prices.Add(name_item, entry);
                     }
                 }
             } catch (Exception ex) {
-                Console.WriteLine(ex);
+                MainWindow.Log(ex.ToString(), 2);
             }
         }
 
@@ -98,42 +86,40 @@ namespace Pricer {
         /// </summary>
         private void DownloadPoeNinjaData() {
             // Clear previous data
-            priceDataDict.Clear();
+            prices.Clear();
 
-            foreach(string key in poeNinjaURLs) {
+            foreach (string key in Settings.poeNinjaKeys) {
                 try {
                     // Download JSON-encoded string
-                    string jsonString = client.DownloadString("http://poe.ninja/api/Data/Get" + key + "Overview?league=" + league);
+                    string jsonString = MainWindow.webClient.DownloadString("http://poe.ninja/api/Data/Get" + 
+                        key + "Overview?league=" + Settings.league);
 
                     // Deserialize JSON string
-                    Dictionary<string, List<PoeNinjaEntry>> temp_deSerDict = 
-                        new JavaScriptSerializer().Deserialize<Dictionary<string, List<PoeNinjaEntry>>>(jsonString);
+                    Dictionary<string, List<PoeNinjaEntry>> tempDict = new JavaScriptSerializer()
+                        .Deserialize<Dictionary<string, List<PoeNinjaEntry>>>(jsonString);
 
-                    if (temp_deSerDict == null) continue;
+                    if (tempDict == null) continue;
 
-                    temp_deSerDict.TryGetValue("lines", out List<PoeNinjaEntry> entryList);
+                    tempDict.TryGetValue("lines", out List<PoeNinjaEntry> entryList);
 
                     if (entryList == null) continue;
 
                     foreach(PoeNinjaEntry ninjaEntry in entryList) {
                         // Quick and dirty workarounds
-                        Entry entry = new Entry {
-                            count = 300,
-                            source = source
-                        };
+                        Entry entry = new Entry { count = ninjaEntry.count };
                         string itemKey;
 
                         switch(key) {
                             case "Currency":
                                 entry.value = ninjaEntry.chaosEquivalent;
                                 itemKey = ninjaEntry.currencyTypeName + "|5";
-                                if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
+                                if (!prices.ContainsKey(itemKey)) prices.Add(itemKey, entry);
                                 break;
 
                             case "Fragment":
                                 entry.value = ninjaEntry.chaosEquivalent;
                                 itemKey = ninjaEntry.currencyTypeName + "|0";
-                                if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
+                                if (!prices.ContainsKey(itemKey)) prices.Add(itemKey, entry);
                                 break;
 
                             case "UniqueArmour":
@@ -239,7 +225,7 @@ namespace Pricer {
                                         break;
                                 }
                                 
-                                if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
+                                if (!prices.ContainsKey(itemKey)) prices.Add(itemKey, entry);
                                 break;
 
                             case "UniqueMap":
@@ -315,7 +301,7 @@ namespace Pricer {
                                         break;
                                 }
 
-                                if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
+                                if (!prices.ContainsKey(itemKey)) prices.Add(itemKey, entry);
                                 break;
 
                             case "Essence":
@@ -324,14 +310,14 @@ namespace Pricer {
                                 entry.value = ninjaEntry.chaosValue;
 
                                 itemKey = ninjaEntry.name + "|" + ninjaEntry.itemClass;
-                                if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
+                                if (!prices.ContainsKey(itemKey)) prices.Add(itemKey, entry);
                                 break;
 
                             case "Map":
                                 entry.value = ninjaEntry.chaosValue;
 
                                 itemKey = ninjaEntry.name + "|0";
-                                if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
+                                if (!prices.ContainsKey(itemKey)) prices.Add(itemKey, entry);
                                 break;
 
                             case "SkillGem":
@@ -341,12 +327,12 @@ namespace Pricer {
                                 if (ninjaEntry.corrupted) itemKey += "|1";
                                 else itemKey += "|0";
 
-                                if (!priceDataDict.ContainsKey(itemKey)) priceDataDict.Add(itemKey, entry);
+                                if (!prices.ContainsKey(itemKey)) prices.Add(itemKey, entry);
                                 break;
                         }
                     }
                 } catch (Exception ex) {
-                    Console.WriteLine(ex);
+                    MainWindow.Log(ex.ToString(), 2);
                 }
             }
         }
@@ -356,31 +342,34 @@ namespace Pricer {
         /// </summary>
         /// <param name="rawItemData">Ctrl+C'd raw item data</param>
         /// <returns>Suggested price as double, 0 if unsuccessful</returns>
-        public double SearchPoePrices(string rawItemData) {
+        public Entry SearchPoePrices(string rawItemData) {
+            Entry returnEntry = new Entry() { count = 20 };
+
             try {
                 // Make request to http://poeprices.info
-                string jsonString = client.DownloadString("https://www.poeprices.info/api?l=" + league + 
-                    "&i=" + UtilityMethods.Base64Encode(rawItemData));
+                string jsonString = MainWindow.webClient.DownloadString("https://www.poeprices.info/api?l=" + Settings.league + 
+                    "&i=" + MiscMethods.Base64Encode(rawItemData));
 
                 // Deserialize JSON-encoded reply string
                 PoePricesReply reply = new JavaScriptSerializer().Deserialize<PoePricesReply>(jsonString);
 
-                // Some protection, idk
-                if (reply == null) return -1;
-                if (reply.error != "0") return -2;
+                // Some protection
+                if (reply == null || reply.error != "0") return null;
 
-                // If the price was in exalteds, convert it to chaos and return the price
+                // If the price was in exalts, convert it to chaos
                 if (reply.currency == "exalt") {
-                    priceDataDict.TryGetValue("Exalted Orb|5", out Entry exaltedEntry);
-                    if (exaltedEntry == null) return -3;
-                    return (reply.max * exaltedEntry.value + reply.min * exaltedEntry.value) / 2.0;
+                    prices.TryGetValue("Exalted Orb|5", out Entry exaltedEntry);
+                    if (exaltedEntry == null) return null;
+                    returnEntry.value = (reply.max * exaltedEntry.value + reply.min * exaltedEntry.value) / 2.0;
+                } else {
+                    returnEntry.value = (reply.max + reply.min) / 2.0;
                 }
 
-                // Otherwise, if it was in chaos, return the price
-                return (reply.max + reply.min) / 2.0;
+                // Return the constructed entry
+                return returnEntry;
             } catch (Exception ex) {
-                Console.WriteLine(ex);
-                return -4;
+                MainWindow.Log(ex.ToString(), 2);
+                return null;
             }
         }
 
@@ -389,22 +378,15 @@ namespace Pricer {
         /// </summary>
         /// <param name="key">Database key to search for</param>
         /// <returns>Median value in chaos</returns>
-        public Entry Search(Item item) {
+        public Entry Search(string key) {
             // Get the database entry
-            priceDataDict.TryGetValue(item.key, out Entry tempEntry);
+            prices.TryGetValue(key, out Entry tempEntry);
 
             // Precaution
             if (tempEntry == null) return null;
 
-            // Manual copy so the original database entry is not affected
-            Entry entry = new Entry() {
-                value = tempEntry.value,
-                source = tempEntry.source,
-                count = tempEntry.count
-            };
-
-            // Return match
-           return entry;
+            // Make a copy so the original database entry is not affected
+            return new Entry(tempEntry);
         }
 
         /// <summary>
@@ -414,56 +396,7 @@ namespace Pricer {
         /// <returns>Formatted buyout note (e.g. "~b/o 53.2 chaos")</returns>
         public string MakeNote(double price) {
             // Replace "," with "." due to game limitations
-            return prefix + " " + price.ToString().Replace(',', '.') + " chaos";
+            return Settings.prefix + " " + price.ToString().Replace(',', '.') + " chaos";
         }
-    }
-
-    /// <summary>
-    /// Used to populate local database
-    /// </summary>
-    public class Entry {
-        public double value { get; set; }
-        public string source { get; set; }
-        public int count { get; set; }
-        public int error { get; set; }
-    }
-
-    /// <summary>
-    /// Used to desierialize http://poe.ovh API calls
-    /// </summary>
-    public class PoeOvhEntry {
-        public double mean { get; set; }
-        public double median { get; set; }
-        public double mode { get; set; }
-        public int count { get; set; }
-    }
-
-    /// <summary>
-    /// Used to desierialize http://poe.ninja API calls
-    /// </summary>
-    public class PoeNinjaEntry {
-        public string name { get; set; }
-        public string baseType { get; set; }
-        public int itemClass { get; set; }
-        public string currencyTypeName { get; set; }
-        public string variant { get; set; }
-        public int links { get; set; }
-
-        public double chaosValue { get; set; }
-        public double chaosEquivalent { get; set; }
-
-        public bool corrupted { get; set; }
-        public int gemLevel { get; set; }
-        public int gemQuality { get; set; }
-    }
-
-    /// <summary>
-    /// Used to desierialize http://poeprices.com API calls
-    /// </summary>
-    public class PoePricesReply {
-        public string currency { get; set; }
-        public string error { get; set; }
-        public double min { get; set; }
-        public double max { get; set; }
     }
 }

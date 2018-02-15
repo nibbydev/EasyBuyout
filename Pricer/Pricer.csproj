@@ -18,7 +18,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -63,6 +63,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Settings.cs" />
+    <Compile Include="SettingsWindow.xaml.cs">
+      <DependentUpon>SettingsWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Utility\Deserializers.cs" />
+    <Compile Include="Utility\MiscMethods.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -71,9 +77,9 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="hooks\ClipboardHandler.cs" />
-    <Compile Include="hooks\KeyEmulator.cs" />
-    <Compile Include="hooks\WindowDiscovery.cs" />
+    <Compile Include="Hooks\ClipboardHandler.cs" />
+    <Compile Include="Hooks\KeyEmulator.cs" />
+    <Compile Include="Hooks\WindowDiscovery.cs" />
     <Compile Include="Item.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
@@ -83,9 +89,13 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="SettingsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="hooks\MouseHook.cs" />
+    <Compile Include="Hooks\MouseHook.cs" />
     <Compile Include="PriceBox.xaml.cs">
       <DependentUpon>PriceBox.xaml</DependentUpon>
     </Compile>

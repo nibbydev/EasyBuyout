@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 
 namespace Pricer {
-    class Item {
+    public class Item {
         public string rarity, name, type, key = "";
         public string[] splitRaw;
         public int stackSize;
@@ -120,6 +120,8 @@ namespace Pricer {
             // Last line will contain "Note:" if item has a note
             bool isCorrupted = splitRaw[splitRaw.Length - 1].Contains("Corrupted");
 
+
+
             // Special gems have special needs
             if (name.Contains("Empower") || name.Contains("Enlighten") || name.Contains("Enhance")) {
                 if (isCorrupted) quality = 0;
@@ -131,11 +133,12 @@ namespace Pricer {
             } else {
                 if (level < 10) level = 1;
                 else if (level < 20) level = 10;
-
                 if (quality < 10) quality = 0;
                 else if (quality < 20) quality = 10;
                 else if (quality == 21) quality = 20;
                 else if (quality > 21) quality = 23;
+
+                if (level < 20) isCorrupted = false;
             }
 
             // Build key in the format of "<gem name>|4|<lvl>|<quality>"
