@@ -120,25 +120,111 @@ namespace Pricer {
             // Last line will contain "Note:" if item has a note
             bool isCorrupted = splitRaw[splitRaw.Length - 1].Contains("Corrupted");
 
+            // Different sources have different gem categories
+            if (Settings.source.ToLower() == "poe.ovh") {
+                // Special gems have special needs
+                if (name.Contains("Empower") || name.Contains("Enlighten") || name.Contains("Enhance")) {
+                    if (quality < 6) quality = 0;
+                    else if (quality < 16) quality = 10;
+                    else if (quality >= 16) quality = 20;
 
+                    // Quality doesn't matter for lvl 3 and 4
+                    if (level > 2) quality = 0;
+                } else {
+                    if (level < 7) level = 1;           // 1  = 1,2,3,4,5,6
+                    else if (level < 19) level = 10;    // 10 = 7,8,9,10,11,12,13,14,15,16,17,18
+                    else if (level < 21) level = 20;    // 20 = 19,20
+                                                        // 21 = 21
 
-            // Special gems have special needs
-            if (name.Contains("Empower") || name.Contains("Enlighten") || name.Contains("Enhance")) {
-                if (isCorrupted) quality = 0;
-                else if (quality < 10) quality = 0;
-                else if (quality < 20) quality = 10;
-                else if (quality > 20) quality = 20;
+                    if (quality < 7) quality = 0;           // 0  = 0,1,2,3,4,5,6
+                    else if (quality < 18) quality = 10;    // 10 = 7,8,9,10,11,12,13,14,15,16,17
+                    else if (quality < 23) quality = 20;    // 20 = 16,17,18,19,20,21,22
+                                                            // 23 = 23
 
-                if (level == 3) quality = 0;
-            } else {
-                if (level < 10) level = 1;
-                else if (level < 20) level = 10;
-                if (quality < 10) quality = 0;
-                else if (quality < 20) quality = 10;
-                else if (quality == 21) quality = 20;
-                else if (quality > 21) quality = 23;
+                    // Gets rid of specific gems
+                    if (level < 20 && quality > 20) quality = 20;           // |4| 1|23|1 and |4|10|23|1
+                    else if (level == 21 && quality < 20) quality = 0;      // |4|21|10|1
 
-                if (level < 20) isCorrupted = false;
+                    if (level < 20 && quality < 20) isCorrupted = false;
+                    if (key.Contains("Vaal")) isCorrupted = true;
+                }
+            } else if (Settings.source.ToLower() == "poe.ninja") {
+                // Special gems have special needs
+                if (name.Contains("Empower") || name.Contains("Enlighten") || name.Contains("Enhance")) {
+                    if (level == 1) {
+                        // Quality can only be 0(1,2,3,4,5,6,7) otherwise set it to -1
+                        if (quality < 8) quality = 0;
+                        else quality = -1;
+                    } else if (level == 2) {
+                        // Quality can be either 0(1,2,3,4,5,6,7) or 20(17,18,19,20) otherwise set it to -1
+                        if (quality < 8) {
+                            quality = 0;
+                            isCorrupted = false;
+                        } else if (quality > 16) {
+                            quality = 20;
+                            isCorrupted = true;
+                        } else quality = -1;
+                    } else if (level == 3) {
+                        // Quality can be either 0(1,2,3,4,5,6,7) or 20(17,18,19,20) otherwise set it to -1
+                        if (quality < 8) {
+                            quality = 0;
+                            isCorrupted = true;
+                        } else if (quality > 16) {
+                            quality = 20;
+                            isCorrupted = false;
+                        } else quality = -1;
+                    } else if (level == 4) {
+                        quality = 0;
+                    }
+                } else {
+                    if (key.Contains("Vaal")) {
+                        // Level can only be 20(17,18,19,20) otherwise set it to -1
+                        if (level > 16) level = 20;
+                        else level = -1;
+
+                        // Quality can be either 0(1,2,3,4,5,6,7) or 20(17,18,19,20) otherwise set it to -1
+                        if (quality < 8) quality = 0;
+                        else if (quality > 16) quality = 20;
+                        else quality = -1;
+                    } else {
+                        // Level can be either 1(1,2,3,4,5,6,7) 20(17,18,19,20) or 21(21) otherwise set it to -1
+                        if (level < 8) level = 1;
+                        else if (level > 16 && level < 21) level = 20;
+                        else if (level != 21) level = -1;
+
+                        // Match quality
+                        switch (level) {
+                            case 1:
+                                // Quality can only be 20(17,18,19,20) otherwise set it to -1
+                                if (quality > 16) {
+                                    isCorrupted = true;
+                                    quality = 20;
+                                } else quality = -1;
+                                break;
+                            case 20:
+                                // Quality can be either 0(1,2,3,4,5,6,7) or 20(17,18,19,20) or 23(23) otherwise set it to -1
+                                if (quality < 8) quality = 0;
+                                else if (quality > 16 && quality < 23) quality = 20;
+                                else if (quality == 23) quality = 23;
+                                else quality = -1;
+                                break;
+                            case 21:
+                                // Quality can be either 0(1,2,3,4,5,6,7) or 20(17,18,19,20) otherwise set it to -1
+                                if (quality < 8) quality = 0;
+                                else if (quality > 16) quality = 20;
+                                else quality = -1;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+
+                // Poe.ninja does not have enough data to price most gems
+                if (quality < 0 || level < 0) {
+                    errorCode = 3;
+                    discard = true;
+                }
             }
 
             // Build key in the format of "<gem name>|4|<lvl>|<quality>"

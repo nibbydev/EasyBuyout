@@ -106,6 +106,10 @@ namespace Pricer {
         /// Runs database download task
         /// </summary>
         private void Button_Download_Click(object sender, RoutedEventArgs e) {
+            Settings.source = (string)ComboBox_Source.SelectedValue;
+            Settings.method = (string)ComboBox_Method.SelectedValue;
+            Settings.league = (string)ComboBox_League.SelectedValue;
+
             Button_Download.IsEnabled = false;
 
             MainWindow.Log("Downloading " + ComboBox_Method.SelectedValue + 

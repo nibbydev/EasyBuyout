@@ -98,13 +98,13 @@ namespace Pricer {
                     Dictionary<string, List<PoeNinjaEntry>> tempDict = new JavaScriptSerializer()
                         .Deserialize<Dictionary<string, List<PoeNinjaEntry>>>(jsonString);
 
-                    if (tempDict == null) continue;
+                    if (tempDict == null) throw new Exception("Received no JSON for: " + key);
 
                     tempDict.TryGetValue("lines", out List<PoeNinjaEntry> entryList);
 
-                    if (entryList == null) continue;
+                    if (entryList == null) throw new Exception("Got invalid JSON format for:" + key);
 
-                    foreach(PoeNinjaEntry ninjaEntry in entryList) {
+                    foreach (PoeNinjaEntry ninjaEntry in entryList) {
                         // Quick and dirty workarounds
                         Entry entry = new Entry { count = ninjaEntry.count };
                         string itemKey;
