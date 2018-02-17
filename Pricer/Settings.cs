@@ -8,12 +8,11 @@ namespace Pricer {
     public static class Settings {
         public static string[] sourceList = { "Poe.ovh", "Poe.ninja" };
         public static string[] priceMethods = { "Mean", "Median", "Mode" };
-        public const string programTitle = "Item pricer v1.0.2";
+        public const string programTitle = "Item pricer v1.0.4";
         public const string activeWindowTitle = "Path of Exile";
 
         // Situational flags
         public static volatile bool flag_clipBoardPaste = false;
-        public static volatile bool flag_leaguesDownloaded = false;
 
         public static volatile bool flag_run = false;
         public static volatile bool flag_sendNote = true;

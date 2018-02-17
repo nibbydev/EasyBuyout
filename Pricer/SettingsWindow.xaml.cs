@@ -119,7 +119,7 @@ namespace Pricer {
             // Download, parse, update as task
             Task.Run(() => {
                 MainWindow.priceManager.Download();
-                Settings.flag_leaguesDownloaded = true;
+                Application.Current.Dispatcher.Invoke(() => MainWindow.runButton.IsEnabled = true);
                 MainWindow.Log("Download finished", 0);
             });
         }

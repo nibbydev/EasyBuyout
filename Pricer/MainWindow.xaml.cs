@@ -18,8 +18,8 @@ namespace Pricer {
         private PriceBox priceBox;
         private static TextBox console;
         private static SettingsWindow settingsWindow;
-        private static Button runButton;
 
+        public static Button runButton;
         public static PriceManager priceManager;
         public static WebClient webClient;
 
@@ -310,9 +310,6 @@ namespace Pricer {
             settingsWindow.Left = Left + Width / 2 - settingsWindow.Width / 2;
             settingsWindow.Top = Top + Height / 2 - settingsWindow.Height / 2;
             settingsWindow.ShowDialog();
-
-            // Check if database has been downloaded
-            if (Settings.flag_leaguesDownloaded) Button_Run.IsEnabled = true; 
         }
 
         /*
