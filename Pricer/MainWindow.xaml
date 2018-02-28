@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Pricer"
         mc:Ignorable="d"
-        Title="MainWindow" Height="290" Width="580" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" Margin="0" Padding="0" Closing="Window_Closing">
+        Title="MainWindow" Height="290" Width="580" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen" Margin="0" Padding="0" Closing="Window_Closing">
     <Grid Background="#FFF0F0F0" Margin="0,0,0,0" UseLayoutRounding="False" ScrollViewer.VerticalScrollBarVisibility="Disabled">
         <TextBox x:Name="console_window" AllowDrop="False" IsReadOnly="True" VerticalScrollBarVisibility="Visible" IsUndoEnabled="False" TextWrapping="Wrap" FontFamily="Courier New" HorizontalAlignment="Left" Width="540" Margin="10,10,10,10" VerticalAlignment="Top" Height="200"/>
         <Button x:Name="Button_Run" Content="Run" Width="75" Click="Button_Run_Click" Height="20" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="475,220,0,0" ToolTip="Listen to mouse/clipboard events" IsEnabled="False"/>
