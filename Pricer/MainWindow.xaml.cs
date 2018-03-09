@@ -22,6 +22,7 @@ namespace Pricer {
         public static Button runButton;
         public static PriceManager priceManager;
         public static WebClient webClient;
+        public static UpdateWindow updateWindow;
 
         /// <summary>
         /// Initializes the form and sets event listeners
@@ -47,11 +48,14 @@ namespace Pricer {
             settingsWindow = new SettingsWindow();
 
             // Set window title
-            Title = Settings.programTitle;
-            Log(Settings.programTitle + " by Siegrest", 0);
+            Title = Settings.programTitle + " (" + Settings.programVersion + ")";
+            Log(Settings.programTitle + " (" + Settings.programVersion + ")" + " by Siegrest", 0);
 
             // Get leagues
             Task.Run(() => settingsWindow.AddLeagues());
+
+            // Check updates
+            updateWindow = new UpdateWindow(webClient);
         }
 
         /*

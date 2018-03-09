@@ -32,6 +32,9 @@ namespace Pricer {
                 Button_Download.IsEnabled = true;
             });
             MainWindow.Log("League list updated", 0);
+
+            // Check for updates now that we finished using the webclient
+            MainWindow.updateWindow.Run();
         }
 
         /// <summary>

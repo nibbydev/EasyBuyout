@@ -8,8 +8,10 @@ namespace Pricer {
     public static class Settings {
         public static string[] sourceList = { "Poe.ovh", "Poe.ninja" };
         public static string[] priceMethods = { "Mean", "Median", "Mode" };
-        public const string programTitle = "Item pricer v1.0.4";
+        public const string programTitle = "Item pricer";
+        public const string programVersion = "v1.0.6";
         public const string activeWindowTitle = "Path of Exile";
+        public const string programReleaseAPI = "https://api.github.com/repos/siegrest/Pricer/releases";
 
         // Situational flags
         public static volatile bool flag_clipBoardPaste = false;
