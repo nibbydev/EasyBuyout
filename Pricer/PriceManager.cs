@@ -73,7 +73,11 @@ namespace Pricer {
                         entry.count = ovhEntry.count;
 
                         // Add to database
-                        prices.Add(name_item, entry);
+                        if (prices.ContainsKey(name_item)) {
+                            Console.WriteLine(name_item);
+                        } else {
+                            prices.Add(name_item, entry);
+                        }
                     }
                 }
             } catch (Exception ex) {

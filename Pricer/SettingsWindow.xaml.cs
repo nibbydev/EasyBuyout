@@ -193,5 +193,14 @@ namespace Pricer {
                 ComboBox_Method.SelectedIndex = 0;
             }
         }
+
+        /// <summary>
+        /// Re-enables download button when user switches price methods
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ComboBox_Method_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            if (ComboBox_Method.SelectedItem != null) Button_Download.IsEnabled = true;
+        }
     }
 }

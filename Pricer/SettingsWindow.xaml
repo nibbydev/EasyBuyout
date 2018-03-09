@@ -15,7 +15,7 @@
                 <ComboBox x:Name="ComboBox_Source" HorizontalAlignment="Left" Margin="12,77,0,0" VerticalAlignment="Top" Width="150" SelectionChanged="ComboBox_Source_SelectionChanged" Height="22" ToolTip="API from which to download price data"/>
                 <Label Content="League" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="42"/>
                 <Label Content="Source" HorizontalAlignment="Left" Margin="10,57,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="40"/>
-                <ComboBox x:Name="ComboBox_Method" HorizontalAlignment="Left" Margin="12,124,0,0" VerticalAlignment="Top" Width="150" Height="22" ToolTip="Swap prices between mean and median (Not supported by Poe.Ninja)"/>
+                <ComboBox x:Name="ComboBox_Method" HorizontalAlignment="Left" Margin="12,124,0,0" VerticalAlignment="Top" Width="150" Height="22" ToolTip="Swap prices between mean and median (Not supported by Poe.Ninja)" SelectionChanged="ComboBox_Method_SelectionChanged"/>
                 <Label Content="Price method" HorizontalAlignment="Left" Margin="12,104,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="74"/>
                 <Button x:Name="Button_Download" Content="Download" HorizontalAlignment="Right" Margin="0,0,16,10" VerticalAlignment="Bottom" Width="75" IsEnabled="False" Click="Button_Download_Click" Height="20" ToolTip="Download the datapackage associated with the selected league"/>
             </Grid>
