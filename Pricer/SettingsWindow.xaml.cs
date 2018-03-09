@@ -83,6 +83,7 @@ namespace Pricer {
             Settings.flag_fallback = (bool)CheckBox_Fallback.IsChecked;
             Settings.flag_sendEnter = (bool)CheckBox_SendEnter.IsChecked;
             Settings.flag_sendNote = (bool)CheckBox_SendNote.IsChecked;
+            Settings.flag_runRightClick = (bool)CheckBox_RunOnRightClick.IsChecked;
 
             // Radio buttons
             if ((bool)Radio_Buyout.IsChecked) Settings.prefix = Radio_Buyout.Content.ToString();
@@ -174,7 +175,8 @@ namespace Pricer {
             CheckBox_SendEnter.IsChecked = Settings.flag_sendEnter;
             CheckBox_SendNote.IsChecked = Settings.flag_sendNote;
             CheckBox_ShowOverlay.IsChecked = Settings.flag_priceBox;
-            
+            CheckBox_RunOnRightClick.IsChecked = Settings.flag_runRightClick;
+
             if (Settings.prefix == (string)Radio_Buyout.Content) {
                 Radio_Buyout.IsChecked = true;
                 Radio_Price.IsChecked = false;

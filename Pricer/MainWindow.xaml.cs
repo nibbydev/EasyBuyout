@@ -69,7 +69,7 @@ namespace Pricer {
         /// <param name="e"></param>
         private void Event_mouse (object sender, EventArgs e) {
             // Do not run if user has not pressed run button
-            if (!Settings.flag_run) return;
+            if (!Settings.flag_run || !Settings.flag_runRightClick) return;
             // Only run if "Path of Exile" is the main focused window
             if (WindowDiscovery.GetActiveWindowTitle() != Settings.activeWindowTitle) return;
 
@@ -82,7 +82,7 @@ namespace Pricer {
         /// </summary>
         private void Event_clipboard (object sender, EventArgs e) {
             // Do not run if user has not pressed run button
-            if (!Settings.flag_run) return;
+            if (!Settings.flag_run && !Settings.flag_runRightClick) return;
             // Only run if "Path of Exile" is the main focused window
             if (WindowDiscovery.GetActiveWindowTitle() != Settings.activeWindowTitle) return;
             // At this point there should be text in the clipboard
