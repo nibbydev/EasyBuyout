@@ -55,7 +55,8 @@ namespace Pricer {
             else Settings.prefix = "price";
 
             // Delay box
-            Int32.TryParse(TextBox_Delay.Text, out int delay);
+            int delay;
+            Int32.TryParse(TextBox_Delay.Text, out delay);
             if (delay != Settings.pasteDelay) {
                 if (delay < 1 || delay > 500) {
                     MainWindow.Log("Invalid input - delay (allowed: 1 - 500)", 2);
@@ -67,7 +68,8 @@ namespace Pricer {
             }
 
             // Lower price % box
-            Int32.TryParse(TextBox_LowerPrice.Text, out int percentage);
+            int percentage;
+            Int32.TryParse(TextBox_LowerPrice.Text, out percentage);
             if (percentage != Settings.lowerPricePercentage) {
                 if (percentage < 0 || percentage > 100) {
                     MainWindow.Log("Invalid input - percentage (allowed: 0 - 100)", 2);

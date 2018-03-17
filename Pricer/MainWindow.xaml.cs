@@ -186,7 +186,8 @@ namespace Pricer {
                 System.Media.SystemSounds.Asterisk.Play();
 
                 string errorMessage;
-                switch(entry.value) {
+                int entryValue = (int)entry.value;
+                switch (entryValue) {
                     case -1:
                         errorMessage = "Empty HTTP reply from PoePrices";
                         break;

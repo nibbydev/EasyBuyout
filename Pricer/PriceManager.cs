@@ -45,11 +45,13 @@ namespace Pricer {
 
                 // Add all values from temp dict to new dict (for ease of use)
                 foreach (string name_category in tempDict.Keys) {
-                    tempDict.TryGetValue(name_category, out Dictionary<string, PoeOvhEntry> category);
+                    Dictionary<string, PoeOvhEntry> category;
+                    tempDict.TryGetValue(name_category, out category);
 
                     foreach (string name_item in category.Keys) {
                         // Get OvhEntry from list
-                        category.TryGetValue(name_item, out PoeOvhEntry ovhEntry);
+                        PoeOvhEntry ovhEntry;
+                        category.TryGetValue(name_item, out ovhEntry);
 
                         // Create Entry instance
                         Entry entry = new Entry();
@@ -104,7 +106,8 @@ namespace Pricer {
 
                     if (tempDict == null) throw new Exception("Received no JSON for: " + key);
 
-                    tempDict.TryGetValue("lines", out List<PoeNinjaEntry> entryList);
+                    List<PoeNinjaEntry> entryList;
+                    tempDict.TryGetValue("lines", out entryList);
 
                     if (entryList == null) throw new Exception("Got invalid JSON format for:" + key);
 
@@ -362,7 +365,8 @@ namespace Pricer {
 
                 // If the price was in exalts, convert it to chaos
                 if (reply.currency == "exalt") {
-                    prices.TryGetValue("Exalted Orb|5", out Entry exaltedEntry);
+                    Entry exaltedEntry;
+                    prices.TryGetValue("Exalted Orb|5", out exaltedEntry);
                     if (exaltedEntry == null) return null;
                     returnEntry.value = (reply.max * exaltedEntry.value + reply.min * exaltedEntry.value) / 2.0;
                 } else {
@@ -384,7 +388,8 @@ namespace Pricer {
         /// <returns>Median value in chaos</returns>
         public Entry Search(string key) {
             // Get the database entry
-            prices.TryGetValue(key, out Entry tempEntry);
+            Entry tempEntry;
+            prices.TryGetValue(key, out tempEntry);
 
             // Precaution
             if (tempEntry == null) return null;
