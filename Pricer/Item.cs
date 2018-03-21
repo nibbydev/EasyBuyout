@@ -447,11 +447,11 @@ namespace Pricer {
                 case "Yriel's Fostering":
                     foreach (string mod in splitRaw[exModIndex + 1].Split('|')) {
                         if (mod.Contains("Chaos Damage"))
-                            return "|var:chaos";
+                            return "|var:snake";
                         else if (mod.Contains("Physical Damage"))
-                            return "|var:physical";
+                            return "|var:ursa";
                         else if (mod.Contains("Attack and Movement"))
-                            return "|var:speed";
+                            return "|var:rhoa";
                     }
                     break;
 
@@ -505,9 +505,9 @@ namespace Pricer {
                     // Check how many abyssal sockets the item has
                     switch (splitRaw[exModIndex].Split('|')[0]) {
                         case "Has 2 Abyssal Sockets":
-                            return "|var:2";
+                            return "|var:2 sockets";
                         case "Has 1 Abyssal Socket":
-                            return "|var:1";
+                            return "|var:1 socket";
                     }
 
                     break;

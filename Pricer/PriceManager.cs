@@ -73,7 +73,7 @@ namespace Pricer {
                     if (ovhEntry.lvl != null) key += "|" + ovhEntry.lvl;
                     if (ovhEntry.quality != null) key += "|" + ovhEntry.quality;
                     if (ovhEntry.corrupted != null) key += "|" + ovhEntry.corrupted;
-                    if (ovhEntry.var != null) key += "|" + ovhEntry.var;
+                    if (ovhEntry.var != null) key += "|var:" + ovhEntry.var;
 
                     // Add to database
                     if (prices.ContainsKey(key)) {
@@ -184,13 +184,13 @@ namespace Pricer {
                                     case "Yriel's Fostering":
                                         switch (ninjaEntry.variant) {
                                             case "Bleeding":
-                                                itemKey += "|var:physical";
+                                                itemKey += "|var:ursa";
                                                 break;
                                             case "Poison":
-                                                itemKey += "|var:chaos";
+                                                itemKey += "|var:snake";
                                                 break;
                                             case "Maim":
-                                                itemKey += "|var:speed";
+                                                itemKey += "|var:rhoa";
                                                 break;
                                             default:
                                                 break;
@@ -219,10 +219,10 @@ namespace Pricer {
                                     case "Tombfist":
                                         switch (ninjaEntry.variant) {
                                             case "2 Jewels":
-                                                itemKey += "|var:2";
+                                                itemKey += "|var:2 sockets";
                                                 break;
                                             case "1 Jewel":
-                                                itemKey += "|var:1";
+                                                itemKey += "|var:1 socket";
                                                 break;
                                             default:
                                                 break;
@@ -388,6 +388,7 @@ namespace Pricer {
         /// <param name="key">Database key to search for</param>
         /// <returns>Median value in chaos</returns>
         public Entry Search(string key) {
+            Console.WriteLine(key);
             // Get the database entry
             Entry tempEntry;
             prices.TryGetValue(key, out tempEntry);
