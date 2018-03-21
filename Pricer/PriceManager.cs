@@ -35,53 +35,54 @@ namespace Pricer {
 
             try {
                 // Download JSON-encoded string
-                string jsonString = MainWindow.webClient.DownloadString("http://api.poe.ovh/Stats?league=" + Settings.league);
+                string jsonString = MainWindow.webClient.DownloadString("http://api.poe.ovh/get?league=" + Settings.league + "&parent=all");
 
                 // Deserialize
-                Dictionary<string, Dictionary<string, PoeOvhEntry>> tempDict = new JavaScriptSerializer()
-                    .Deserialize<Dictionary<string, Dictionary<string, PoeOvhEntry>>>(jsonString);
+                List<PoeOvhEntry> tempDict = new JavaScriptSerializer().Deserialize<List<PoeOvhEntry>>(jsonString);
 
                 if (tempDict == null) return;
 
                 // Add all values from temp dict to new dict (for ease of use)
-                foreach (string name_category in tempDict.Keys) {
-                    Dictionary<string, PoeOvhEntry> category;
-                    tempDict.TryGetValue(name_category, out category);
+                foreach (PoeOvhEntry ovhEntry in tempDict) {
+                    // Create Entry instance
+                    Entry entry = new Entry();
 
-                    foreach (string name_item in category.Keys) {
-                        // Get OvhEntry from list
-                        PoeOvhEntry ovhEntry;
-                        category.TryGetValue(name_item, out ovhEntry);
+                    // Set Entry value
+                    switch (Settings.method.ToLower()) {
+                        case "mean":
+                            entry.value = ovhEntry.mean;
+                            break;
+                        case "median":
+                            entry.value = ovhEntry.median;
+                            break;
+                        case "mode":
+                            entry.value = ovhEntry.mode;
+                            break;
+                        default:
+                            break;
+                    }
 
-                        // Create Entry instance
-                        Entry entry = new Entry();
+                    // Set misc data
+                    entry.count = ovhEntry.count;
 
-                        // Set Entry value
-                        switch (Settings.method.ToLower()) {
-                            case "mean":
-                                entry.value = ovhEntry.mean;
-                                break;
-                            case "median":
-                                entry.value = ovhEntry.median;
-                                break;
-                            case "mode":
-                                entry.value = ovhEntry.mode;
-                                break;
-                            default:
-                                break;
-                        }
+                    // Form map key
+                    string key = ovhEntry.name;
+                    if (ovhEntry.type != null) key += "|" + ovhEntry.type;
+                    key += "|" + ovhEntry.frame;
+                    if (ovhEntry.links != null) key += "|" + ovhEntry.links + "L";
+                    if (ovhEntry.lvl != null) key += "|" + ovhEntry.lvl;
+                    if (ovhEntry.quality != null) key += "|" + ovhEntry.quality;
+                    if (ovhEntry.corrupted != null) key += "|" + ovhEntry.corrupted;
+                    if (ovhEntry.var != null) key += "|" + ovhEntry.var;
 
-                        // Set misc data
-                        entry.count = ovhEntry.count;
-
-                        // Add to database
-                        if (prices.ContainsKey(name_item)) {
-                            Console.WriteLine(name_item);
-                        } else {
-                            prices.Add(name_item, entry);
-                        }
+                    // Add to database
+                    if (prices.ContainsKey(key)) {
+                        Console.WriteLine("duplicate key: " + key);
+                    } else {
+                        prices.Add(key, entry);
                     }
                 }
+
             } catch (Exception ex) {
                 MainWindow.Log(ex.ToString(), 2);
             }
