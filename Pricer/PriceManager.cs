@@ -35,7 +35,7 @@ namespace Pricer {
 
             try {
                 // Download JSON-encoded string
-                string jsonString = MainWindow.webClient.DownloadString("http://api.poe.ovh/get?league=" + Settings.league + "&parent=all");
+                string jsonString = MainWindow.webClient.DownloadString("http://api.poe.ovh/compactPriceAPI?league=" + Settings.league);
 
                 // Deserialize
                 List<PoeOvhEntry> tempDict = new JavaScriptSerializer().Deserialize<List<PoeOvhEntry>>(jsonString);
@@ -65,15 +65,8 @@ namespace Pricer {
                     // Set misc data
                     entry.count = ovhEntry.count;
 
-                    // Form map key
-                    string key = ovhEntry.name;
-                    if (ovhEntry.type != null) key += "|" + ovhEntry.type;
-                    key += "|" + ovhEntry.frame;
-                    if (ovhEntry.links != null) key += "|" + ovhEntry.links + "L";
-                    if (ovhEntry.lvl != null) key += "|" + ovhEntry.lvl;
-                    if (ovhEntry.quality != null) key += "|" + ovhEntry.quality;
-                    if (ovhEntry.corrupted != null) key += "|" + ovhEntry.corrupted;
-                    if (ovhEntry.var != null) key += "|var:" + ovhEntry.var;
+                    // Key came with league and category
+                    String key = ovhEntry.key.Substring(ovhEntry.key.IndexOf('|', ovhEntry.key.IndexOf('|') + 1) + 1);
 
                     // Add to database
                     if (prices.ContainsKey(key)) {
@@ -136,13 +129,13 @@ namespace Pricer {
 
                                 switch (ninjaEntry.links) {
                                     case 6:
-                                        itemKey = ninjaEntry.name + "|" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass + "|6L";
+                                        itemKey = ninjaEntry.name + ":" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass + "|links:6";
                                         break;
                                     case 5:
-                                        itemKey = ninjaEntry.name + "|" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass + "|5L";
+                                        itemKey = ninjaEntry.name + ":" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass + "|links:5";
                                         break;
                                     default:
-                                        itemKey = ninjaEntry.name + "|" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass;
+                                        itemKey = ninjaEntry.name + ":" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass;
                                         break;
                                 }
 
@@ -241,7 +234,7 @@ namespace Pricer {
                             case "UniqueFlask":
                             case "UniqueAccessory":
                                 entry.value = ninjaEntry.chaosValue;
-                                itemKey = ninjaEntry.name + "|" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass;
+                                itemKey = ninjaEntry.name + ":" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass;
 
                                 switch (ninjaEntry.name) {
                                     case "Vessel of Vinktar":

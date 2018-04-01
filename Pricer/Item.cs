@@ -256,7 +256,7 @@ namespace Pricer {
             }
             
             // Format base key
-            key = name + "|" + type + "|3";
+            key = name + ":" + type + "|3";
 
             // Find what index socket data has
             int i;
@@ -265,7 +265,7 @@ namespace Pricer {
             // Decide whether to add link suffix or not
             if (splitRaw.Length > i) {
                 int links = ParseData_Links(splitRaw[i]);
-                if (links > 4) key += "|" + links + "L";
+                if (links > 4) key += "|links:" + links;
             }
 
             // Check if the item has special variants
@@ -307,7 +307,7 @@ namespace Pricer {
             key = name;
 
             // If the item has a type, add it to the key
-            if (type != null) key += "|" + type;
+            if (type != null) key += ":" + type;
 
             // Append frameType to the key
             key += "|" + frameType;

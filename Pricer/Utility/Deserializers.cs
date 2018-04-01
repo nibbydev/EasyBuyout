@@ -28,14 +28,7 @@ namespace Pricer.Utility {
         public double median { get; set; }
         public double mode { get; set; }
         public int count { get; set; }
-        public int frame { get; set; }
-        public string links { get; set; }
-        public string lvl { get; set; }
-        public string quality { get; set; }
-        public string corrupted { get; set; }
-        public string name { get; set; }
-        public string type { get; set; }
-        public string var { get; set; }
+        public string key { get; set; }
     }
 
     /// <summary>
