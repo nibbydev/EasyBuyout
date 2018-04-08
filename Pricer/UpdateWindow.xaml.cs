@@ -41,6 +41,8 @@ namespace Pricer {
         public void Run() {
             // Can't be null when making calls to github
             webClient.Headers.Add("user-agent", "!null");
+            // Fix for https DonwloadString bug (https://stackoverflow.com/questions/28286086/default-securityprotocol-in-net-4-5)
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
 
             ReleaseObject latest = GetLatestRelease();
 
