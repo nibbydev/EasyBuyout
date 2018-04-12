@@ -66,7 +66,7 @@ namespace Pricer {
                     entry.count = ovhEntry.count;
 
                     // Key came with league and category
-                    String key = ovhEntry.key.Substring(ovhEntry.key.IndexOf('|', ovhEntry.key.IndexOf('|') + 1) + 1);
+                    String key = ovhEntry.key.Substring(ovhEntry.key.IndexOf('|') + 1);
 
                     // Add to database
                     if (prices.ContainsKey(key)) {
