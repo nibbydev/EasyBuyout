@@ -3,36 +3,42 @@ using System.Text.RegularExpressions;
 
 namespace Pricer {
     public class Item {
-        public string rarity, name, type, key = "";
-        public string[] splitRaw;
-        public int stackSize;
-        public volatile bool discard = false;
-        public int gem_q; // Only available for gems
-        public string raw;
+        public string key;
         public int errorCode;
+        public volatile bool discard;
+
+        private readonly string raw;
+        private readonly string[] splitRaw;
+
+        // Keybuilding variables
+        private int links, frame;
+        private string rarity, variant, name, type;
+        private int level, quality, corrupted;
 
         public Item(string raw) {
             // All Ctrl+C'd item data must contain "--------" or "Rarity:"
-            if (!raw.Contains("--------")) return;
-            if (!raw.Contains("Rarity: ")) return;
+            if (!raw.Contains("--------") || !raw.Contains("Rarity: ")) {
+                errorCode = 1;
+                return;
+            }
 
-            // Add to raw
             this.raw = raw;
 
-            // Format the data and split it into an array
-            ParseRaw();
-
-            // Checks what type of item is present and calls appropriate methods
-            ParseData();
+            // Format the data and split it into a list
+            splitRaw = SplitParseRaw(raw);
         }
 
-        /**
-         * Parser methods
-        **/
+        //-----------------------------------------------------------------------------------------------------------
+        // Main parsing methods
+        //-----------------------------------------------------------------------------------------------------------
 
-        // Converts input into an array, replaces newlines with delimiters, splits groups
-        private void ParseRaw() {
-            // Expects input in the form of (whatever copied itemdata looks like):
+        /// <summary>
+        /// Converts input into an array, replaces newlines with delimiters, splits groups
+        /// </summary>
+        /// <param name="raw">Raw item data string</param>
+        /// <returns>Formatted list of itemdata groups</returns>
+        private static string[] SplitParseRaw(string raw) {
+            // Expects input in the form of whatever copied itemdata looks like:
             //     Rarity: Normal
             //     Majestic Plate
             //     --------
@@ -46,16 +52,14 @@ namespace Pricer {
             //     --------
             //     Item Level: 100
 
+            // Convert it to a string like this:
+            // "Rarity: Normal|Majestic Plate|::|Armour: 530|::|Requirements:|Level: 53|Str: 144|::|Sockets: B-R |::|Item Level: 100"
+
             string formattedRaw = raw.Replace("--------", "::");
             formattedRaw = formattedRaw.Replace("\r\n", "|");
             formattedRaw = formattedRaw.Remove(formattedRaw.Length - 1);
 
-            // At this point the input looks like this:
-            // "Rarity: Normal|Majestic Plate|::|Armour: 530|::|Requirements:|Level: 53|Str: 144|::|Sockets: B-R |::|Item Level: 100"
-
-            splitRaw = formattedRaw.Split(new string[] { "|::|" }, StringSplitOptions.None);
-
-            // Then we get something like this:
+            // Then get something like this:
             // {
             //     "Rarity: Normal|Majestic Plate",
             //     "Armour: 530",
@@ -63,45 +67,100 @@ namespace Pricer {
             // 	   "Sockets: B-R ",
             // 	   "Item Level: 100"
             // }
+
+            return formattedRaw.Split(new string[] { "|::|" }, StringSplitOptions.None);
         }
 
-        // Checks what data is present and then calls parse methods
-        private void ParseData() {
-            // Index 0 will always contain rarity/name/type info
-            ParseData_Rarity(splitRaw[0]);
-
-            // Do some error code assignment
+        /// <summary>
+        /// Checks what data is present and then calls specific parse methods
+        /// </summary>
+        public void ParseData() {
+            // Check if item is pricable
             foreach (string line in splitRaw) { 
-                if (line.Contains("Unidentified")) {
-                    errorCode = 1;
-                    break;
-                } else if (line.Contains("Note: ")) {
+                if (line.StartsWith("Unidentified")) {
                     errorCode = 2;
+                    break;
+                } else if (line.StartsWith("Note: ")) {
+                    errorCode = 3;
                     break;
                 }
             }
 
-            // Call methods based on item type
+            // Find name, type and rarity
+            string[] splitLine = splitRaw[0].Split('|');
+            rarity = TrimProperty(splitLine[0]);
+            name = splitLine[1];
+            if (splitLine.Length > 2) type = splitLine[2];
+
+            // Call specific parse methods based on item rarity
             switch (rarity) {
                 case "Gem":
+                    frame = 4;
                     Parse_GemData();
                     break;
+
                 case "Divination Card":
-                    Parse_DivinationData();
+                    frame = 6;
                     break;
+
                 case "Unique":
-                    Parse_Unique(); 
+                    frame = 3;
+
+                    // Can't price unidentified uniques
+                    if (errorCode == 2) {
+                        discard = true;
+                        return;
+                    }
+
+                    // Check if the item has more than 4 links
+                    links = ParseData_Sockets();
+                    // Check if the item has special variants
+                    variant = ParseData_Variant();
+
                     break;
-                case "Currency": // Contains essence and currency
-                    Parse_Currency();
+
+                case "Currency":
+                    frame = 5;
                     break;
+
                 default:
-                    Parse_Default();
+                    frame = Parse_DefaultData();
+                    // Unknown rarity
+                    if (frame == -1) errorCode = 5;
                     break;
             }
+
+            key = BuildKey();
         }
 
-        // Makes specific key when item is a gem
+        /// <summary>
+        /// Constructs a key for the item
+        /// </summary>
+        /// <returns></returns>
+        private string BuildKey() {
+            string key = name;
+            if (type != null) key += ":" + type;
+            key += "|" + frame;
+
+            if (frame == 4) {
+                key += "|l:" + level;
+                key += "|q:" + quality;
+                key += "|c:" + corrupted;
+            } else {
+                if (links > 4) key += "|links:" + links;
+                if (variant != null) key += "|var:" + variant;
+            }
+
+            return key;
+        }
+
+        //-----------------------------------------------------------------------------------------------------------
+        // Specific parsing methods
+        //-----------------------------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Parses item data when item is a gem
+        /// </summary>
         private void Parse_GemData() {
             int level = 0, quality = 0;
 
@@ -113,9 +172,6 @@ namespace Pricer {
                     quality = Int32.Parse(new Regex(@"\d+").Match(s).Value);
                 }
             }
-
-            // Store the quality for later use
-            gem_q = quality;
 
             // Last line will contain "Note:" if item has a note
             bool isCorrupted = splitRaw[splitRaw.Length - 1].Contains("Corrupted");
@@ -214,69 +270,27 @@ namespace Pricer {
 
                 // Poe.ninja does not have enough data to price most gems
                 if (quality < 0 || level < 0) {
-                    errorCode = 3;
-                    discard = true;
+                    errorCode = 4;
                 }
             }
 
-            // Build key in the format of "<gem name>|4|<lvl>|<quality>"
-            key = name + "|4|l:" + level + "|q:" + quality;
-
-            // Add corruption to key
-            key += isCorrupted ? "|c:1" : "|c:0";
+            this.level = level;
+            this.quality = quality;
+            this.corrupted = isCorrupted ? 1 : 0;
         }
 
-        // Makes specific key when item is a divination card
-        private void Parse_DivinationData() {
-            // Build key in the format of "A Mother's Parting Gift|6"
-            key = name + "|" + 6;
-        }
-
-        // Makes specific key when item is a currency
-        private void Parse_Currency() {
-            // Build key in the format of "Alchemy Shard|5"
-            key = name + "|" + 5;
-        }
-
-        // Makes specific key when item is unique
-        private void Parse_Unique() {
-            // Can't price unidentified uniques
-            if (errorCode == 1) {
-                discard = true;
-                return;
-            }
-            
-            // Format base key
-            key = name + ":" + type + "|3";
-
-            // Find what index socket data has
-            int i;
-            for (i = 0; i < splitRaw.Length; i++) if (splitRaw[i].StartsWith("Sockets:")) break;
-
-            // Decide whether to add link suffix or not
-            if (splitRaw.Length > i) {
-                int links = ParseData_Links(splitRaw[i]);
-                if (links > 4) key += "|links:" + links;
-            }
-
-            // Check if the item has special variants
-            key += ParseData_Variant();
-        }
-
-        // Makes specific key when item is of normal rarity
-        // (this includes maps, fragments, prophecies and maybe others aswell)
-        private void Parse_Default() {
-            int frameType = 0;
-
-            // Loop through lines, checking if the item contains prophecy text
-            // (They have frameType 8 but Ctrl+C shows them as "Normal")
+        /// <summary>
+        /// Parses item data when item is of normal rarity
+        /// Includes maps, fragments, prophecies and maybe others
+        /// </summary>
+        /// <returns>Item's frametype</returns>
+        private int Parse_DefaultData() {
+            // Loop through lines, checking if the item contains prophecy or map text
             for (int i = splitRaw.Length - 1; i > 0; i--) {
                 if (splitRaw[i].Contains("Right-click to add this prophecy to your character")) {
-                    frameType = 8;
-                    break;
+                    return 8;
                 } else if (splitRaw[i].Contains("Travel to this Map by using it in the Templar Laboratory or a personal Map Device")) {
-                    frameType = 0;
-                    
+                    // Count rare maps as normal
                     if (rarity == "Rare") {
                         name = type;
                         type = null;
@@ -284,126 +298,97 @@ namespace Pricer {
 
                     if (name.Contains("Superior ")) name = name.Remove(0, 9);
 
-                    break;
-                } else if (rarity == "Normal") {
-                    frameType = 0;
-                } else if (rarity == "Magic") {
-                    frameType = 1;
-                } else if (rarity == "Rare") {
-                    frameType = 2;
+                    return 0;
                 }
             }
 
-            // Start building the database key
-            key = name;
-
-            // If the item has a type, add it to the key
-            if (type != null) key += ":" + type;
-
-            // Append frameType to the key
-            key += "|" + frameType;
+            if (rarity == "Normal") return 0;
+            else if (rarity == "Magic") return 1;
+            else if (rarity == "Rare") return 2;
+            else return -1;
         }
 
-        // Takes input as "Item Level: 55" or "Sockets: B - B B " and returns "55" or "B - B B"
-        private string TrimProperty(string str) {
-            // Convert "Sockets: B - B B " -> "B - B B"
-            int tempIndex = str.IndexOf(' ') + 1;
-            return str.Substring(tempIndex, str.Length - tempIndex).Trim();
+        //-----------------------------------------------------------------------------------------------------------
+        // Generic parsing methods
+        //-----------------------------------------------------------------------------------------------------------
+        
+        /// <summary>
+        /// Finds the index of the element the element in the haystack that starts with the needle
+        /// </summary>
+        /// <param name="needle">String to search for</param>
+        /// <param name="haystack">Array to search it in</param>
+        /// <returns></returns>
+        private static int FindIndexOf(string needle, string[] haystack) {
+            for (int i = 0; i < haystack.Length; i++) {
+                if (haystack[i].StartsWith(needle)) {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
-        /**
-         * Parse methods
-        **/
+        /// <summary>
+        /// Parses socket data if present and finds largest link
+        /// </summary>
+        private int ParseData_Sockets() {
+            // Find what index socket data is under
+            int index = FindIndexOf("Sockets:", splitRaw);
+            // If it's still 0 then item doesn't have socket data
+            if (index == -1) return 0;
+            // Assign socket string: "Sockets: B G-R-R-G-R " -> "B G-R-R-G-R"
+            string socketData = TrimProperty(splitRaw[index]);
 
-        // Takes input as "Rarity: Gem|Faster Attacks Support"
-        private void ParseData_Rarity(string str) {
-            // Examples of item rarity categories:
-            //     Div cards: "Rarity: Divination Card|Rain of Chaos"
-            //     Gem: "Rarity: Gem|Faster Attacks Support"
-            //     Unique: "Rarity: Unique|Inpulsa's Broken Heart|Sadist Garb"
-
-            // Rarity and item name will always be under data[0]
-            string[] splitStr = str.Split('|');
-
-            // Get rarity. [0] is "Rarity: Magic"
-            rarity = TrimProperty(splitStr[0]);
-
-            // Get name. [1] is "Majestic Plate" or "Radiating Samite Gloves of the Penguin"
-            name = splitStr[1];
-
-            // If item has a type, add it to the key
-            if (splitStr.Length > 2) type = splitStr[2];
-        }
-
-        // Converts "Sockets: B G-R-R-G-R " -> "B G-R-R-G-R"
-        private int ParseData_Links(string str) {
-            // Remove useless info from socket data
-            str = TrimProperty(str);
-
-            int[] links = { 1, 1, 1, 1, 1 };
+            int[] tempLinks = { 1, 1, 1, 1, 1 };
             int counter = 0;
 
             // Loop through, counting links
-            for (int i = 1; i < str.Length; i += 2) {
-                if (str[i] != '-') counter++;
-                else links[counter]++;
+            for (int i = 1; i < socketData.Length; i += 2) {
+                if (socketData[i] != '-') counter++;
+                else tempLinks[counter]++;
             }
 
-            // Reuse, reduce, recycle
-            counter = 0;
+            // Find largest link
+            foreach (int tempLink in tempLinks) {
+                if (tempLink > 4) return tempLink;
+            }
 
-            // Find largest element
-            foreach (int link in links) if (link > counter) counter = link;
-
-            // Return largest link
-            return counter;
+            // If largest < 5
+            return 0;
         }
 
-        // Expects input in the form of "Stack Size: 2/20"
-        private void ParseData_StackSize(string str) {
-            // "Stack Size: 2,352/10" -> "Stack Size: 2352/10"
-            if(str.Contains(",")) str = str.Remove(str.IndexOf(','), 1);
-
-            // Remove spaces: "Stack Size: 11/20" -> "StackSize:11/20"
-            str = String.Join(null, str.Split(' '));
-
-            // Extract stack size: "StackSize:11/20" -> "11"
-            string stackSize = str.Substring(str.IndexOf(':') + 1, str.IndexOf('/') - str.IndexOf(':') - 1);
-
-            this.stackSize = Int32.Parse(stackSize);
-        }
-
-        // Special items have multiple variants, distinguish them
+        /// <summary>
+        /// As some specific items have multiple variants, distinguish them
+        /// </summary>
+        /// <returns>Variant string</returns>
         private string ParseData_Variant() {
             // Find the index of "Item Level:"
-            int exModIndex;
-            for (exModIndex = 0; exModIndex < splitRaw.Length; exModIndex++)
-                if (splitRaw[exModIndex].StartsWith("Item Level:")) break;
-
+            int exModIndex = FindIndexOf("Item Level:", splitRaw);
+            // Couldn't find index of item level
+            if (exModIndex == -1) return null;
 
             // Check variation
             switch (name) {
                 case "Atziri's Splendour":
                     string[] splitExplicitMods = splitRaw[exModIndex + 1].Split('|');
-                    
-                    // Do some magic :)
+
                     switch (String.Join("#", Regex.Split(splitExplicitMods[0], @"\d+"))) {
                         case "#% increased Armour, Evasion and Energy Shield":
-                            return "|var:ar/ev/es";
+                            return "ar/ev/es";
                         case "#% increased Armour and Energy Shield":
-                            if (splitExplicitMods[1].Contains("Life")) return "|var:ar/es/li";
-                            else return "|var:ar/es";
+                            if (splitExplicitMods[1].Contains("Life")) return "ar/es/li";
+                            else return "ar/es";
                         case "#% increased Evasion and Energy Shield":
-                            if (splitExplicitMods[1].Contains("Life")) return "|var:ev/es/li";
-                            else return "|var:ev/es";
+                            if (splitExplicitMods[1].Contains("Life")) return "ev/es/li";
+                            else return "ev/es";
                         case "#% increased Armour and Evasion":
-                            return  "|var:ar/ev";
+                            return "ar/ev";
                         case "#% increased Armour":
-                            return "|var:ar";
+                            return "ar";
                         case "#% increased Evasion Rating":
-                            return "|var:ev";
+                            return "ev";
                         case "+# to maximum Energy Shield":
-                            return "|var:es";
+                            return "es";
                         default:
                             break;
                     }
@@ -412,37 +397,37 @@ namespace Pricer {
                 case "Vessel of Vinktar":
                     foreach (string mod in splitRaw[exModIndex + 1].Split('|')) {
                         if (mod.Contains("to Spells"))
-                            return "|var:spells";
+                            return "spells";
                         else if (mod.Contains("to Attacks"))
-                            return "|var:attacks";
+                            return "attacks";
                         else if (mod.Contains("Converted to"))
-                            return "|var:conversion";
+                            return "conversion";
                         else if (mod.Contains("Penetrates"))
-                            return "|var:penetration";
+                            return "penetration";
                     }
                     break;
 
                 case "Doryani's Invitation":
                     foreach (string mod in splitRaw[exModIndex + 2].Split('|')) {
                         if (mod.Contains("Lightning Damage"))
-                            return "|var:lightning";
+                            return "lightning";
                         else if (mod.Contains("Fire Damage"))
-                            return "|var:fire";
+                            return "fire";
                         else if (mod.Contains("Cold Damage"))
-                            return "|var:cold";
+                            return "cold";
                         else if (mod.Contains("Physical Damage"))
-                            return "|var:physical";
+                            return "physical";
                     }
                     break;
 
                 case "Yriel's Fostering":
                     foreach (string mod in splitRaw[exModIndex + 1].Split('|')) {
                         if (mod.Contains("Chaos Damage"))
-                            return "|var:snake";
+                            return "snake";
                         else if (mod.Contains("Physical Damage"))
-                            return "|var:ursa";
+                            return "ursa";
                         else if (mod.Contains("Attack and Movement"))
-                            return "|var:rhoa";
+                            return "rhoa";
                     }
                     break;
 
@@ -458,26 +443,26 @@ namespace Pricer {
                     // Figure out item variant
                     foreach (string mod in splitRaw[exModIndex].Split('|')) {
                         if (mod.Contains("Lightning Damage"))
-                            return "|var:lightning";
+                            return "lightning";
                         else if (mod.Contains("Fire Damage"))
-                            return "|var:fire";
+                            return "fire";
                         else if (mod.Contains("Cold Damage"))
-                            return "|var:cold";
+                            return "cold";
                     }
                     break;
 
                 case "Impresence":
                     foreach (string mod in splitRaw[exModIndex + 2].Split('|')) {
                         if (mod.Contains("Lightning Damage"))
-                            return "|var:lightning";
+                            return "lightning";
                         else if (mod.Contains("Fire Damage"))
-                            return "|var:fire";
+                            return "fire";
                         else if (mod.Contains("Cold Damage"))
-                            return "|var:cold";
+                            return "cold";
                         else if (mod.Contains("Physical Damage"))
-                            return "|var:physical";
+                            return "physical";
                         else if (mod.Contains("Chaos Damage"))
-                            return "|var:chaos";
+                            return "chaos";
                     }
                     break;
 
@@ -496,19 +481,40 @@ namespace Pricer {
                     // Check how many abyssal sockets the item has
                     switch (splitRaw[exModIndex].Split('|')[0]) {
                         case "Has 2 Abyssal Sockets":
-                            return "|var:2 sockets";
+                            return "2 sockets";
                         case "Has 1 Abyssal Socket":
-                            return "|var:1 socket";
+                            return "1 socket";
                     }
 
                     break;
                 default:
-                    return "";
+                    break;
             }
 
             // Nothing matched, eh?
-            Console.WriteLine("Unmatched variant item: " + raw);
-            return "";
+            return null;
+        }
+
+        /// <summary>
+        /// Takes input as "Item Level: 55" or "Sockets: B - B B " and returns "55" or "B - B B"
+        /// </summary>
+        /// <param name="str">"Sockets: B - B B "</param>
+        /// <returns>"B - B B"</returns>
+        private static string TrimProperty(string str) {
+            int index = str.IndexOf(' ') + 1;
+            return str.Substring(index, str.Length - index).Trim();
+        }
+
+        //-----------------------------------------------------------------------------------------------------------
+        // Getters and setters
+        //-----------------------------------------------------------------------------------------------------------
+
+        public int GetFrame() {
+            return frame;
+        }
+
+        public string GetRaw() {
+            return raw;
         }
     }
 }

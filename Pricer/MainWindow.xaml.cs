@@ -106,11 +106,10 @@ namespace Pricer {
         /// </summary>
         /// <param name="clipboardString">Item data from the clipboard</param>
         private void ClipBoard_ItemParseTask(string clipboardString) {
-            // Raise the flag that indicates we will permit 1 buyout note to pass the clipboard event
-            Settings.flag_clipBoardPaste = true;
-
-            // Create Item instance
             Item item = new Item(clipboardString);
+            item.ParseData();
+
+            Console.WriteLine("key: " + item.key);
 
             // If the item was shite, discard it
             if (item.discard) {
@@ -118,24 +117,28 @@ namespace Pricer {
 
                 switch (item.errorCode) {
                     case 1:
-                        Log("Unable to price unidentified items", 2);
+                        Log("Did not find any item data", 2);
                         break;
                     case 2:
-                        Log("Unable to price items with notes", 2);
+                        Log("Unable to price unidentified items", 2);
                         break;
                     case 3:
+                        Log("Unable to price items with notes", 2);
+                        break;
+                    case 4:
                         Log("Poe.ninja does not have any data for that item. Try Poe.ovh instead", 2);
                         break;
                 }
                 return;
             }
 
-            // Get object from database
+            // Attempt to get entry from database
             Entry entry = priceManager.Search(item.key);
 
-            // Last-case scenario, use poeprices to get price
-            if (entry == null && Settings.flag_fallback) {
-                if (item.rarity == "Rare" || item.rarity == "Magic" || item.rarity == "Normal") {
+            // If there were no matches
+            if (entry == null) {
+                // If user had enabled poeprices fallback
+                if (Settings.flag_fallback) {
                     Log("No database entry found. Feeding item to PoePrices...", 0);
 
                     // If pricebox was enabled, display "Searching..." in it until a price is found
@@ -147,12 +150,13 @@ namespace Pricer {
                         });
                     }
 
-                    entry = priceManager.SearchPoePrices(item.raw);
+                    entry = priceManager.SearchPoePrices(item.GetRaw());
                 }
             }
 
-            // If PoePrices was disabled and no match was found and pricebox was enabled, display error in it
+            // Display error
             if (entry == null && Settings.flag_showOverlay) {
+                
                 Dispatcher.Invoke(() => {
                     priceBox.Content = "No match...";
                     SetPriceBoxPosition();
@@ -164,7 +168,7 @@ namespace Pricer {
 
             // If the price is 0c
             if (entry.value == 0) {
-                Log("Worth: 0c: " + item.key, 2);
+                Log("Worth: 0c: " + item.key, 1);
 
                 // If pricebox was enabled, display the value in it
                 if (Settings.flag_showOverlay) {
@@ -246,11 +250,13 @@ namespace Pricer {
             }
 
             // Error code 2 means items already has a note. Can't overwrite it
-            if (item.errorCode == 2) {
+            if (item.errorCode == 3) {
                 Log("Item already has a note", 2);
                 return;
             }
 
+            // Raise the flag that indicates we will permit 1 buyout note to pass the clipboard event
+            Settings.flag_clipBoardPaste = true;
             if (Settings.flag_sendNote) Dispatcher.Invoke(() => Clipboard.SetText(note));
         }
 

@@ -393,7 +393,6 @@ namespace Pricer {
         /// <param name="key">Database key to search for</param>
         /// <returns>Median value in chaos</returns>
         public Entry Search(string key) {
-            Console.WriteLine(key);
             // Get the database entry
             Entry tempEntry;
             prices.TryGetValue(key, out tempEntry);
