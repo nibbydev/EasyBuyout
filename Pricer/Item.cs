@@ -286,10 +286,10 @@ namespace Pricer {
         /// <returns>Item's frametype</returns>
         private int Parse_DefaultData() {
             // Loop through lines, checking if the item contains prophecy or map text
-            for (int i = splitRaw.Length - 1; i > 0; i--) {
-                if (splitRaw[i].Contains("Right-click to add this prophecy to your character")) {
+            foreach (string line in splitRaw) {
+                if (line.Contains("Right-click to add this prophecy to your character")) {
                     return 8;
-                } else if (splitRaw[i].Contains("Travel to this Map by using it in the Templar Laboratory or a personal Map Device")) {
+                } else if (line.Contains("Travel to this Map by using it in the Templar Laboratory or a personal Map Device")) {
                     // Count rare maps as normal
                     if (rarity == "Rare") {
                         name = type;
@@ -299,6 +299,8 @@ namespace Pricer {
                     if (name.Contains("Superior ")) name = name.Remove(0, 9);
 
                     return 0;
+                } else if (line.Equals("Relic Unique")) {
+                    return 9;
                 }
             }
 
