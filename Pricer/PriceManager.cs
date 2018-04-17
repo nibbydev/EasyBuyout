@@ -108,19 +108,17 @@ namespace Pricer {
                     foreach (PoeNinjaEntry ninjaEntry in entryList) {
                         // Quick and dirty workarounds
                         Entry entry = new Entry { count = ninjaEntry.count };
-                        string itemKey;
+                        string itemKey = "";
 
                         switch(key) {
                             case "Currency":
                                 entry.value = ninjaEntry.chaosEquivalent;
                                 itemKey = ninjaEntry.currencyTypeName + "|5";
-                                if (!prices.ContainsKey(itemKey)) prices.Add(itemKey, entry);
                                 break;
 
                             case "Fragment":
                                 entry.value = ninjaEntry.chaosEquivalent;
                                 itemKey = ninjaEntry.currencyTypeName + "|0";
-                                if (!prices.ContainsKey(itemKey)) prices.Add(itemKey, entry);
                                 break;
 
                             case "UniqueArmour":
@@ -225,8 +223,7 @@ namespace Pricer {
                                     default:
                                         break;
                                 }
-                                
-                                if (!prices.ContainsKey(itemKey)) prices.Add(itemKey, entry);
+
                                 break;
 
                             case "UniqueMap":
@@ -302,7 +299,6 @@ namespace Pricer {
                                         break;
                                 }
 
-                                if (!prices.ContainsKey(itemKey)) prices.Add(itemKey, entry);
                                 break;
 
                             case "Essence":
@@ -311,26 +307,28 @@ namespace Pricer {
                                 entry.value = ninjaEntry.chaosValue;
 
                                 itemKey = ninjaEntry.name + "|" + ninjaEntry.itemClass;
-                                if (!prices.ContainsKey(itemKey)) prices.Add(itemKey, entry);
                                 break;
 
                             case "Map":
                                 entry.value = ninjaEntry.chaosValue;
 
                                 itemKey = ninjaEntry.name + "|0";
-                                if (!prices.ContainsKey(itemKey)) prices.Add(itemKey, entry);
                                 break;
 
                             case "SkillGem":
                                 entry.value = ninjaEntry.chaosValue;
 
-                                itemKey = ninjaEntry.name + "|" + ninjaEntry.itemClass + "|" + ninjaEntry.gemLevel + "|" + ninjaEntry.gemQuality;
-                                if (ninjaEntry.corrupted) itemKey += "|1";
-                                else itemKey += "|0";
-
-                                if (!prices.ContainsKey(itemKey)) prices.Add(itemKey, entry);
+                                itemKey = ninjaEntry.name + "|" + ninjaEntry.itemClass + "|l:" + ninjaEntry.gemLevel + "|q:" + ninjaEntry.gemQuality;
+                                itemKey += ninjaEntry.corrupted ? "|c:1" : "|0";
                                 break;
                         }
+
+                        if (prices.ContainsKey(itemKey)) {
+                            Console.WriteLine("duplicate key: " + itemKey);
+                        } else {
+                            prices.Add(itemKey, entry);
+                        }
+
                     }
                 } catch (Exception ex) {
                     MainWindow.Log(ex.ToString(), 2);

@@ -164,16 +164,8 @@ namespace Pricer {
                             quality = 20;
                             isCorrupted = true;
                         } else quality = -1;
-                    } else if (level == 3) {
-                        // Quality can be either 0(1,2,3,4,5,6,7) or 20(17,18,19,20) otherwise set it to -1
-                        if (quality < 8) {
-                            quality = 0;
-                            isCorrupted = true;
-                        } else if (quality > 16) {
-                            quality = 20;
-                            isCorrupted = false;
-                        } else quality = -1;
-                    } else if (level == 4) {
+                    } else if (level == 3 || level == 4) {
+                        // Quality doesn't matter
                         quality = 0;
                     }
                 } else {
@@ -228,11 +220,10 @@ namespace Pricer {
             }
 
             // Build key in the format of "<gem name>|4|<lvl>|<quality>"
-            key = name + "|4|" + level + "|" + quality;
+            key = name + "|4|l:" + level + "|q:" + quality;
 
             // Add corruption to key
-            if (isCorrupted) key += "|1";
-            else key += "|0";
+            key += isCorrupted ? "|c:1" : "|c:0";
         }
 
         // Makes specific key when item is a divination card
