@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,7 +9,11 @@ namespace Pricer {
     /// Interaction logic for SettingsWindow.xaml
     /// </summary>
     public partial class SettingsWindow : Window {
-        public SettingsWindow() {
+        private readonly MainWindow main;
+
+        public SettingsWindow(MainWindow main) {
+            this.main = main;
+
             InitializeComponent();
 
             foreach (string method in Settings.priceMethods) ComboBox_Method.Items.Add(method);
@@ -19,23 +24,76 @@ namespace Pricer {
             Settings.method = Settings.priceMethods[0];
         }
 
+        //-----------------------------------------------------------------------------------------------------------
+        // Generic methods
+        //-----------------------------------------------------------------------------------------------------------
+
         /// <summary>
         /// Gets active leagues and adds them to controls
         /// </summary>
         public void AddLeagues() {
-            string[] leagues = Utility.MiscMethods.GetLeagueList();
-            MainWindow.Log("Downloading league list...", 0);
+            MainWindow.Log("Updating league list...", 0);
+            string[] leagues = Utility.MiscMethods.GetLeagueList(main.GetWebClient());
+
+            if (leagues == null) {
+                MainWindow.Log("Unable to update leagues", 3);
+                return;
+            }
+
             Dispatcher.Invoke(() => {
-                foreach (string league in leagues) ComboBox_League.Items.Add(league);
+                foreach (string league in leagues) {
+                    ComboBox_League.Items.Add(league);
+                }
+
                 ComboBox_League.SelectedIndex = 0;
                 Settings.league = ComboBox_League.SelectedValue.ToString();
+
                 Button_Download.IsEnabled = true;
             });
-            MainWindow.Log("League list updated", 0);
 
-            // Check for updates now that we finished using the webclient
-            MainWindow.updateWindow.Run();
+            MainWindow.Log("League list updated", 0);
         }
+
+        /// <summary>
+        /// Reverts all settings back to original state when cancel button is pressed
+        /// </summary>
+        private void ResetOptions() {
+            // Reset dropdown boxes
+            ComboBox_League.SelectedValue = Settings.league;
+            ComboBox_Method.SelectedValue = Settings.method;
+            ComboBox_Source.SelectedValue = Settings.source;
+
+            // Reset text fields
+            TextBox_Delay.Text = Settings.pasteDelay.ToString();
+            TextBox_LowerPrice.Text = Settings.lowerPricePercentage.ToString();
+
+            // Reset checkboxe states
+            CheckBox_Fallback.IsChecked = Settings.flag_fallback;
+            CheckBox_SendEnter.IsChecked = Settings.flag_sendEnter;
+            CheckBox_SendNote.IsChecked = Settings.flag_sendNote;
+            CheckBox_ShowOverlay.IsChecked = Settings.flag_showOverlay;
+            CheckBox_RunOnRightClick.IsChecked = Settings.flag_runOnRightClick;
+
+            // Reset ~b/o radio states
+            bool tempCheck1 = Settings.prefix == (string)Radio_Buyout.Content;
+            Radio_Buyout.IsChecked = tempCheck1;
+            Radio_Price.IsChecked = !tempCheck1;
+
+            // Reset enabled states
+            CheckBox_SendEnter.IsEnabled = Settings.flag_sendNote;
+            Radio_Buyout.IsEnabled = Settings.flag_sendNote;
+            Radio_Price.IsEnabled = Settings.flag_sendNote;
+            TextBox_Delay.IsEnabled = Settings.flag_sendNote;
+
+            // Reset method selection
+            bool tempCheck2 = ComboBox_Source.SelectedValue.ToString().ToLower() == "poe.ninja";
+            ComboBox_Method.IsEnabled = !tempCheck2;
+            ComboBox_Method.SelectedIndex = tempCheck2 ? -1 : 0;
+        }
+
+        //-----------------------------------------------------------------------------------------------------------
+        // WPF events
+        //-----------------------------------------------------------------------------------------------------------
 
         /// <summary>
         /// Intercepts window close event and hides it instead
@@ -81,11 +139,11 @@ namespace Pricer {
             }
 
             // Checkboxes
-            Settings.flag_priceBox = (bool)CheckBox_ShowOverlay.IsChecked;
+            Settings.flag_showOverlay = (bool)CheckBox_ShowOverlay.IsChecked;
             Settings.flag_fallback = (bool)CheckBox_Fallback.IsChecked;
             Settings.flag_sendEnter = (bool)CheckBox_SendEnter.IsChecked;
             Settings.flag_sendNote = (bool)CheckBox_SendNote.IsChecked;
-            Settings.flag_runRightClick = (bool)CheckBox_RunOnRightClick.IsChecked;
+            Settings.flag_runOnRightClick = (bool)CheckBox_RunOnRightClick.IsChecked;
 
             // Radio buttons
             if ((bool)Radio_Buyout.IsChecked) Settings.prefix = Radio_Buyout.Content.ToString();
@@ -118,14 +176,19 @@ namespace Pricer {
 
             Button_Download.IsEnabled = false;
 
-            MainWindow.Log("Downloading " + ComboBox_Method.SelectedValue + 
-                " price data for " + ComboBox_League.SelectedValue + 
-                " from " + ComboBox_Source.SelectedValue, 0);
+            MainWindow.Log("Downloading " + Settings.method + " price data for " + 
+                Settings.league +  " from " + Settings.source, 0);
 
-            // Download, parse, update as task
             Task.Run(() => {
-                MainWindow.priceManager.Download();
-                Application.Current.Dispatcher.Invoke(() => MainWindow.runButton.IsEnabled = true);
+                // Download and format price data
+                main.GetPriceManager().Download();
+                // Enable run button on MainWindow
+                Application.Current.Dispatcher.Invoke(() => {
+                    main.Button_Run.IsEnabled = true;
+                    // Re-enable the button so user knows dl finished
+                    Button_Download.IsEnabled = true;
+                });
+
                 MainWindow.Log("Download finished", 0);
             });
         }
@@ -163,49 +226,8 @@ namespace Pricer {
         }
 
         /// <summary>
-        /// Reverts all settings back to original state when cancel button is pressed
-        /// </summary>
-        private void ResetOptions() {
-            ComboBox_League.SelectedValue = Settings.league;
-            ComboBox_Method.SelectedValue = Settings.method;
-            ComboBox_Source.SelectedValue = Settings.source;
-
-            TextBox_Delay.Text = Settings.pasteDelay.ToString();
-            TextBox_LowerPrice.Text = Settings.lowerPricePercentage.ToString();
-
-            CheckBox_Fallback.IsChecked = Settings.flag_fallback;
-            CheckBox_SendEnter.IsChecked = Settings.flag_sendEnter;
-            CheckBox_SendNote.IsChecked = Settings.flag_sendNote;
-            CheckBox_ShowOverlay.IsChecked = Settings.flag_priceBox;
-            CheckBox_RunOnRightClick.IsChecked = Settings.flag_runRightClick;
-
-            if (Settings.prefix == (string)Radio_Buyout.Content) {
-                Radio_Buyout.IsChecked = true;
-                Radio_Price.IsChecked = false;
-            } else {
-                Radio_Buyout.IsChecked = false;
-                Radio_Price.IsChecked = true;
-            }
-
-            CheckBox_SendEnter.IsEnabled = Settings.flag_sendNote;
-            Radio_Buyout.IsEnabled = Settings.flag_sendNote;
-            Radio_Price.IsEnabled = Settings.flag_sendNote;
-            TextBox_Delay.IsEnabled = Settings.flag_sendNote;
-
-            if (ComboBox_Source.SelectedValue.ToString().ToLower() == "poe.ninja") {
-                ComboBox_Method.IsEnabled = false;
-                ComboBox_Method.SelectedIndex = -1;
-            } else {
-                ComboBox_Method.IsEnabled = true;
-                ComboBox_Method.SelectedIndex = 0;
-            }
-        }
-
-        /// <summary>
         /// Re-enables download button when user switches price methods
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void ComboBox_Method_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (ComboBox_Method.SelectedItem != null) Button_Download.IsEnabled = true;
         }

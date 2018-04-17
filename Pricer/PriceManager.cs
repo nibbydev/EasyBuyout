@@ -1,6 +1,7 @@
 ﻿using Pricer.Utility;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Web.Script.Serialization;
 
 namespace Pricer {
@@ -8,7 +9,16 @@ namespace Pricer {
     /// PriceManager handles downlading, managing and translating price data from various websites
     /// </summary>
     public class PriceManager {
+        private readonly WebClient webClient;
         private Dictionary<string, Entry> prices = new Dictionary<string, Entry>();
+
+        public PriceManager (WebClient webClient) {
+            this.webClient = webClient;
+        }
+
+        //-----------------------------------------------------------------------------------------------------------
+        // Data download
+        //-----------------------------------------------------------------------------------------------------------
 
         /// <summary>
         /// Picks download source depending on source selection
@@ -35,7 +45,7 @@ namespace Pricer {
 
             try {
                 // Download JSON-encoded string
-                string jsonString = MainWindow.webClient.DownloadString("http://api.poe.ovh/compactPriceAPI?league=" + Settings.league);
+                string jsonString = webClient.DownloadString("http://api.poe.ovh/compactPriceAPI?league=" + Settings.league);
 
                 // Deserialize
                 List<PoeOvhEntry> tempDict = new JavaScriptSerializer().Deserialize<List<PoeOvhEntry>>(jsonString);
@@ -65,7 +75,7 @@ namespace Pricer {
                     // Set misc data
                     entry.count = ovhEntry.count;
 
-                    // Key came with league and category
+                    // Key came with category
                     String key = ovhEntry.key.Substring(ovhEntry.key.IndexOf('|') + 1);
 
                     // Add to database
@@ -91,7 +101,7 @@ namespace Pricer {
             foreach (string key in Settings.poeNinjaKeys) {
                 try {
                     // Download JSON-encoded string
-                    string jsonString = MainWindow.webClient.DownloadString("http://poe.ninja/api/Data/Get" + 
+                    string jsonString = webClient.DownloadString("http://poe.ninja/api/Data/Get" + 
                         key + "Overview?league=" + Settings.league);
 
                     // Deserialize JSON string
@@ -346,7 +356,7 @@ namespace Pricer {
 
             try {
                 // Make request to http://poeprices.info
-                string jsonString = MainWindow.webClient.DownloadString("https://www.poeprices.info/api?l=" + Settings.league + 
+                string jsonString = webClient.DownloadString("https://www.poeprices.info/api?l=" + Settings.league + 
                     "&i=" + MiscMethods.Base64Encode(rawItemData));
 
                 // Deserialize JSON-encoded reply string
@@ -372,6 +382,10 @@ namespace Pricer {
                 return null;
             }
         }
+
+        //-----------------------------------------------------------------------------------------------------------
+        // Generic methods
+        //-----------------------------------------------------------------------------------------------------------
 
         /// <summary>
         /// Primitive method for looking up gem prices

@@ -8,7 +8,7 @@ namespace Pricer.Utility {
     /// <summary>
     /// Used to populate local database
     /// </summary>
-    public class Entry {
+    public sealed class Entry {
         public double value { get; set; }
         public int count { get; set; }
 
@@ -23,7 +23,7 @@ namespace Pricer.Utility {
     /// <summary>
     /// Used to desierialize http://poe.ovh API calls
     /// </summary>
-    public class PoeOvhEntry {
+    public sealed class PoeOvhEntry {
         public double mean { get; set; }
         public double median { get; set; }
         public double mode { get; set; }
@@ -34,7 +34,7 @@ namespace Pricer.Utility {
     /// <summary>
     /// Used to desierialize http://poe.ninja API calls
     /// </summary>
-    public class PoeNinjaEntry {
+    public sealed class PoeNinjaEntry {
         public string name { get; set; }
         public int count { get; set; }
         public string baseType { get; set; }
@@ -54,10 +54,33 @@ namespace Pricer.Utility {
     /// <summary>
     /// Used to desierialize http://poeprices.com API calls
     /// </summary>
-    public class PoePricesReply {
+    public sealed class PoePricesReply {
         public string currency { get; set; }
         public string error { get; set; }
         public double min { get; set; }
         public double max { get; set; }
+    }
+
+    /// <summary>
+    /// Deserializer for https://www.pathofexile.com/api/trade/data/leagues
+    /// </summary>
+    public sealed class LeagueList {
+        public List<Dictionary<string, string>> result { get; set; }
+    }
+
+    /// <summary>
+    /// Deserializer for Github's latest release API
+    /// </summary>
+    public sealed class ReleaseObject {
+        public sealed class AssetObject {
+            public string name { get; set; }
+            public string size { get; set; }
+            public string browser_download_url { get; set; }
+        }
+
+        public string html_url { get; set; }
+        public string tag_name { get; set; }
+        public string name { get; set; }
+        public List<AssetObject> assets { get; set; }
     }
 }

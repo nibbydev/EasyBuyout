@@ -13,16 +13,14 @@ namespace Pricer {
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window {
-        private EventHandler eventHandler_mouse;
-        private EventHandler eventHandler_clip;
-        private PriceBox priceBox;
-        private static TextBox console;
-        private static SettingsWindow settingsWindow;
+        private readonly WebClient webClient;
+        private readonly PriceBox priceBox;
+        private readonly SettingsWindow settingsWindow;
+        private readonly PriceManager priceManager;
+        private readonly Button runButton;
+        private readonly UpdateWindow updateWindow;
 
-        public static Button runButton;
-        public static PriceManager priceManager;
-        public static WebClient webClient;
-        public static UpdateWindow updateWindow;
+        private static TextBox console;
 
         /// <summary>
         /// Initializes the form and sets event listeners
@@ -30,37 +28,37 @@ namespace Pricer {
         public MainWindow() {
             // Initialize objects
             webClient = new WebClient();
-            priceManager = new PriceManager();
+            priceManager = new PriceManager(webClient);
 
             // Define eventhandlers
-            eventHandler_mouse = new EventHandler(Event_mouse);
-            eventHandler_clip = new EventHandler(Event_clipboard);
-            ClipboardNotification.ClipboardUpdate += eventHandler_clip;
-            MouseHook.MouseAction += eventHandler_mouse;
+            ClipboardNotification.ClipboardUpdate += new EventHandler(Event_clipboard);
+            MouseHook.MouseAction += new EventHandler(Event_mouse);
 
             // Initialize the UI components
             InitializeComponent();
 
             // Set objects that need to be accessed from outside
-            priceBox = new PriceBox();
             console = console_window;
             runButton = Button_Run;
-            settingsWindow = new SettingsWindow();
+            priceBox = new PriceBox();
+            settingsWindow = new SettingsWindow(this);
+            updateWindow = new UpdateWindow(webClient);
 
             // Set window title
             Title = Settings.programTitle + " (" + Settings.programVersion + ")";
             Log(Settings.programTitle + " (" + Settings.programVersion + ")" + " by Siegrest", 0);
 
-            // Get leagues
-            Task.Run(() => settingsWindow.AddLeagues());
-
-            // Check updates
-            updateWindow = new UpdateWindow(webClient);
+            Task.Run(() => {
+                // Get list of active leagues from official API
+                settingsWindow.AddLeagues();
+                // Check for updates now that we finished using the webclient
+                updateWindow.Run();
+            });
         }
 
-        /*
-         * Major event handlers
-         */
+        //-----------------------------------------------------------------------------------------------------------
+        // Major event handlers
+        //-----------------------------------------------------------------------------------------------------------
 
         /// <summary>
         /// Mouse event handler
@@ -69,7 +67,7 @@ namespace Pricer {
         /// <param name="e"></param>
         private void Event_mouse (object sender, EventArgs e) {
             // Do not run if user has not pressed run button
-            if (!Settings.flag_run || !Settings.flag_runRightClick) return;
+            if (!Settings.flag_run || !Settings.flag_runOnRightClick) return;
             // Only run if "Path of Exile" is the main focused window
             if (WindowDiscovery.GetActiveWindowTitle() != Settings.activeWindowTitle) return;
 
@@ -82,7 +80,7 @@ namespace Pricer {
         /// </summary>
         private void Event_clipboard (object sender, EventArgs e) {
             // Do not run if user has not pressed run button
-            if (!Settings.flag_run && !Settings.flag_runRightClick) return;
+            if (!Settings.flag_run && !Settings.flag_runOnRightClick) return;
             // Only run if "Path of Exile" is the main focused window
             if (WindowDiscovery.GetActiveWindowTitle() != Settings.activeWindowTitle) return;
             // At this point there should be text in the clipboard
@@ -141,7 +139,7 @@ namespace Pricer {
                     Log("No database entry found. Feeding item to PoePrices...", 0);
 
                     // If pricebox was enabled, display "Searching..." in it until a price is found
-                    if (Settings.flag_priceBox) {
+                    if (Settings.flag_showOverlay) {
                         Dispatcher.Invoke(() => {
                             priceBox.Content = "Searching...";
                             SetPriceBoxPosition();
@@ -154,7 +152,7 @@ namespace Pricer {
             }
 
             // If PoePrices was disabled and no match was found and pricebox was enabled, display error in it
-            if (entry == null && Settings.flag_priceBox) {
+            if (entry == null && Settings.flag_showOverlay) {
                 Dispatcher.Invoke(() => {
                     priceBox.Content = "No match...";
                     SetPriceBoxPosition();
@@ -169,7 +167,7 @@ namespace Pricer {
                 Log("Worth: 0c: " + item.key, 2);
 
                 // If pricebox was enabled, display the value in it
-                if (Settings.flag_priceBox) {
+                if (Settings.flag_showOverlay) {
                     Dispatcher.Invoke(() => {
                         priceBox.Content = "Value: 0c";
                         SetPriceBoxPosition();
@@ -208,7 +206,7 @@ namespace Pricer {
                 Log(errorMessage, 2);
 
                 // If pricebox was enabled, display error in it
-                if (Settings.flag_priceBox) {
+                if (Settings.flag_showOverlay) {
                     Dispatcher.Invoke(() => {
                         priceBox.Content = errorMessage;
                         SetPriceBoxPosition();
@@ -237,7 +235,7 @@ namespace Pricer {
             else
                 Log("[" + Settings.source + "] " + item.key + ": " + oldPrice + "c -> " + newPrice + "c", 0);
 
-            if (Settings.flag_priceBox) {
+            if (Settings.flag_showOverlay) {
                 Dispatcher.Invoke(() => {
                     priceBox.Content = "Value: " + newPrice + "c";
                     SetPriceBoxPosition();
@@ -274,9 +272,9 @@ namespace Pricer {
             if (Settings.flag_sendEnter) System.Windows.Forms.SendKeys.SendWait("{ENTER}");
         }
 
-        /*
-         * WPF event handlers
-         */
+        //-----------------------------------------------------------------------------------------------------------
+        // WPF event handlers
+        //-----------------------------------------------------------------------------------------------------------
 
         /// <summary>
         /// Unhooks hooks on program exit
@@ -284,8 +282,6 @@ namespace Pricer {
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
-            ClipboardNotification.ClipboardUpdate -= eventHandler_clip;
-            MouseHook.MouseAction -= eventHandler_mouse;
             MouseHook.Stop();
 
             // Close app
@@ -317,9 +313,9 @@ namespace Pricer {
             settingsWindow.ShowDialog();
         }
 
-        /*
-         * Generic methods
-         */
+        //-----------------------------------------------------------------------------------------------------------
+        // Generic methods
+        //-----------------------------------------------------------------------------------------------------------
 
         /// <summary>
         /// Prints text to window in console-like fashion, prefixes a timestamp
@@ -359,6 +355,18 @@ namespace Pricer {
         private void SetPriceBoxPosition() {
             priceBox.Left = System.Windows.Forms.Cursor.Position.X - priceBox.Width / 2;
             priceBox.Top = System.Windows.Forms.Cursor.Position.Y - priceBox.Height / 2;
+        }
+
+        //-----------------------------------------------------------------------------------------------------------
+        // Getters and setters
+        //-----------------------------------------------------------------------------------------------------------
+
+        public PriceManager GetPriceManager() {
+            return priceManager;
+        }
+
+        public WebClient GetWebClient() {
+            return webClient;
         }
     }
 }
