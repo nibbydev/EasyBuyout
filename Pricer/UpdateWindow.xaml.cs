@@ -90,10 +90,7 @@ namespace Pricer {
 
             int oldLen = splitOld.Length;
             int newLen = splitNew.Length;
-
-            int totLen;
-            if (newLen > oldLen) totLen = newLen;
-            else totLen = oldLen;
+            int totLen = newLen > oldLen ? newLen : oldLen;
 
             for (int i = 0; i < totLen; i++) {
                 int resultNew = 0, resultOld = 0;
@@ -102,6 +99,7 @@ namespace Pricer {
                 if (oldLen > i) Int32.TryParse(splitOld[i], out resultOld);
 
                 if (resultNew > resultOld) return true;
+                else if (resultNew < resultOld) return false;
             }
 
             return false;
