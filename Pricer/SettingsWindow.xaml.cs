@@ -199,10 +199,10 @@ namespace Pricer {
         private void CheckBox_ShowOverlay_Click(object sender, RoutedEventArgs e) {
             CheckBox_SendNote.IsChecked = false;
 
-            CheckBox_SendEnter.IsEnabled = !(bool)CheckBox_ShowOverlay.IsChecked;
-            Radio_Buyout.IsEnabled = !(bool)CheckBox_ShowOverlay.IsChecked;
-            Radio_Price.IsEnabled = !(bool)CheckBox_ShowOverlay.IsChecked;
-            TextBox_Delay.IsEnabled = !(bool)CheckBox_ShowOverlay.IsChecked;
+            CheckBox_SendEnter.IsEnabled = false;
+            Radio_Buyout.IsEnabled = false;
+            Radio_Price.IsEnabled = false;
+            TextBox_Delay.IsEnabled = false;
         }
 
         /// <summary>
