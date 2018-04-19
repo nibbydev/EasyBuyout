@@ -489,6 +489,19 @@ namespace Pricer {
                     }
 
                     break;
+
+                case "The Beachhead":
+                    // Find the line from itemdata that contains map tier info (e.g "Map Tier: 15")
+                    foreach (string line in splitRaw) {
+                        foreach (string prop in line.Split('|')) {
+                            if (prop.StartsWith("Map Tier: ")) {
+                                // Return tier info (e.g "15")
+                                return prop.Substring(prop.IndexOf(' ', prop.IndexOf(' ') + 1) + 1);
+                            }
+                        }
+                    }
+                    break;
+
                 default:
                     break;
             }

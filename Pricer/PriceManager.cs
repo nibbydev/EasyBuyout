@@ -305,10 +305,15 @@ namespace Pricer {
                                         }
                                         break;
 
+                                    case "The Beachhead":
+                                        // "T15" -> "|var:15"
+                                        // Could use mapTier field but haven't set up the deserializer for that
+                                        itemKey += "|var:" + ninjaEntry.variant.Substring(1);
+                                        break;
+
                                     default:
                                         break;
                                 }
-
                                 break;
 
                             case "Essence":
@@ -329,7 +334,7 @@ namespace Pricer {
                                 entry.value = ninjaEntry.chaosValue;
 
                                 itemKey = ninjaEntry.name + "|" + ninjaEntry.itemClass + "|l:" + ninjaEntry.gemLevel + "|q:" + ninjaEntry.gemQuality;
-                                itemKey += ninjaEntry.corrupted ? "|c:1" : "|0";
+                                itemKey += ninjaEntry.corrupted ? "|c:1" : "|c:0";
                                 break;
                         }
 
