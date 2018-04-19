@@ -319,6 +319,25 @@ namespace Pricer {
             settingsWindow.ShowDialog();
         }
 
+        /// <summary>
+        /// Prevents main window from resizing whenever anything is written to main textbox
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Window_Loaded(object sender, RoutedEventArgs e) {
+            // Reset the SizeToContent property
+            SizeToContent = SizeToContent.Manual;
+
+            // Position window to screen center manually
+            try {
+                Rect rect = SystemParameters.WorkArea;
+                this.Left = (rect.Width - Width) / 2 + rect.Left;
+                this.Top = (rect.Height - Height) / 2 + rect.Top;
+            } catch (Exception ex) {
+                Console.WriteLine(ex);
+            }
+        }
+
         //-----------------------------------------------------------------------------------------------------------
         // Generic methods
         //-----------------------------------------------------------------------------------------------------------
