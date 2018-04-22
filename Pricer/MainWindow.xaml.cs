@@ -126,7 +126,7 @@ namespace Pricer {
                         Log("Unable to price items with notes", 2);
                         break;
                     case 4:
-                        Log("Poe.ninja does not have any data for that item. Try Poe.ovh instead", 2);
+                        Log("Poe.ninja does not have any data for that item. Try poe-stats.com instead", 2);
                         break;
                 }
                 return;

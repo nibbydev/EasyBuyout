@@ -15,7 +15,7 @@ namespace Pricer {
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void PriceBox1_MouseLeave(object sender, MouseEventArgs e) {
+        private void Window_MouseLeave(object sender, MouseEventArgs e) {
             Hide();
         }
     }

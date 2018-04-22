@@ -28,8 +28,8 @@ namespace Pricer {
                 case "poe.ninja":
                     DownloadPoeNinjaData();
                     break;
-                case "poe.ovh":
-                    DownloadPoeOvhData();
+                case "poe-stats.com":
+                    DownloadPoeStatsData();
                     break;
                 default:
                     return;
@@ -37,46 +37,46 @@ namespace Pricer {
         }
 
         /// <summary>
-        /// Downloads and populates price data from http://poe.ovh
+        /// Downloads and populates price data from http://poe-stats.com
         /// </summary>
-        private void DownloadPoeOvhData() {
+        private void DownloadPoeStatsData() {
             // Clear previous data
             prices.Clear();
 
             try {
                 // Download JSON-encoded string
-                string jsonString = webClient.DownloadString("http://api.poe.ovh/compactPriceAPI?league=" + Settings.league);
+                string jsonString = webClient.DownloadString("http://api.poe-stats.com/compactPriceAPI?league=" + Settings.league);
 
                 // Deserialize
-                List<PoeOvhEntry> tempDict = new JavaScriptSerializer().Deserialize<List<PoeOvhEntry>>(jsonString);
+                List<PoeStatsEntry> tempDict = new JavaScriptSerializer().Deserialize<List<PoeStatsEntry>>(jsonString);
 
                 if (tempDict == null) return;
 
                 // Add all values from temp dict to new dict (for ease of use)
-                foreach (PoeOvhEntry ovhEntry in tempDict) {
+                foreach (PoeStatsEntry statsEntry in tempDict) {
                     // Create Entry instance
                     Entry entry = new Entry();
 
                     // Set Entry value
                     switch (Settings.method.ToLower()) {
                         case "mean":
-                            entry.value = ovhEntry.mean;
+                            entry.value = statsEntry.mean;
                             break;
                         case "median":
-                            entry.value = ovhEntry.median;
+                            entry.value = statsEntry.median;
                             break;
                         case "mode":
-                            entry.value = ovhEntry.mode;
+                            entry.value = statsEntry.mode;
                             break;
                         default:
                             break;
                     }
 
                     // Set misc data
-                    entry.count = ovhEntry.count;
+                    entry.count = statsEntry.count;
 
                     // Key came with category
-                    String key = ovhEntry.key.Substring(ovhEntry.key.IndexOf('|') + 1);
+                    String key = statsEntry.key.Substring(statsEntry.key.IndexOf('|') + 1);
 
                     // Add to database
                     if (prices.ContainsKey(key)) {

@@ -177,7 +177,7 @@ namespace Pricer {
             bool isCorrupted = splitRaw[splitRaw.Length - 1].Contains("Corrupted");
 
             // Different sources have different gem categories
-            if (Settings.source.ToLower() == "poe.ovh") {
+            if (Settings.source.ToLower() == "poe-stats.com") {
                 // Special gems have special needs
                 if (name.Contains("Empower") || name.Contains("Enlighten") || name.Contains("Enhance")) {
                     if (quality < 6) quality = 0;
