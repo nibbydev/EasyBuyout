@@ -43,51 +43,37 @@ namespace Pricer {
             // Clear previous data
             prices.Clear();
 
-            try {
-                // Download JSON-encoded string
-                string jsonString = webClient.DownloadString("http://api.poe-stats.com/compactPriceAPI?league=" + Settings.league);
+            foreach (string category in Settings.poeStatsKeys) {
+                MainWindow.Log("Downloading: " + category, 0);
 
-                // Deserialize
-                List<PoeStatsEntry> tempDict = new JavaScriptSerializer().Deserialize<List<PoeStatsEntry>>(jsonString);
+                try {
+                    // Download JSON-encoded string
+                    string jsonString = webClient.DownloadString("http://api.poe-stats.com/get?league=" +
+                        Settings.league + "&category=" + category);
 
-                if (tempDict == null) return;
+                    // Deserialize
+                    List<PoeStatsEntry> tempDict = Newtonsoft.Json.JsonConvert.DeserializeObject<List<PoeStatsEntry>>(jsonString);
 
-                // Add all values from temp dict to new dict (for ease of use)
-                foreach (PoeStatsEntry statsEntry in tempDict) {
-                    // Create Entry instance
-                    Entry entry = new Entry();
+                    if (tempDict == null) return;
 
-                    // Set Entry value
-                    switch (Settings.method.ToLower()) {
-                        case "mean":
-                            entry.value = statsEntry.mean;
-                            break;
-                        case "median":
-                            entry.value = statsEntry.median;
-                            break;
-                        case "mode":
-                            entry.value = statsEntry.mode;
-                            break;
-                        default:
-                            break;
+                    // Add all values from temp dict to new dict (for ease of use)
+                    foreach (PoeStatsEntry statsEntry in tempDict) {
+                        // Create Entry instance
+                        Entry entry = new Entry() {
+                            value = statsEntry.mean,
+                            count = statsEntry.count
+                        };
+
+                        // Add to database
+                        if (prices.ContainsKey(statsEntry.key)) {
+                            Console.WriteLine("duplicate key: " + statsEntry.key);
+                        } else {
+                            prices.Add(statsEntry.key, entry);
+                        }
                     }
-
-                    // Set misc data
-                    entry.count = statsEntry.count;
-
-                    // Key came with category
-                    String key = statsEntry.key.Substring(statsEntry.key.IndexOf('|') + 1);
-
-                    // Add to database
-                    if (prices.ContainsKey(key)) {
-                        Console.WriteLine("duplicate key: " + key);
-                    } else {
-                        prices.Add(key, entry);
-                    }
+                } catch (Exception ex) {
+                    MainWindow.Log(ex.ToString(), 2);
                 }
-
-            } catch (Exception ex) {
-                MainWindow.Log(ex.ToString(), 2);
             }
         }
 
@@ -98,29 +84,31 @@ namespace Pricer {
             // Clear previous data
             prices.Clear();
 
-            foreach (string key in Settings.poeNinjaKeys) {
+            foreach (string category in Settings.poeNinjaKeys) {
+                MainWindow.Log("Downloading: " + category, 0);
+
                 try {
                     // Download JSON-encoded string
                     string jsonString = webClient.DownloadString("http://poe.ninja/api/Data/Get" + 
-                        key + "Overview?league=" + Settings.league);
+                        category + "Overview?league=" + Settings.league);
 
                     // Deserialize JSON string
                     Dictionary<string, List<PoeNinjaEntry>> tempDict = Newtonsoft.Json.JsonConvert
                         .DeserializeObject<Dictionary<string, List<PoeNinjaEntry>>>(jsonString);
 
-                    if (tempDict == null) throw new Exception("Received no JSON for: " + key);
+                    if (tempDict == null) throw new Exception("Received no JSON for: " + category);
 
                     List<PoeNinjaEntry> entryList;
                     tempDict.TryGetValue("lines", out entryList);
 
-                    if (entryList == null) throw new Exception("Got invalid JSON format for:" + key);
+                    if (entryList == null) throw new Exception("Got invalid JSON format for:" + category);
 
                     foreach (PoeNinjaEntry ninjaEntry in entryList) {
                         // Quick and dirty workarounds
                         Entry entry = new Entry { count = ninjaEntry.count };
                         string itemKey = "";
 
-                        switch(key) {
+                        switch(category) {
                             case "Currency":
                                 entry.value = ninjaEntry.chaosEquivalent;
                                 itemKey = ninjaEntry.currencyTypeName + "|5";

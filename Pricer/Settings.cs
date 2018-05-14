@@ -9,7 +9,7 @@ namespace Pricer {
         public static readonly string[] sourceList = { "Poe-stats.com", "Poe.ninja" };
         public static readonly string[] priceMethods = { "Mean", "Median", "Mode" };
         public const string programTitle = "Item pricer";
-        public const string programVersion = "v1.0.11";
+        public const string programVersion = "v1.0.13";
         public const string activeWindowTitle = "Path of Exile";
         public const string programReleaseAPI = "https://api.github.com/repos/siegrest/Pricer/releases";
 
@@ -32,6 +32,12 @@ namespace Pricer {
 
         public static readonly string[] poeNinjaKeys = {
             "Currency", "UniqueArmour", "Fragment", "Essence", "DivinationCards", "Prophecy", "UniqueMap",
-            "Map", "UniqueJewel", "UniqueFlask", "UniqueWeapon", "UniqueAccessory", "SkillGem" };
+            "Map", "UniqueJewel", "UniqueFlask", "UniqueWeapon", "UniqueAccessory", "SkillGem"
+        };
+
+        public static readonly string[] poeStatsKeys = {
+            "gems", "maps", "prophecy", "currency", "weapons", "armour", "accessories",
+            "jewels", "cards", "flasks", "essence", "enchantments"
+        };
     }
 }
