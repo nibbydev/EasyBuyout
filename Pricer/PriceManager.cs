@@ -101,7 +101,6 @@ namespace Pricer {
 
             foreach (string category in Settings.poeNinjaKeys) {
                 MainWindow.Log("Downloading: " + category, 0);
-                IncProgressBar();
 
                 try {
                     // Download JSON-encoded string
