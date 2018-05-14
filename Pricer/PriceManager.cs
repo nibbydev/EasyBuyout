@@ -105,8 +105,8 @@ namespace Pricer {
                         key + "Overview?league=" + Settings.league);
 
                     // Deserialize JSON string
-                    Dictionary<string, List<PoeNinjaEntry>> tempDict = new JavaScriptSerializer()
-                        .Deserialize<Dictionary<string, List<PoeNinjaEntry>>>(jsonString);
+                    Dictionary<string, List<PoeNinjaEntry>> tempDict = Newtonsoft.Json.JsonConvert
+                        .DeserializeObject<Dictionary<string, List<PoeNinjaEntry>>>(jsonString);
 
                     if (tempDict == null) throw new Exception("Received no JSON for: " + key);
 
