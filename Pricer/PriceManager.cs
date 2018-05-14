@@ -3,18 +3,20 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Web.Script.Serialization;
-using System.Windows;
 
 namespace Pricer {
     /// <summary>
     /// PriceManager handles downlading, managing and translating price data from various websites
     /// </summary>
     public class PriceManager {
-        private System.Windows.Controls.ProgressBar progressBar;
+        private readonly JavaScriptSerializer javaScriptSerializer = new JavaScriptSerializer();
         private readonly WebClient webClient;
+
         private Dictionary<string, Entry> prices = new Dictionary<string, Entry>();
+        private System.Windows.Controls.ProgressBar progressBar;
 
         public PriceManager (WebClient webClient) {
+            javaScriptSerializer.MaxJsonLength = Int32.MaxValue;
             this.webClient = webClient;
         }
 
@@ -31,7 +33,11 @@ namespace Pricer {
                     DownloadPoeNinjaData();
                     break;
                 case "poe-stats.com":
-                    DownloadPoeStatsData();
+                    try {
+                        DownloadPoeStatsData();
+                    } catch (Exception ex) {
+                        Console.WriteLine(ex);
+                    }
                     break;
                 default:
                     return;
@@ -56,7 +62,7 @@ namespace Pricer {
                         Settings.league + "&category=" + category);
 
                     // Deserialize
-                    List<PoeStatsEntry> tempDict = Newtonsoft.Json.JsonConvert.DeserializeObject<List<PoeStatsEntry>>(jsonString);
+                    List<PoeStatsEntry> tempDict = javaScriptSerializer.Deserialize<List<PoeStatsEntry>>(jsonString);
 
                     if (tempDict == null) return;
 
@@ -76,6 +82,7 @@ namespace Pricer {
                         }
                     }
                 } catch (Exception ex) {
+                    Console.WriteLine(ex);
                     MainWindow.Log(ex.ToString(), 2);
                 } finally {
                     IncProgressBar();
@@ -102,8 +109,7 @@ namespace Pricer {
                         category + "Overview?league=" + Settings.league);
 
                     // Deserialize JSON string
-                    Dictionary<string, List<PoeNinjaEntry>> tempDict = Newtonsoft.Json.JsonConvert
-                        .DeserializeObject<Dictionary<string, List<PoeNinjaEntry>>>(jsonString);
+                    Dictionary<string, List<PoeNinjaEntry>> tempDict = javaScriptSerializer.Deserialize<Dictionary<string, List<PoeNinjaEntry>>>(jsonString);
 
                     if (tempDict == null) throw new Exception("Received no JSON for: " + category);
 
@@ -430,14 +436,14 @@ namespace Pricer {
         }
 
         private void ConfigureProgressBar(string[] keys) {
-            Application.Current.Dispatcher.Invoke(() => {
+            System.Windows.Application.Current.Dispatcher.Invoke(() => {
                 progressBar.Maximum = keys.Length;
                 progressBar.Value = 0;
             });
         }
 
         private void IncProgressBar() {
-            Application.Current.Dispatcher.Invoke(() => ++progressBar.Value);
+            System.Windows.Application.Current.Dispatcher.Invoke(() => ++progressBar.Value);
         }
     }
 }
