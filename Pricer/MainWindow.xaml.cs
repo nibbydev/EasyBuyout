@@ -27,7 +27,7 @@ namespace Pricer {
         /// </summary>
         public MainWindow() {
             // Initialize objects
-            webClient = new WebClient();
+            webClient = new WebClient() { Encoding = System.Text.Encoding.UTF8 };
             priceManager = new PriceManager(webClient);
 
             // Define eventhandlers
