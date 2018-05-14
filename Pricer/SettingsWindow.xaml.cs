@@ -16,12 +16,9 @@ namespace Pricer {
 
             InitializeComponent();
 
-            foreach (string method in Settings.priceMethods) ComboBox_Method.Items.Add(method);
             foreach (string source in Settings.sourceList) ComboBox_Source.Items.Add(source);
-            ComboBox_Method.SelectedIndex = 0;
             ComboBox_Source.SelectedIndex = 0;
             Settings.source = Settings.sourceList[0];
-            Settings.method = Settings.priceMethods[0];
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -60,7 +57,6 @@ namespace Pricer {
         private void ResetOptions() {
             // Reset dropdown boxes
             ComboBox_League.SelectedValue = Settings.league;
-            ComboBox_Method.SelectedValue = Settings.method;
             ComboBox_Source.SelectedValue = Settings.source;
 
             // Reset text fields
@@ -84,11 +80,6 @@ namespace Pricer {
             Radio_Buyout.IsEnabled = Settings.flag_sendNote;
             Radio_Price.IsEnabled = Settings.flag_sendNote;
             TextBox_Delay.IsEnabled = Settings.flag_sendNote;
-
-            // Reset method selection
-            bool tempCheck2 = ComboBox_Source.SelectedValue.ToString().ToLower() == "poe.ninja";
-            ComboBox_Method.IsEnabled = !tempCheck2;
-            ComboBox_Method.SelectedIndex = tempCheck2 ? -1 : 0;
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -157,13 +148,6 @@ namespace Pricer {
         /// </summary>
         private void ComboBox_Source_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (ComboBox_League.SelectedItem != null) Button_Download.IsEnabled = true;
-            if (ComboBox_Source.SelectedValue.ToString().ToLower() == "poe.ninja") {
-                ComboBox_Method.IsEnabled = false;
-                ComboBox_Method.SelectedIndex = -1;
-            } else {
-                ComboBox_Method.IsEnabled = true;
-                ComboBox_Method.SelectedIndex = 0;
-            }
         }
 
         /// <summary>
@@ -171,13 +155,11 @@ namespace Pricer {
         /// </summary>
         private void Button_Download_Click(object sender, RoutedEventArgs e) {
             Settings.source = (string)ComboBox_Source.SelectedValue;
-            Settings.method = (string)ComboBox_Method.SelectedValue;
             Settings.league = (string)ComboBox_League.SelectedValue;
 
             Button_Download.IsEnabled = false;
 
-            MainWindow.Log("Downloading " + Settings.method + " price data for " + 
-                Settings.league +  " from " + Settings.source, 0);
+            MainWindow.Log("Downloading data for " + Settings.league +  " from " + Settings.source, 0);
 
             Task.Run(() => {
                 // Download and format price data
@@ -223,13 +205,6 @@ namespace Pricer {
         private void Button_Cancel_Click(object sender, RoutedEventArgs e) {
             ResetOptions();
             Hide();
-        }
-
-        /// <summary>
-        /// Re-enables download button when user switches price methods
-        /// </summary>
-        private void ComboBox_Method_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            if (ComboBox_Method.SelectedItem != null) Button_Download.IsEnabled = true;
         }
     }
 }

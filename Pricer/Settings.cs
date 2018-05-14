@@ -7,9 +7,8 @@ using System.Threading.Tasks;
 namespace Pricer {
     public static class Settings {
         public static readonly string[] sourceList = { "Poe-stats.com", "Poe.ninja" };
-        public static readonly string[] priceMethods = { "Mean", "Median", "Mode" };
         public const string programTitle = "Item pricer";
-        public const string programVersion = "v1.0.13";
+        public const string programVersion = "v1.0.13.2";
         public const string activeWindowTitle = "Path of Exile";
         public const string programReleaseAPI = "https://api.github.com/repos/siegrest/Pricer/releases";
 
@@ -28,7 +27,6 @@ namespace Pricer {
         public static int lowerPricePercentage; // ?? needed ??
         public static string league;
         public static string source;
-        public static string method;
 
         public static readonly string[] poeNinjaKeys = {
             "Currency", "UniqueArmour", "Fragment", "Essence", "DivinationCards", "Prophecy", "UniqueMap",

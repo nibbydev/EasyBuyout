@@ -3,12 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Web.Script.Serialization;
+using System.Windows;
 
 namespace Pricer {
     /// <summary>
     /// PriceManager handles downlading, managing and translating price data from various websites
     /// </summary>
     public class PriceManager {
+        private System.Windows.Controls.ProgressBar progressBar;
         private readonly WebClient webClient;
         private Dictionary<string, Entry> prices = new Dictionary<string, Entry>();
 
@@ -43,6 +45,8 @@ namespace Pricer {
             // Clear previous data
             prices.Clear();
 
+            ConfigureProgressBar(Settings.poeStatsKeys);
+
             foreach (string category in Settings.poeStatsKeys) {
                 MainWindow.Log("Downloading: " + category, 0);
 
@@ -73,6 +77,8 @@ namespace Pricer {
                     }
                 } catch (Exception ex) {
                     MainWindow.Log(ex.ToString(), 2);
+                } finally {
+                    IncProgressBar();
                 }
             }
         }
@@ -84,8 +90,11 @@ namespace Pricer {
             // Clear previous data
             prices.Clear();
 
+            ConfigureProgressBar(Settings.poeNinjaKeys);
+
             foreach (string category in Settings.poeNinjaKeys) {
                 MainWindow.Log("Downloading: " + category, 0);
+                IncProgressBar();
 
                 try {
                     // Download JSON-encoded string
@@ -335,6 +344,8 @@ namespace Pricer {
                     }
                 } catch (Exception ex) {
                     MainWindow.Log(ex.ToString(), 2);
+                } finally {
+                    IncProgressBar();
                 }
             }
         }
@@ -405,6 +416,25 @@ namespace Pricer {
         public string MakeNote(double price) {
             // Replace "," with "." due to game limitations
             return Settings.prefix + " " + price.ToString().Replace(',', '.') + " chaos";
+        }
+
+        //-----------------------------------------------------------------------------------------------------------
+        // Progressbar-related shenanigans
+        //-----------------------------------------------------------------------------------------------------------
+
+        public void SetProgressBar(System.Windows.Controls.ProgressBar progressBar) {
+            this.progressBar = progressBar;
+        }
+
+        private void ConfigureProgressBar(string[] keys) {
+            Application.Current.Dispatcher.Invoke(() => {
+                progressBar.Maximum = keys.Length;
+                progressBar.Value = 0;
+            });
+        }
+
+        private void IncProgressBar() {
+            Application.Current.Dispatcher.Invoke(() => ++progressBar.Value);
         }
     }
 }

@@ -44,6 +44,8 @@ namespace Pricer {
             settingsWindow = new SettingsWindow(this);
             updateWindow = new UpdateWindow(webClient);
 
+            priceManager.SetProgressBar(settingsWindow.ProgressBar_Progress);
+
             // Set window title
             Title = Settings.programTitle + " (" + Settings.programVersion + ")";
             Log(Settings.programTitle + " (" + Settings.programVersion + ")" + " by Siegrest", 0);
