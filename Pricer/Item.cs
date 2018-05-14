@@ -202,7 +202,7 @@ namespace Pricer {
                     else if (level == 21 && quality < 20) quality = 0;      // |4|21|10|1
 
                     if (level < 20 && quality < 20) isCorrupted = false;
-                    if (key.Contains("Vaal")) isCorrupted = true;
+                    if (name.Contains("Vaal")) isCorrupted = true;
                 }
             } else if (Settings.source.ToLower() == "poe.ninja") {
                 // Special gems have special needs
