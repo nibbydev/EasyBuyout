@@ -10,13 +10,13 @@ namespace Pricer.Utility {
     /// </summary>
     public sealed class Entry {
         public double value { get; set; }
-        public int count { get; set; }
+        public int quantity { get; set; }
 
         public Entry() { }
 
         public Entry(Entry input) {
             value = input.value;
-            count = input.count;
+            quantity = input.quantity;
         }
     }
 
@@ -27,7 +27,7 @@ namespace Pricer.Utility {
         public double mean { get; set; }
         public double median { get; set; }
         public double mode { get; set; }
-        public int count { get; set; }
+        public int quantity { get; set; }
         public string key { get; set; }
     }
 

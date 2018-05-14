@@ -224,9 +224,9 @@ namespace Pricer {
             }
 
             // Send a warning message when count is less than 10 as these items probably have inaccurate prices
-            if (entry.count < 10) {
+            if (entry.quantity < 5) {
                 System.Media.SystemSounds.Asterisk.Play();
-                Log("Likely incorrect price (count: " + entry.count + ")", 1);
+                Log("Likely incorrect price (quantity: " + entry.quantity + ")", 1);
             }
 
             // Calculate prices

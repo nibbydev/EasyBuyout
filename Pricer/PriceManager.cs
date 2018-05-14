@@ -65,7 +65,7 @@ namespace Pricer {
                         // Create Entry instance
                         Entry entry = new Entry() {
                             value = statsEntry.mean,
-                            count = statsEntry.count
+                            quantity = statsEntry.quantity
                         };
 
                         // Add to database
@@ -114,7 +114,7 @@ namespace Pricer {
 
                     foreach (PoeNinjaEntry ninjaEntry in entryList) {
                         // Quick and dirty workarounds
-                        Entry entry = new Entry { count = ninjaEntry.count };
+                        Entry entry = new Entry { quantity = ninjaEntry.count };
                         string itemKey = "";
 
                         switch(category) {
@@ -356,7 +356,10 @@ namespace Pricer {
         /// <param name="rawItemData">Ctrl+C'd raw item data</param>
         /// <returns>Suggested price as double, 0 if unsuccessful</returns>
         public Entry SearchPoePrices(string rawItemData) {
-            Entry returnEntry = new Entry() { count = 20 };
+            Entry returnEntry = new Entry() {
+                // Hacky solution as there is no quantity for PoePrices so that quantity checks wouldn't warn about it
+                quantity = 20
+            };
 
             try {
                 // Make request to http://poeprices.info
