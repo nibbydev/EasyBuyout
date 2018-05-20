@@ -9,15 +9,19 @@ namespace Pricer {
     /// PriceManager handles downlading, managing and translating price data from various websites
     /// </summary>
     public class PriceManager {
-        private readonly JavaScriptSerializer javaScriptSerializer = new JavaScriptSerializer();
-        private readonly WebClient webClient;
-
-        private Dictionary<string, Entry> prices = new Dictionary<string, Entry>();
         private System.Windows.Controls.ProgressBar progressBar;
+        private readonly JavaScriptSerializer javaScriptSerializer;
+        private readonly WebClient webClient;
+        private readonly Prices prices;
 
         public PriceManager (WebClient webClient) {
-            javaScriptSerializer.MaxJsonLength = Int32.MaxValue;
             this.webClient = webClient;
+
+            javaScriptSerializer = new JavaScriptSerializer {
+                MaxJsonLength = Int32.MaxValue
+            };
+
+            prices = new Prices();
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -33,11 +37,7 @@ namespace Pricer {
                     DownloadPoeNinjaData();
                     break;
                 case "poe-stats.com":
-                    try {
-                        DownloadPoeStatsData();
-                    } catch (Exception ex) {
-                        Console.WriteLine(ex);
-                    }
+                    DownloadPoeStatsData();
                     break;
                 default:
                     return;
@@ -45,44 +45,41 @@ namespace Pricer {
         }
 
         /// <summary>
-        /// Downloads and populates price data from http://poe-stats.com
+        /// Download data from http://poe-stats.com and populate price dict
         /// </summary>
         private void DownloadPoeStatsData() {
-            // Clear previous data
+            ConfigureProgressBar(Settings.poeStatsKeys);
             prices.Clear();
 
-            ConfigureProgressBar(Settings.poeStatsKeys);
-
             foreach (string category in Settings.poeStatsKeys) {
-                MainWindow.Log("Downloading: " + category, 0);
+                MainWindow.Log("[PS] Downloading: " + category + " for " + Settings.league, 0);
 
                 try {
-                    // Download JSON-encoded string
-                    string jsonString = webClient.DownloadString("http://api.poe-stats.com/get?league=" +
-                        Settings.league + "&category=" + category);
+                    string url = "http://api.poe-stats.com/get?league=" + Settings.league + "&category=" + category;
+                    string jsonString = webClient.DownloadString(url);
 
                     // Deserialize
-                    List<PoeStatsEntry> tempDict = javaScriptSerializer.Deserialize<List<PoeStatsEntry>>(jsonString);
+                    PoeStatsEntryList poeStatsEntryList = javaScriptSerializer.Deserialize<PoeStatsEntryList>(jsonString);
 
-                    if (tempDict == null) return;
+                    if (poeStatsEntryList == null) {
+                        MainWindow.Log("[PS][" + Settings.league + "] Reply was null: " + category, 0);
+                        return;
+                    }
 
-                    // Add all values from temp dict to new dict (for ease of use)
-                    foreach (PoeStatsEntry statsEntry in tempDict) {
-                        // Create Entry instance
+                    // Add all entries from temp list to prices dict
+                    foreach (PoeStatsEntry statsEntry in poeStatsEntryList) {
                         Entry entry = new Entry() {
                             value = statsEntry.mean,
                             quantity = statsEntry.quantity
                         };
 
-                        // Add to database
                         if (prices.ContainsKey(statsEntry.key)) {
-                            Console.WriteLine("duplicate key: " + statsEntry.key);
+                            MainWindow.Log("[PS][" + Settings.league + "] Duplicate key: " + statsEntry.key, 1);
                         } else {
                             prices.Add(statsEntry.key, entry);
                         }
                     }
                 } catch (Exception ex) {
-                    Console.WriteLine(ex);
                     MainWindow.Log(ex.ToString(), 2);
                 } finally {
                     IncProgressBar();
@@ -91,262 +88,48 @@ namespace Pricer {
         }
 
         /// <summary>
-        /// Downloads and populates price data from http://poe.ninja
+        /// Download data from http://poe.ninja and populate price dict
         /// </summary>
         private void DownloadPoeNinjaData() {
-            // Clear previous data
+            ConfigureProgressBar(Settings.poeNinjaKeys);
             prices.Clear();
 
-            ConfigureProgressBar(Settings.poeNinjaKeys);
-
             foreach (string category in Settings.poeNinjaKeys) {
-                MainWindow.Log("Downloading: " + category, 0);
-                IncProgressBar();
+                MainWindow.Log("[PN] Downloading: " + category + " for " + Settings.league, 0);
 
                 try {
-                    // Download JSON-encoded string
-                    string jsonString = webClient.DownloadString("http://poe.ninja/api/Data/Get" + 
-                        category + "Overview?league=" + Settings.league);
+                    string url = "http://poe.ninja/api/Data/Get" + category + "Overview?league=" + Settings.league;
+                    string jsonString = webClient.DownloadString(url);
 
-                    // Deserialize JSON string
-                    Dictionary<string, List<PoeNinjaEntry>> tempDict = javaScriptSerializer.Deserialize<Dictionary<string, List<PoeNinjaEntry>>>(jsonString);
+                    // Deserialize
+                    PoeNinjasEntryDict poeNinjaEntryDict = javaScriptSerializer.Deserialize<PoeNinjasEntryDict> (jsonString);
 
-                    if (tempDict == null) throw new Exception("Received no JSON for: " + category);
+                    if (poeNinjaEntryDict == null) {
+                        MainWindow.Log("[PN][" + Settings.league + "] Reply was null: " + category, 0);
+                        return;
+                    } else if (poeNinjaEntryDict.lines == null) {
+                        MainWindow.Log("[PN][" + Settings.league + "] Got invalid JSON format for:" + category, 0);
+                        return;
+                    }
 
-                    List<PoeNinjaEntry> entryList;
-                    tempDict.TryGetValue("lines", out entryList);
+                    // Add all entries from temp list to prices dict
+                    foreach (PoeNinjaEntry ninjaEntry in poeNinjaEntryDict.lines) {
+                        Entry entry = new Entry {
+                            quantity = ninjaEntry.count
+                        };
 
-                    if (entryList == null) throw new Exception("Got invalid JSON format for:" + category);
+                        string key = FormatPoeNinjaItemKey(category, ninjaEntry, entry);
 
-                    foreach (PoeNinjaEntry ninjaEntry in entryList) {
-                        // Quick and dirty workarounds
-                        Entry entry = new Entry { quantity = ninjaEntry.count };
-                        string itemKey = "";
-
-                        switch(category) {
-                            case "Currency":
-                                entry.value = ninjaEntry.chaosEquivalent;
-                                itemKey = ninjaEntry.currencyTypeName + "|5";
-                                break;
-
-                            case "Fragment":
-                                entry.value = ninjaEntry.chaosEquivalent;
-                                itemKey = ninjaEntry.currencyTypeName + "|0";
-                                break;
-
-                            case "UniqueArmour":
-                            case "UniqueWeapon":
-                                entry.value = ninjaEntry.chaosValue;
-
-                                switch (ninjaEntry.links) {
-                                    case 6:
-                                        itemKey = ninjaEntry.name + ":" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass + "|links:6";
-                                        break;
-                                    case 5:
-                                        itemKey = ninjaEntry.name + ":" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass + "|links:5";
-                                        break;
-                                    default:
-                                        itemKey = ninjaEntry.name + ":" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass;
-                                        break;
-                                }
-
-                                switch (ninjaEntry.name) {
-                                    case "Atziri's Splendour":
-                                        switch(ninjaEntry.variant) {
-                                            case "Armour/ES":
-                                                itemKey += "|var:ar/es";
-                                                break;
-                                            case "ES":
-                                                itemKey += "|var:es";
-                                                break;
-                                            case "Armour/Evasion":
-                                                itemKey += "|var:ar/ev";
-                                                break;
-                                            case "Armour/ES/Life":
-                                                itemKey += "|var:ar/es/li";
-                                                break;
-                                            case "Evasion/ES":
-                                                itemKey += "|var:ev/es";
-                                                break;
-                                            case "Armour/Evasion/ES":
-                                                itemKey += "|var:ar/ev/es";
-                                                break;
-                                            case "Evasion":
-                                                itemKey += "|var:ev";
-                                                break;
-                                            case "Evasion/ES/Life":
-                                                itemKey += "|var:ev/es/li";
-                                                break;
-                                            case "Armour":
-                                                itemKey += "|var:ar";
-                                                break;
-                                            default:
-                                                break;
-                                        }
-                                        break;
-
-                                    case "Yriel's Fostering":
-                                        switch (ninjaEntry.variant) {
-                                            case "Bleeding":
-                                                itemKey += "|var:ursa";
-                                                break;
-                                            case "Poison":
-                                                itemKey += "|var:snake";
-                                                break;
-                                            case "Maim":
-                                                itemKey += "|var:rhoa";
-                                                break;
-                                            default:
-                                                break;
-                                        }
-                                        break;
-
-                                    case "Volkuur's Guidance":
-                                        switch (ninjaEntry.variant) {
-                                            case "Lightning":
-                                                itemKey += "|var:lightning";
-                                                break;
-                                            case "Fire":
-                                                itemKey += "|var:fire";
-                                                break;
-                                            case "Cold":
-                                                itemKey += "|var:cold";
-                                                break;
-                                            default:
-                                                break;
-                                        }
-                                        break;
-
-                                    case "Lightpoacher":
-                                    case "Shroud of the Lightless":
-                                    case "Bubonic Trail":
-                                    case "Tombfist":
-                                        switch (ninjaEntry.variant) {
-                                            case "2 Jewels":
-                                                itemKey += "|var:2 sockets";
-                                                break;
-                                            case "1 Jewel":
-                                                itemKey += "|var:1 socket";
-                                                break;
-                                            default:
-                                                break;
-                                        }
-                                        break;
-
-                                    default:
-                                        break;
-                                }
-
-                                break;
-
-                            case "UniqueMap":
-                            case "UniqueJewel":
-                            case "UniqueFlask":
-                            case "UniqueAccessory":
-                                entry.value = ninjaEntry.chaosValue;
-                                itemKey = ninjaEntry.name + ":" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass;
-
-                                switch (ninjaEntry.name) {
-                                    case "Vessel of Vinktar":
-                                        switch (ninjaEntry.variant) {
-                                            case "Added Attacks":
-                                                itemKey += "|var:attacks";
-                                                break;
-                                            case "Added Spells":
-                                                itemKey += "|var:spells";
-                                                break;
-                                            case "Penetration":
-                                                itemKey += "|var:penetration";
-                                                break;
-                                            case "Conversion":
-                                                itemKey += "|var:conversion";
-                                                break;
-                                            default:
-                                                break;
-                                        }
-                                        break;
-
-                                    case "Doryani's Invitation":
-                                        switch (ninjaEntry.variant) {
-                                            case null: // Bug on poe.ninja's end
-                                            case "Physical":
-                                                itemKey += "|var:physical";
-                                                break;
-                                            case "Fire":
-                                                itemKey += "|var:fire";
-                                                break;
-                                            case "Cold":
-                                                itemKey += "|var:cold";
-                                                break;
-                                            case "Lightning":
-                                                itemKey += "|var:lightning";
-                                                break;
-                                            default:
-                                                break;
-                                        }
-                                        break;
-
-                                    case "Impresence":
-                                        switch (ninjaEntry.variant) {
-                                            case "Chaos":
-                                                itemKey += "|var:chaos";
-                                                break;
-                                            case "Physical":
-                                                itemKey += "|var:physical";
-                                                break;
-                                            case "Fire":
-                                                itemKey += "|var:fire";
-                                                break;
-                                            case "Cold":
-                                                itemKey += "|var:cold";
-                                                break;
-                                            case "Lightning":
-                                                itemKey += "|var:lightning";
-                                                break;
-                                            default:
-                                                break;
-                                        }
-                                        break;
-
-                                    case "The Beachhead":
-                                        // "T15" -> "|var:15"
-                                        // Could use mapTier field but haven't set up the deserializer for that
-                                        itemKey += "|var:" + ninjaEntry.variant.Substring(1);
-                                        break;
-
-                                    default:
-                                        break;
-                                }
-                                break;
-
-                            case "Essence":
-                            case "DivinationCards":
-                            case "Prophecy":
-                                entry.value = ninjaEntry.chaosValue;
-
-                                itemKey = ninjaEntry.name + "|" + ninjaEntry.itemClass;
-                                break;
-
-                            case "Map":
-                                entry.value = ninjaEntry.chaosValue;
-
-                                itemKey = ninjaEntry.name + "|0";
-                                break;
-
-                            case "SkillGem":
-                                entry.value = ninjaEntry.chaosValue;
-
-                                itemKey = ninjaEntry.name + "|" + ninjaEntry.itemClass + "|l:" + ninjaEntry.gemLevel + "|q:" + ninjaEntry.gemQuality;
-                                itemKey += ninjaEntry.corrupted ? "|c:1" : "|c:0";
-                                break;
+                        if (key == null) {
+                            MainWindow.Log("[PN][" + Settings.league + "] Couldn't generate key for:" + ninjaEntry.name, 1);
+                            return;
                         }
 
-                        if (prices.ContainsKey(itemKey)) {
-                            Console.WriteLine("duplicate key: " + itemKey);
+                        if (prices.ContainsKey(key)) {
+                            MainWindow.Log("[PN][" + Settings.league + "] Duplicate key: " + key, 1);
                         } else {
-                            prices.Add(itemKey, entry);
+                            prices.Add(key, entry);
                         }
-
                     }
                 } catch (Exception ex) {
                     MainWindow.Log(ex.ToString(), 2);
@@ -354,6 +137,165 @@ namespace Pricer {
                     IncProgressBar();
                 }
             }
+        }
+
+        /// <summary>
+        /// Forms a unique dictionary key for each item based on the data from http://poe.ninja's API
+        /// </summary>
+        /// <param name="category">PoeNinja's category key</param>
+        /// <param name="ninjaEntry">Serialized PoeNinja item object</param>
+        /// <param name="entry">Output entry to be added to price dict</param>
+        /// <returns>Unique database key or null on error</returns>
+        private string FormatPoeNinjaItemKey(string category, PoeNinjaEntry ninjaEntry, Entry entry) {
+            string key, variant;
+
+            switch (category) {
+                case "Currency":
+                    entry.value = ninjaEntry.chaosEquivalent;
+                    return ninjaEntry.currencyTypeName + "|5";
+
+                case "Fragment":
+                    entry.value = ninjaEntry.chaosEquivalent;
+                    return ninjaEntry.currencyTypeName + "|0";
+
+                case "UniqueArmour":
+                case "UniqueWeapon":
+                    entry.value = ninjaEntry.chaosValue;
+
+                    key = ninjaEntry.name + ":" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass;
+                    if (ninjaEntry.links >= 5) key += "|links:" + ninjaEntry.links;
+
+                    variant = FormatPoeNinjaItemVariant(ninjaEntry);
+                    if (variant != null) key += variant;
+
+                    return key;
+
+                case "UniqueMap":
+                case "UniqueJewel":
+                case "UniqueFlask":
+                case "UniqueAccessory":
+                    entry.value = ninjaEntry.chaosValue;
+                    key = ninjaEntry.name + ":" + ninjaEntry.baseType + "|" + ninjaEntry.itemClass;
+
+                    variant = FormatPoeNinjaItemVariant(ninjaEntry);
+                    if (variant != null) key += variant;
+
+                    return key;
+
+                case "Essence":
+                case "DivinationCards":
+                case "Prophecy":
+                    entry.value = ninjaEntry.chaosValue;
+                    return ninjaEntry.name + "|" + ninjaEntry.itemClass;
+
+                case "Map":
+                    entry.value = ninjaEntry.chaosValue;
+                    return ninjaEntry.name + "|0";
+
+                case "SkillGem":
+                    entry.value = ninjaEntry.chaosValue;
+                    return ninjaEntry.name + 
+                        "|" + ninjaEntry.itemClass + 
+                        "|l:" + ninjaEntry.gemLevel + 
+                        "|q:" + ninjaEntry.gemQuality + 
+                        (ninjaEntry.corrupted ? "|c:1" : "|c:0");
+            }
+
+            // Wasn't able to find a key, return null
+            return null;
+        }
+
+        /// <summary>
+        /// Converts PoeNinja's odd variants to a standard variant format
+        /// </summary>
+        /// <param name="ninjaEntry">Serialized PoeNinja item object</param>
+        /// <returns>Standardized variant key or null on error</returns>
+        private string FormatPoeNinjaItemVariant(PoeNinjaEntry ninjaEntry) {
+            switch (ninjaEntry.name) {
+                case "Atziri's Splendour":
+
+                    switch (ninjaEntry.variant) {
+                        case "Armour/ES":           return "|var:ar/es";
+                        case "ES":                  return "|var:es";
+                        case "Armour/Evasion":      return "|var:ar/ev";
+                        case "Armour/ES/Life":      return "|var:ar/es/li";
+                        case "Evasion/ES":          return "|var:ev/es";
+                        case "Armour/Evasion/ES":   return "|var:ar/ev/es";
+                        case "Evasion":             return "|var:ev";
+                        case "Evasion/ES/Life":     return "|var:ev/es/li";
+                        case "Armour":              return "|var:ar";
+                    }
+                    break;
+
+                case "Yriel's Fostering":
+
+                    switch (ninjaEntry.variant) {
+                        case "Bleeding":            return "|var:ursa";
+                        case "Poison":              return "|var:snake";
+                        case "Maim":                return "|var:rhoa";
+                    }
+                    break;
+
+                case "Volkuur's Guidance":
+
+                    switch (ninjaEntry.variant) {
+                        case "Lightning":           return "|var:lightning";
+                        case "Fire":                return "|var:fire";
+                        case "Cold":                return "|var:cold";
+                    }
+                    break;
+
+                case "Lightpoacher":
+                case "Shroud of the Lightless":
+                case "Bubonic Trail":
+                case "Tombfist":
+
+                    switch (ninjaEntry.variant) {
+                        case "2 Jewels":            return "|var:2 sockets";
+                        case "1 Jewel":             return "|var:1 socket";
+                    }
+                    break;
+
+                case "Vessel of Vinktar":
+
+                    switch (ninjaEntry.variant) {
+                        case "Added Attacks":       return "|var:attacks";
+                        case "Added Spells":        return "|var:spells";
+                        case "Penetration":         return "|var:penetration";
+                        case "Conversion":          return "|var:conversion";
+                    }
+                    break;
+
+                case "Doryani's Invitation":
+
+                    switch (ninjaEntry.variant) {
+                        case null: // Bug on poe.ninja's end
+                        case "Physical":            return "|var:physical";
+                        case "Fire":                return "|var:fire";
+                        case "Cold":                return "|var:cold";
+                        case "Lightning":           return "|var:lightning";
+                    }
+                    break;
+
+                case "Impresence":
+
+                    switch (ninjaEntry.variant) {
+                        case "Chaos":               return "|var:chaos";
+                        case "Physical":            return "|var:physical";
+                        case "Fire":                return "|var:fire";
+                        case "Cold":                return "|var:cold";
+                        case "Lightning":           return "|var:lightning";
+                    }
+                    break;
+
+                case "The Beachhead":
+                    // "T15" -> "|var:15"
+                    // Could use mapTier field but haven't set up the deserializer for that
+                    return "|var:" + ninjaEntry.variant.Substring(1);
+            }
+
+            // Wasn't able to find a variant match, return null
+            return null;
         }
 
         /// <summary>
