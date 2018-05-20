@@ -83,4 +83,20 @@ namespace Pricer.Utility {
         public string name { get; set; }
         public List<AssetObject> assets { get; set; }
     }
+
+    //-----------------------------------------------------------------------------------------------------------
+    // Eye-candy for pretty code
+    //-----------------------------------------------------------------------------------------------------------
+
+    public sealed class Prices : Dictionary<String, Entry> {
+
+    }
+
+    public sealed class PoeStatsEntryList : List<PoeStatsEntry> {
+
+    }
+
+    public sealed class PoeNinjasEntryDict {
+        public List<PoeNinjaEntry> lines { get; set; }
+    }
 }
