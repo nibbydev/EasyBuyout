@@ -4,46 +4,45 @@
 
 ## What does it do
 When the user right-clicks an item in a premium tab (or any tab), this handy program instantly outputs a buyout note containing the average price for that type of item.
-Check it in action [here](https://www.youtube.com/watch?v=Y0WsRWPG4P8).
 
 ## Who is it for
-Players who have little time on their hands and want to make some $$ without having to look up prices for every single item.
-Be you a labrunner, who has dozens upon dozens of gems that need prices or a Uber Atziri farmer, who has amassed thousands of red tier maps, this program is perfect for you.
+Players who are tired of induvidually pricing hundreds of items in their stash tabs. 
+Be you a labrunner or an Uber Atziri farmer, who has dozens upon dozens of gems or maps that need prices or maybe just your average player who wants to actually enjoy the game instead of playing Shoppe Keep all day long. Well, then this program is perfect for you.
 
-## How to get it running (as of v1.0.2)
+## How to get it running (as of v1.0.14)
 1. Compile it yourself or download a compiled file from the [releases](https://github.com/siegrest/Pricer/releases/latest) page
 2. Run the program and open settings
-3. Pick a league, source and method (poe.ninja is accurate but poe.ovh provides a lot more variation)
-5. Choose whatever settings
-6. Click Apply
-7. Click Run
-8. Right click or Ctrl+C an item (right click is advised)
+3. Pick a league and source to your liking and hit download
+4. Choose whatever settings (explained below)
+5. Click Apply
+6. Click Run
+7. Right click (or Ctrl+C) an item
 
-## Settings explained (as of v1.0.2)
-* "Lower price by #%" takes whatever price the item usually goes for and reduces its price by that % 
-* "Send note" copies a buyout tag (eg. "~b/o 5 chaos") to your clipboard and pastes it
-* "Send enter" sends enter after sending the note, applying the price instantly
-* "PoePrices Fallback" allows normal/magic/rare items to be prices with the help of [poeprices](https://www.poeprices.info/) if there were no matches in the local database
-* "Show overlay" spawns a small window under the cursor containing the price of the item (can be closed by moved cursor away from window)
-* "Price method" dropbox is only supported by poe.ovh atm, it can be used to switch pricing modes
-* "Paste delay" is the delay in milliseconds that occurs between right clicking and pasting the buyout note. This is required as the price picking box in premium stash tabs takes some time to open
+## Settings explained (as of v1.0.14)
+* `Show overlay` Displays a small TradeMacro-like box under the cursor that contains the price instead of pasting it (can be closed by moving the cursor away from the box)
+* `Send note` copies a buyout note (eg. `~b/o 5 chaos`) to your clipboard and pastes it into the game's note field
+* `Send enter` automatically presses enter after pasting the note, applying the price instantly
+* `Paste delay` delay in milliseconds between right clicking and pasting the buyout note. Required as the game's note field in premium stash tabs takes some time to open. If the buyout notes are not being pasted, try incrementing this value by 50 until you see a change.
+* `Lower price by #%` takes whatever price the item usually goes for and reduces its price by that ppercentage
+* `PoePrices Fallback` allows normal/magic/rare items to be priced with the help of [poeprices](https://www.poeprices.info/), the same way TradeMacro does it
+* `Run on right click` does what it says. When this is disabled, the program can be used with `Ctrl+C`
 
 ## What can it price
-Uniques, gems, divination cards, maps, 6-links, currency, prophecies, essences, magic and rare items and pretty much everything.
+Armours, weapons, accessories, flasks, 6-links, 5-links, jewels, gems, divination cards, maps, currency, prophecies, essences, normal, magic and rare items. In short: if it's an item, this program can find a price for it.
 
-## But I have PoeTradeMacro, why is this needed
+## But I have TradeMacro
 Yeah and it's slow as s#!t.
 You hover over the item, click the hotkey, wait a bunch for it to load and then get a list of the cheapest prices.
 Mind you, those might very well be pricefixers.
 Not with this program though.
-The prices are accurate and represent the average over a certain period of time.
+The prices are accurate and represent the average what other people have listed over a certain period of time.
 Alls you gotta do is right click and you got your price set!
 
 ## Where are the prices from
-Three main sources: [poe.ovh](http://poe.ovh), [poe.ninja](http://poe.ninja) and [poeprices](https://www.poeprices.info/) (as a fallback).
+Three main sources: [poe-stats.com](http://poe-stats.com), [poe.ninja](http://poe.ninja) and [poeprices](https://www.poeprices.info/).
 
 ## Words of warning
-* The prices might are not always 100% accurate
-* This is especially evident in sparsely found items (i.e league-specific uniques or certain gems)
+* The prices might not be always 100% accurate (this is especially evident in sparsely found items, i.e league-specific uniques or certain gems)
 * PriceBoxes probably don't work well with full-screen mode
 * Prices in hardcore are generally not accurate as nobody plays there
+* There might be some issues running this program alongside TradeMacro or similar applications as they both need to access the clipboard
