@@ -24,9 +24,7 @@ namespace Pricer.Utility {
     /// Used to desierialize http://poe-stats.com API calls
     /// </summary>
     public sealed class PoeStatsEntry {
-        public double mean { get; set; }
         public double median { get; set; }
-        public double mode { get; set; }
         public int quantity { get; set; }
         public string key { get; set; }
     }

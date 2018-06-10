@@ -59,7 +59,7 @@ namespace Pricer {
                     string jsonString = webClient.DownloadString(url);
 
                     // Deserialize
-                    PoeStatsEntryList poeStatsEntryList = javaScriptSerializer.Deserialize<PoeStatsEntryList>(jsonString);
+                    List<PoeStatsEntry> poeStatsEntryList = javaScriptSerializer.Deserialize<List<PoeStatsEntry>>(jsonString);
 
                     if (poeStatsEntryList == null) {
                         MainWindow.Log("[PS][" + Settings.league + "] Reply was null: " + category, 0);
@@ -69,7 +69,7 @@ namespace Pricer {
                     // Add all entries from temp list to prices dict
                     foreach (PoeStatsEntry statsEntry in poeStatsEntryList) {
                         Entry entry = new Entry() {
-                            value = statsEntry.mean,
+                            value = statsEntry.median,
                             quantity = statsEntry.quantity
                         };
 
