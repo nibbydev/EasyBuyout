@@ -224,7 +224,7 @@ namespace Pricer {
             }
 
             // Send a warning message when count is less than 10 as these items probably have inaccurate prices
-            if (entry.quantity < 5) {
+            if (entry.quantity < 5 && !Settings.source.Equals("poe.ninja") && item.GetFrame() != 5) {
                 System.Media.SystemSounds.Asterisk.Play();
                 Log("Likely incorrect price (quantity: " + entry.quantity + ")", 1);
             }
