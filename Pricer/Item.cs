@@ -429,6 +429,17 @@ namespace Pricer {
                     }
                     break;
 
+                case "Combat Focus":
+                    foreach (string mod in splitRaw[exModIndex + 2].Split('|')) {
+                        if (mod.Contains("choose Fire"))
+                            return "fire";
+                        else if (mod.Contains("choose Cold"))
+                            return "cold";
+                        else if (mod.Contains("choose Lightning"))
+                            return "lightning";
+                    }
+                    break;
+
                 default:
                     break;
             }
