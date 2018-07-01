@@ -168,26 +168,10 @@ namespace Pricer {
             if (itemEntry == null && Settings.flag_showOverlay) {
                 
                 Dispatcher.Invoke(() => {
-                    priceBox.Content = "No match..." + enchantDisplay;
+                    priceBox.Content = "Item: No match..." + enchantDisplay;
                     SetPriceBoxPosition();
                     priceBox.Show();
                 });
-
-                return;
-            }
-
-            // If the price is 0c
-            if (itemEntry.value == 0) {
-                Log("Worth: 0c: " + item.key, 1);
-
-                // If pricebox was enabled, display the value in it
-                if (Settings.flag_showOverlay) {
-                    Dispatcher.Invoke(() => {
-                        priceBox.Content = "Item: 0c" + enchantDisplay;
-                        SetPriceBoxPosition();
-                        priceBox.Show();
-                    });
-                }
 
                 return;
             }
@@ -244,10 +228,11 @@ namespace Pricer {
             string note = priceManager.MakeNote(newPrice);
 
             // If the LowerPriceByPercentage slider is more than 0, change output message
-            if (Settings.lowerPricePercentage == 0)
-                Log("[" + Settings.source + "] " + item.key + ": " + oldPrice + "c", 0);
-            else
-                Log("[" + Settings.source + "] " + item.key + ": " + oldPrice + "c -> " + newPrice + "c", 0);
+            if (Settings.lowerPricePercentage == 0) {
+                Log(item.key + ": " + oldPrice + "c", 0);
+            } else {
+                Log(item.key + ": " + oldPrice + "c -> " + newPrice + "c", 0);
+            }
 
             if (Settings.flag_showOverlay) {
                 Dispatcher.Invoke(() => {
@@ -259,13 +244,13 @@ namespace Pricer {
                 return;
             }
 
-            // Error code 2 means items already has a note. Can't overwrite it
+            // Item already has a note. Can't overwrite it
             if (item.errorCode == 3) {
                 Log("Item already has a note", 2);
                 return;
             }
 
-            // Raise the flag that indicates we will permit 1 buyout note to pass the clipboard event
+            // Raise flag allowing next cb event to be processed
             Settings.flag_clipBoardPaste = true;
             if (Settings.flag_sendNote) Dispatcher.Invoke(() => Clipboard.SetText(note));
         }

@@ -8,7 +8,7 @@ namespace Pricer {
     public static class Settings {
         public static readonly string[] sourceList = { "Poe-stats.com", "Poe.ninja" };
         public const string programTitle = "Item pricer";
-        public const string programVersion = "v1.0.19";
+        public const string programVersion = "v1.0.20";
         public const string activeWindowTitle = "Path of Exile";
         public const string programReleaseAPI = "https://api.github.com/repos/siegrest/Pricer/releases";
 
