@@ -343,20 +343,30 @@ namespace Pricer {
         //-----------------------------------------------------------------------------------------------------------
 
         /// <summary>
-        /// Primitive method for looking up gem prices
+        /// Get Entry instances associated with provided keys.
+        /// Objects are ordered as the provided keys
         /// </summary>
-        /// <param name="key">Database key to search for</param>
-        /// <returns>Median value in chaos</returns>
-        public Entry Search(string key) {
-            // Get the database entry
-            Entry tempEntry;
-            prices.TryGetValue(key, out tempEntry);
+        /// <param name="keys">Keys to search</param>
+        /// <returns>List of Entry objects</returns>
+        public Entry[] Search(string[] keys) {
+            Entry[] returnEntryList = new Entry[keys.Length];
 
-            // Precaution
-            if (tempEntry == null) return null;
+            for (int i = 0; i < keys.Length; i++) {
+                string key = keys[i];
 
-            // Make a copy so the original database entry is not affected
-            return new Entry(tempEntry);
+                if (key == null) {
+                    returnEntryList[i] = null;
+                    continue;
+                }
+
+                // Get the database entry
+                Entry tempEntry;
+                prices.TryGetValue(key, out tempEntry);
+
+                returnEntryList[i] = tempEntry == null ? null : new Entry(tempEntry);
+            }
+
+            return returnEntryList;
         }
 
         /// <summary>

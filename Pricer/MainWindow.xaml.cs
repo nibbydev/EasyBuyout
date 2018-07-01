@@ -134,11 +134,19 @@ namespace Pricer {
                 return;
             }
 
-            // Attempt to get entry from database
-            Entry entry = priceManager.Search(item.key);
+            // Get entries associated with item keys
+            Entry[] entries = priceManager.Search(new string[] { item.key, item.enchantKey });
+            Entry itemEntry = entries[0];
+            Entry enchantEntry = entries[1];
+
+            // Form enchantEntry's displaystring
+            string enchantDisplay = "";
+            if (enchantEntry != null && enchantEntry.value > 0) {
+                enchantDisplay += "\nEnchant: "+ enchantEntry.value +"c";
+            }
 
             // If there were no matches
-            if (entry == null) {
+            if (itemEntry == null) {
                 // If user had enabled poeprices fallback
                 if (Settings.flag_fallback) {
                     Log("No database entry found. Feeding item to PoePrices...", 0);
@@ -152,15 +160,15 @@ namespace Pricer {
                         });
                     }
 
-                    entry = priceManager.SearchPoePrices(item.GetRaw());
+                    itemEntry = priceManager.SearchPoePrices(item.GetRaw());
                 }
             }
 
             // Display error
-            if (entry == null && Settings.flag_showOverlay) {
+            if (itemEntry == null && Settings.flag_showOverlay) {
                 
                 Dispatcher.Invoke(() => {
-                    priceBox.Content = "No match...";
+                    priceBox.Content = "No match..." + enchantDisplay;
                     SetPriceBoxPosition();
                     priceBox.Show();
                 });
@@ -169,13 +177,13 @@ namespace Pricer {
             }
 
             // If the price is 0c
-            if (entry.value == 0) {
+            if (itemEntry.value == 0) {
                 Log("Worth: 0c: " + item.key, 1);
 
                 // If pricebox was enabled, display the value in it
                 if (Settings.flag_showOverlay) {
                     Dispatcher.Invoke(() => {
-                        priceBox.Content = "Value: 0c";
+                        priceBox.Content = "Item: 0c" + enchantDisplay;
                         SetPriceBoxPosition();
                         priceBox.Show();
                     });
@@ -185,12 +193,12 @@ namespace Pricer {
             }
 
             // Display some info about some error codes, if any
-            if (entry.value < 0) {
+            if (itemEntry.value < 0) {
                 // Play a warning sound
                 System.Media.SystemSounds.Asterisk.Play();
 
                 string errorMessage;
-                int entryValue = (int)entry.value;
+                int entryValue = (int)itemEntry.value;
                 switch (entryValue) {
                     case -1:
                         errorMessage = "Empty HTTP reply from PoePrices";
@@ -224,14 +232,14 @@ namespace Pricer {
             }
 
             // Send a warning message when count is less than 10 as these items probably have inaccurate prices
-            if (entry.quantity < 5 && !Settings.source.Equals("poe.ninja") && item.GetFrame() != 5) {
+            if (itemEntry.quantity < 5 && !Settings.source.Equals("poe.ninja") && item.GetFrame() != 5) {
                 System.Media.SystemSounds.Asterisk.Play();
-                Log("Likely incorrect price (quantity: " + entry.quantity + ")", 1);
+                Log("Likely incorrect price (quantity: " + itemEntry.quantity + ")", 1);
             }
 
             // Calculate prices
-            double oldPrice = Math.Ceiling(entry.value * 2) / 2.0;
-            double newPrice = Math.Ceiling(entry.value * (100 - Settings.lowerPricePercentage) / 100.0 * 2) / 2.0;
+            double oldPrice = Math.Ceiling(itemEntry.value * 2) / 2.0;
+            double newPrice = Math.Ceiling(itemEntry.value * (100 - Settings.lowerPricePercentage) / 100.0 * 2) / 2.0;
 
             string note = priceManager.MakeNote(newPrice);
 
@@ -243,7 +251,7 @@ namespace Pricer {
 
             if (Settings.flag_showOverlay) {
                 Dispatcher.Invoke(() => {
-                    priceBox.Content = "Value: " + newPrice + "c";
+                    priceBox.Content = "Item: " + newPrice + "c" + enchantDisplay;
                     SetPriceBoxPosition();
                     if (!priceBox.IsVisible) priceBox.Show();
                 });
