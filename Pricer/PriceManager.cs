@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
 
 namespace Pricer {
@@ -199,6 +200,13 @@ namespace Pricer {
                         "|l:" + ninjaEntry.gemLevel + 
                         "|q:" + ninjaEntry.gemQuality + 
                         (ninjaEntry.corrupted ? "|c:1" : "|c:0");
+                case "HelmetEnchant":
+                    entry.value = ninjaEntry.chaosValue;
+
+                    string name = Regex.Replace(ninjaEntry.name, "[-]?\\d*\\.?\\d+", "#");
+                    string num = String.Join("-", Regex.Replace(ninjaEntry.name, "[^-.0-9]+", " ").Trim().Split(' '));
+
+                    return name + "|-1" + (num != null ? "|var:" + num : "");
             }
 
             // Wasn't able to find a key, return null
