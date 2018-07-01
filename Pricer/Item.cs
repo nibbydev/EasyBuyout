@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace Pricer {
     public class Item {
-        public string key;
+        public string key, enchantKey;
         public int errorCode;
         public volatile bool discard;
 
@@ -116,6 +116,8 @@ namespace Pricer {
                     links = ParseData_Sockets();
                     // Check if the item has special variants
                     variant = ParseData_Variant();
+                    // Find item's enchant key, if it has one
+                    enchantKey = Parse_EnchantData();
 
                     break;
 
@@ -125,6 +127,7 @@ namespace Pricer {
 
                 default:
                     frame = Parse_DefaultData();
+                    enchantKey = Parse_EnchantData();
                     // Unknown rarity
                     if (frame == -1) errorCode = 5;
                     break;
@@ -237,10 +240,29 @@ namespace Pricer {
             else return -1;
         }
 
+        /// <summary>
+        /// Parses item data and attempts to find enchantments
+        /// </summary>
+        /// <returns>Specific key of enchantment or null if not found</returns>
+        private string Parse_EnchantData() {
+            // Find the index of "Item Level:"
+            int exModIndex = FindIndexOf("Item Level:", splitRaw);
+            // Couldn't find index of item level
+            if (exModIndex == -1) return null;
+
+            // Get the line that *might* cointain enchantment data
+            string enchant = splitRaw[exModIndex + 1];
+
+            string name = Regex.Replace(enchant, "[-]?\\d*\\.?\\d+", "#");
+            string num = String.Join("-", Regex.Replace(enchant, "[^-.0-9]+", " ").Trim().Split(' '));
+
+            return name + "|-1" + (num != null ? "|var:" + num : "");
+        }
+
         //-----------------------------------------------------------------------------------------------------------
         // Generic parsing methods
         //-----------------------------------------------------------------------------------------------------------
-        
+
         /// <summary>
         /// Finds the index of the element the element in the haystack that starts with the needle
         /// </summary>

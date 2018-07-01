@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
 
 namespace Pricer {
@@ -199,6 +200,13 @@ namespace Pricer {
                         "|l:" + ninjaEntry.gemLevel + 
                         "|q:" + ninjaEntry.gemQuality + 
                         (ninjaEntry.corrupted ? "|c:1" : "|c:0");
+                case "HelmetEnchant":
+                    entry.value = ninjaEntry.chaosValue;
+
+                    string name = Regex.Replace(ninjaEntry.name, "[-]?\\d*\\.?\\d+", "#");
+                    string num = String.Join("-", Regex.Replace(ninjaEntry.name, "[^-.0-9]+", " ").Trim().Split(' '));
+
+                    return name + "|-1" + (num != null ? "|var:" + num : "");
             }
 
             // Wasn't able to find a key, return null
@@ -343,20 +351,30 @@ namespace Pricer {
         //-----------------------------------------------------------------------------------------------------------
 
         /// <summary>
-        /// Primitive method for looking up gem prices
+        /// Get Entry instances associated with provided keys.
+        /// Objects are ordered as the provided keys
         /// </summary>
-        /// <param name="key">Database key to search for</param>
-        /// <returns>Median value in chaos</returns>
-        public Entry Search(string key) {
-            // Get the database entry
-            Entry tempEntry;
-            prices.TryGetValue(key, out tempEntry);
+        /// <param name="keys">Keys to search</param>
+        /// <returns>List of Entry objects</returns>
+        public Entry[] Search(string[] keys) {
+            Entry[] returnEntryList = new Entry[keys.Length];
 
-            // Precaution
-            if (tempEntry == null) return null;
+            for (int i = 0; i < keys.Length; i++) {
+                string key = keys[i];
 
-            // Make a copy so the original database entry is not affected
-            return new Entry(tempEntry);
+                if (key == null) {
+                    returnEntryList[i] = null;
+                    continue;
+                }
+
+                // Get the database entry
+                Entry tempEntry;
+                prices.TryGetValue(key, out tempEntry);
+
+                returnEntryList[i] = tempEntry == null ? null : new Entry(tempEntry);
+            }
+
+            return returnEntryList;
         }
 
         /// <summary>
