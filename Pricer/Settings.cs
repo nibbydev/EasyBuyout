@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace Pricer {
     public static class Settings {
-        public static readonly string[] sourceList = { "Poe-stats.com", "Poe.ninja" };
-        public const string programTitle = "Item pricer";
+        public static readonly string[] sourceList = { "Poe.ninja", "Poe-stats.com" };
+        public const string programTitle = "PoE EasyBuyout";
         public const string programVersion = "v1.0.21";
         public const string activeWindowTitle = "Path of Exile";
 

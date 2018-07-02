@@ -47,8 +47,8 @@ namespace Pricer {
             priceManager.SetProgressBar(settingsWindow.ProgressBar_Progress);
 
             // Set window title
-            Title = Settings.programTitle + " (" + Settings.programVersion + ")";
-            Log(Settings.programTitle + " (" + Settings.programVersion + ")" + " by Siegrest", 0);
+            Title = Settings.programTitle + " " + Settings.programVersion;
+            Log(Settings.programTitle + " " + Settings.programVersion + " by Siegrest", 0);
 
             Task.Run(() => {
                 // Get list of active leagues from official API
