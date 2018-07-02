@@ -1,10 +1,10 @@
 ﻿using EasyBuyout.League;
-using EasyBuyout.Utility;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
+using System.Windows;
 
 namespace EasyBuyout.Prices {
     /// <summary>
@@ -15,15 +15,22 @@ namespace EasyBuyout.Prices {
         private readonly JavaScriptSerializer javaScriptSerializer;
         private readonly WebClient webClient;
         private readonly LeagueManager leagueManager;
-        private readonly Prices prices;
+        private readonly PriceBox priceBox;
+        private readonly Dictionary<String, Entry> entryMap;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="webClient"></param>
+        /// <param name="leagueManager"></param>
         public PriceManager (WebClient webClient, LeagueManager leagueManager) {
             this.webClient = webClient;
             this.leagueManager = leagueManager;
 
             javaScriptSerializer = new JavaScriptSerializer { MaxJsonLength = Int32.MaxValue };
 
-            prices = new Prices();
+            priceBox = new PriceBox();
+            entryMap = new Dictionary<string, Entry>();
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -50,8 +57,8 @@ namespace EasyBuyout.Prices {
         /// Download data from http://poe-stats.com and populate price dict
         /// </summary>
         private void DownloadPoeStatsData() {
-            ConfigureProgressBar(Settings.poeStatsKeys);
-            prices.Clear();
+            ConfigureProgressBar(Settings.poeStatsKeys.Length);
+            entryMap.Clear();
 
             foreach (string category in Settings.poeStatsKeys) {
                 MainWindow.Log("[PS] Downloading: " + category + " for " + leagueManager.GetSelectedLeague(), 0);
@@ -75,10 +82,10 @@ namespace EasyBuyout.Prices {
                             quantity = statsEntry.quantity
                         };
 
-                        if (prices.ContainsKey(statsEntry.key)) {
+                        if (entryMap.ContainsKey(statsEntry.key)) {
                             MainWindow.Log("[PS][" + leagueManager.GetSelectedLeague() + "] Duplicate key: " + statsEntry.key, 1);
                         } else {
-                            prices.Add(statsEntry.key, entry);
+                            entryMap.Add(statsEntry.key, entry);
                         }
                     }
                 } catch (Exception ex) {
@@ -93,8 +100,8 @@ namespace EasyBuyout.Prices {
         /// Download data from http://poe.ninja and populate price dict
         /// </summary>
         private void DownloadPoeNinjaData() {
-            ConfigureProgressBar(Settings.poeNinjaKeys);
-            prices.Clear();
+            ConfigureProgressBar(Settings.poeNinjaKeys.Length);
+            entryMap.Clear();
 
             foreach (string category in Settings.poeNinjaKeys) {
                 MainWindow.Log("[PN] Downloading: " + category + " for " + leagueManager.GetSelectedLeague(), 0);
@@ -127,10 +134,10 @@ namespace EasyBuyout.Prices {
                             return;
                         }
 
-                        if (prices.ContainsKey(key)) {
+                        if (entryMap.ContainsKey(key)) {
                             MainWindow.Log("[PN][" + leagueManager.GetSelectedLeague() + "] Duplicate key: " + key, 1);
                         } else {
-                            prices.Add(key, entry);
+                            entryMap.Add(key, entry);
                         }
                     }
                 } catch (Exception ex) {
@@ -321,7 +328,7 @@ namespace EasyBuyout.Prices {
             try {
                 // Make request to http://poeprices.info
                 string jsonString = webClient.DownloadString("https://www.poeprices.info/api?l=" + leagueManager.GetSelectedLeague() + 
-                    "&i=" + MiscMethods.Base64Encode(rawItemData));
+                    "&i=" + Base64Encode(rawItemData));
 
                 // Deserialize JSON-encoded reply string
                 PoePricesReply reply = new JavaScriptSerializer().Deserialize<PoePricesReply>(jsonString);
@@ -332,7 +339,7 @@ namespace EasyBuyout.Prices {
                 // If the price was in exalts, convert it to chaos
                 if (reply.currency == "exalt") {
                     Entry exaltedEntry;
-                    prices.TryGetValue("Exalted Orb|5", out exaltedEntry);
+                    entryMap.TryGetValue("Exalted Orb|5", out exaltedEntry);
                     if (exaltedEntry == null) return null;
                     returnEntry.value = (reply.max * exaltedEntry.value + reply.min * exaltedEntry.value) / 2.0;
                 } else {
@@ -368,9 +375,9 @@ namespace EasyBuyout.Prices {
                     continue;
                 }
 
-                // Get the database entry
+                // Get the item entry
                 Entry tempEntry;
-                prices.TryGetValue(key, out tempEntry);
+                entryMap.TryGetValue(key, out tempEntry);
 
                 returnEntryList[i] = tempEntry == null ? null : new Entry(tempEntry);
             }
@@ -388,23 +395,66 @@ namespace EasyBuyout.Prices {
             return Settings.prefix + " " + price.ToString().Replace(',', '.') + " chaos";
         }
 
+        /// <summary>
+        /// Encodes text in base64, used for https://poeprices.info API calls
+        /// </summary>
+        /// <param name="text">Raw item data</param>
+        /// <returns>Base64 encoded raw item data</returns>
+        public static string Base64Encode(string text) {
+            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(text);
+            return System.Convert.ToBase64String(plainTextBytes);
+        }
+
         //-----------------------------------------------------------------------------------------------------------
         // Progressbar-related shenanigans
         //-----------------------------------------------------------------------------------------------------------
 
+        /// <summary>
+        /// Just a setter
+        /// </summary>
+        /// <param name="progressBar"></param>
         public void SetProgressBar(System.Windows.Controls.ProgressBar progressBar) {
             this.progressBar = progressBar;
         }
 
-        private void ConfigureProgressBar(string[] keys) {
-            System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                progressBar.Maximum = keys.Length;
+        /// <summary>
+        /// Set initial progressbar values
+        /// </summary>
+        /// <param name="size">Progress step count</param>
+        private void ConfigureProgressBar(int size) {
+            if (progressBar == null) return;
+
+            Application.Current.Dispatcher.Invoke(() => {
+                progressBar.Maximum = size;
                 progressBar.Value = 0;
             });
         }
 
+        /// <summary>
+        /// Increment the progressbar by one
+        /// </summary>
         private void IncProgressBar() {
-            System.Windows.Application.Current.Dispatcher.Invoke(() => ++progressBar.Value);
+            if (progressBar == null) return;
+
+            Application.Current.Dispatcher.Invoke(() => ++progressBar.Value);
+        }
+
+        //-----------------------------------------------------------------------------------------------------------
+        // Pricebox control
+        //-----------------------------------------------------------------------------------------------------------
+        
+        /// <summary>
+        /// Set the content, position and visibility of the pricebox with one method
+        /// </summary>
+        /// <param name="content">String to be displayed in the overlay</param>
+        public void DisplayPriceBox(string content) {
+            if (priceBox == null) return;
+
+            Application.Current.Dispatcher.Invoke(() => {
+                priceBox.Content = content;
+                priceBox.SetPosition();
+                priceBox.Show();
+            });
         }
     }
 }

@@ -59,18 +59,9 @@ namespace EasyBuyout.Prices {
         public double max { get; set; }
     }
 
-    //-----------------------------------------------------------------------------------------------------------
-    // Eye-candy for pretty code
-    //-----------------------------------------------------------------------------------------------------------
-
-    public sealed class Prices : Dictionary<String, Entry> {
-
-    }
-
-    public sealed class PoeStatsEntryList : List<PoeStatsEntry> {
-
-    }
-
+    /// <summary>
+    /// Eye-candy for pretty code
+    /// </summary>
     public sealed class PoeNinjasEntryDict {
         public List<PoeNinjaEntry> lines { get; set; }
     }

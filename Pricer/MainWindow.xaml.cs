@@ -15,7 +15,6 @@ namespace EasyBuyout {
     /// </summary>
     public partial class MainWindow : Window {
         private readonly WebClient webClient;
-        private readonly PriceBox priceBox;
         private readonly SettingsWindow settingsWindow;
         private readonly PriceManager priceManager;
         private readonly UpdateWindow updateWindow;
@@ -31,7 +30,11 @@ namespace EasyBuyout {
             // Initialize objects
             webClient = new WebClient() { Encoding = System.Text.Encoding.UTF8 };
             leagueManager = new LeagueManager(webClient);
+            updateWindow = new UpdateWindow(webClient);
+            settingsWindow = new SettingsWindow(this, leagueManager);
+
             priceManager = new PriceManager(webClient, leagueManager);
+            priceManager.SetProgressBar(settingsWindow.ProgressBar_Progress);
 
             // Define eventhandlers
             ClipboardNotification.ClipboardUpdate += new EventHandler(Event_clipboard);
@@ -43,12 +46,7 @@ namespace EasyBuyout {
             // Set objects that need to be accessed from outside
             console = console_window;
             runButton = Button_Run;
-            priceBox = new PriceBox();
-            settingsWindow = new SettingsWindow(this, leagueManager);
-            updateWindow = new UpdateWindow(webClient);
-
-            priceManager.SetProgressBar(settingsWindow.ProgressBar_Progress);
-
+            
             // Set window title
             Title = Settings.programTitle + " " + Settings.programVersion;
             Log(Settings.programTitle + " " + Settings.programVersion + " by Siegrest", 0);
@@ -72,7 +70,7 @@ namespace EasyBuyout {
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Event_mouse (object sender, EventArgs e) {
+        private void Event_mouse(object sender, EventArgs e) {
             // Do not run if user has not pressed run button
             if (!Settings.flag_run || !Settings.flag_runOnRightClick) return;
             // Only run if "Path of Exile" is the main focused window
@@ -85,7 +83,7 @@ namespace EasyBuyout {
         /// <summary>
         /// Clipboard event handler
         /// </summary>
-        private void Event_clipboard (object sender, EventArgs e) {
+        private void Event_clipboard(object sender, EventArgs e) {
             // Do not run if user has not pressed run button
             if (!Settings.flag_run && !Settings.flag_runOnRightClick) return;
             // Only run if "Path of Exile" is the main focused window
@@ -158,11 +156,7 @@ namespace EasyBuyout {
 
                     // If pricebox was enabled, display "Searching..." in it until a price is found
                     if (Settings.flag_showOverlay) {
-                        Dispatcher.Invoke(() => {
-                            priceBox.Content = "Searching...";
-                            SetPriceBoxPosition();
-                            priceBox.Show();
-                        });
+                        priceManager.DisplayPriceBox("Searching...");
                     }
 
                     itemEntry = priceManager.SearchPoePrices(item.GetRaw());
@@ -171,13 +165,7 @@ namespace EasyBuyout {
 
             // Display error
             if (itemEntry == null && Settings.flag_showOverlay) {
-                
-                Dispatcher.Invoke(() => {
-                    priceBox.Content = "Item: No match..." + enchantDisplay;
-                    SetPriceBoxPosition();
-                    priceBox.Show();
-                });
-
+                priceManager.DisplayPriceBox("Item: No match..." + enchantDisplay);
                 return;
             }
 
@@ -210,11 +198,7 @@ namespace EasyBuyout {
 
                 // If pricebox was enabled, display error in it
                 if (Settings.flag_showOverlay) {
-                    Dispatcher.Invoke(() => {
-                        priceBox.Content = errorMessage;
-                        SetPriceBoxPosition();
-                        priceBox.Show();
-                    });
+                    priceManager.DisplayPriceBox(errorMessage);
                 }
 
                 return;
@@ -240,12 +224,7 @@ namespace EasyBuyout {
             }
 
             if (Settings.flag_showOverlay) {
-                Dispatcher.Invoke(() => {
-                    priceBox.Content = "Item: " + newPrice + "c" + enchantDisplay;
-                    SetPriceBoxPosition();
-                    if (!priceBox.IsVisible) priceBox.Show();
-                });
-
+                priceManager.DisplayPriceBox("Item: " + newPrice + "c" + enchantDisplay);
                 return;
             }
 
@@ -279,7 +258,7 @@ namespace EasyBuyout {
         }
 
         //-----------------------------------------------------------------------------------------------------------
-        // WPF event handlers
+        // Event handlers
         //-----------------------------------------------------------------------------------------------------------
 
         /// <summary>
@@ -331,15 +310,15 @@ namespace EasyBuyout {
             // Position window to screen center manually
             try {
                 Rect rect = SystemParameters.WorkArea;
-                this.Left = (rect.Width - Width) / 2 + rect.Left;
-                this.Top = (rect.Height - Height) / 2 + rect.Top;
+                Left = (rect.Width - Width) / 2 + rect.Left;
+                Top = (rect.Height - Height) / 2 + rect.Top;
             } catch (Exception ex) {
                 Console.WriteLine(ex);
             }
         }
 
         //-----------------------------------------------------------------------------------------------------------
-        // Generic methods
+        // Static methods
         //-----------------------------------------------------------------------------------------------------------
 
         /// <summary>
@@ -372,14 +351,6 @@ namespace EasyBuyout {
                 console.AppendText("[" + time + "]" + prefix + str + "\n");
                 console.ScrollToEnd();
             });
-        }
-
-        /// <summary>
-        /// Set the position of the price overlay under the user's cursor
-        /// </summary>
-        private void SetPriceBoxPosition() {
-            priceBox.Left = System.Windows.Forms.Cursor.Position.X - priceBox.Width / 2;
-            priceBox.Top = System.Windows.Forms.Cursor.Position.Y - priceBox.Height / 2;
         }
 
         //-----------------------------------------------------------------------------------------------------------

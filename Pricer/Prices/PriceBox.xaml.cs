@@ -18,5 +18,13 @@ namespace EasyBuyout.Prices {
         private void Window_MouseLeave(object sender, MouseEventArgs e) {
             Hide();
         }
+
+        /// <summary>
+        /// Set the position of the price overlay under the user's cursor
+        /// </summary>
+        public void SetPosition() {
+            Left = System.Windows.Forms.Cursor.Position.X - Width / 2;
+            Top = System.Windows.Forms.Cursor.Position.Y - Height / 2;
+        }
     }
 }
