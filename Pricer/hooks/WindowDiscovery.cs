@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Pricer.hooks {
+namespace EasyBuyout.hooks {
     public sealed class WindowDiscovery {
         private const int nChars = 256;
 

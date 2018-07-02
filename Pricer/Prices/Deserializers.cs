@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Pricer.Utility {
+namespace EasyBuyout.Prices {
     /// <summary>
     /// Used to populate local database
     /// </summary>

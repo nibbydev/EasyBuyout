@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-namespace Pricer {
+namespace EasyBuyout {
     // from: http://stackoverflow.com/questions/2226920/how-to-monitor-clipboard-content-changes-in-c
     /// Provides notifications when the contents of the clipboard is updated.
     public sealed class ClipboardNotification {

@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace Pricer.hooks {
+namespace EasyBuyout.hooks {
     public partial class KeyEmulator {
         public static void SendCtrlC() {
             keybd_event(0x11, 0, 0, 0); // 0x11 - ctrl, 0 - down

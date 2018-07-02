@@ -1,11 +1,11 @@
-﻿using Pricer.League;
+﻿using EasyBuyout.League;
 using System;
 using System.Net;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace Pricer {
+namespace EasyBuyout {
     /// <summary>
     /// Interaction logic for SettingsWindow.xaml
     /// </summary>

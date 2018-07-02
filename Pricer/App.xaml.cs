@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 
-namespace Pricer {
+namespace EasyBuyout {
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>

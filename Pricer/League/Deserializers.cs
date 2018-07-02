@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Pricer.League {
+namespace EasyBuyout.League {
     /// <summary>
     /// Deserializer for https://www.pathofexile.com/api/trade/data/leagues
     /// </summary>

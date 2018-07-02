@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Pricer {
+namespace EasyBuyout {
     public static class Settings {
         public static readonly string[] sourceList = { "Poe.ninja", "Poe-stats.com" };
-        public const string programTitle = "PoE EasyBuyout";
-        public const string programVersion = "v1.0.22";
+        public const string programTitle = "EasyBuyout";
+        public const string programVersion = "v1.0.22.2";
         public const string activeWindowTitle = "Path of Exile";
 
         // League manager

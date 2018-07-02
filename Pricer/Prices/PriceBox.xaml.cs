@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Input;
 
-namespace Pricer {
+namespace EasyBuyout.Prices {
     /// <summary>
     /// Interaction logic for PriceBox.xaml
     /// </summary>

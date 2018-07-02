@@ -1,11 +1,11 @@
-﻿using Pricer.Updater;
+﻿using EasyBuyout.Updater;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Web.Script.Serialization;
 using System.Windows;
 
-namespace Pricer {
+namespace EasyBuyout {
     /// <summary>
     /// Interaction logic for UpdateWindow.xaml
     /// </summary>

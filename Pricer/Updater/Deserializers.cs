@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Pricer.Updater {
+namespace EasyBuyout.Updater {
     /// <summary>
     /// Deserializer for Github's release API
     /// </summary>

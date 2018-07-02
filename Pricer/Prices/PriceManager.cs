@@ -1,12 +1,12 @@
-﻿using Pricer.League;
-using Pricer.Utility;
+﻿using EasyBuyout.League;
+using EasyBuyout.Utility;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
 
-namespace Pricer {
+namespace EasyBuyout.Prices {
     /// <summary>
     /// PriceManager handles downlading, managing and translating price data from various websites
     /// </summary>

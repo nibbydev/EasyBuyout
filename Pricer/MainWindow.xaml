@@ -1,9 +1,9 @@
-﻿<Window x:Class="Pricer.MainWindow"
+﻿<Window x:Class="EasyBuyout.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Pricer"
+        xmlns:local="clr-namespace:EasyBuyout"
         mc:Ignorable="d" WindowStartupLocation="CenterScreen" Margin="0" Padding="0" Closing="Window_Closing" MinWidth="598" MinHeight="281" SizeToContent="WidthAndHeight" Loaded="Window_Loaded">
     <Grid Background="#FFF0F0F0" Margin="0,0,0,0" UseLayoutRounding="False" ScrollViewer.VerticalScrollBarVisibility="Disabled" MinWidth="580" MinHeight="240">
         <TextBox x:Name="console_window" AllowDrop="False" IsReadOnly="True" VerticalScrollBarVisibility="Visible" IsUndoEnabled="False" FontFamily="Courier New" Margin="10,10,10,50" MinHeight="180" MinWidth="560" TextWrapping="Wrap"/>

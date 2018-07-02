@@ -1,6 +1,6 @@
-﻿using Pricer.hooks;
-using Pricer.League;
-using Pricer.Utility;
+﻿using EasyBuyout.hooks;
+using EasyBuyout.League;
+using EasyBuyout.Prices;
 using System;
 using System.Net;
 using System.Threading;
@@ -9,7 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
-namespace Pricer {
+namespace EasyBuyout {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -18,11 +18,10 @@ namespace Pricer {
         private readonly PriceBox priceBox;
         private readonly SettingsWindow settingsWindow;
         private readonly PriceManager priceManager;
-        private readonly Button runButton;
         private readonly UpdateWindow updateWindow;
         private readonly LeagueManager leagueManager;
-        
 
+        private readonly Button runButton;
         private static TextBox console;
 
         /// <summary>

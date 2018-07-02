@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows;
 
-namespace Pricer.League {
+namespace EasyBuyout.League {
     public class LeagueManager {
         private readonly ManualLeagueWindow manualLeagueWindow;
         private readonly WebClient webClient;

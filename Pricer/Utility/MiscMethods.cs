@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Web.Script.Serialization;
 using System.Net;
 
-namespace Pricer.Utility {
+namespace EasyBuyout.Utility {
     class MiscMethods {
         /// <summary>
         /// Encodes text in base64, used for https://poeprices.info API calls

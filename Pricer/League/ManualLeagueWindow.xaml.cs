@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace Pricer.League {
+namespace EasyBuyout.League {
     /// <summary>
     /// Interaction logic for ManualLeagueWindow.xaml
     /// </summary>

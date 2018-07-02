@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 
-namespace Pricer {
+namespace EasyBuyout {
     public class Item {
         public string key, enchantKey;
         public int errorCode;
