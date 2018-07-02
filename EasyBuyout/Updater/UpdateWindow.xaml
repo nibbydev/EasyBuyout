@@ -1,0 +1,32 @@
+﻿<Window x:Class="EasyBuyout.UpdateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EasyBuyout"
+        mc:Ignorable="d"
+        Title="Updater" Height="302" Width="440" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" SizeToContent="WidthAndHeight" >
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="3*"/>
+            <RowDefinition Height="4*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="4*"/>
+        </Grid.ColumnDefinitions>
+        <Label Content="New version available:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="121"/>
+        <Label Content="Current version: " HorizontalAlignment="Left" Margin="10,35,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="91"/>
+        <Label Content="Release URL:" HorizontalAlignment="Left" Margin="10,60,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="85"/>
+        <Label x:Name="Label_NewVersion" Content="Label" Grid.Column="1" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Padding="2,2,0,2" Height="20" Width="69"/>
+        <Label x:Name="Label_CurrentVersion" Content="Label" Grid.Column="1" HorizontalAlignment="Left" Margin="10,35,0,0" VerticalAlignment="Top" Padding="2,2,0,2" Height="20" Width="69"/>
+        <Label Content="Direct download URL:" HorizontalAlignment="Left" Margin="10,85,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="118" />
+        <TextBlock Margin="10,60,0,0" Grid.Column="1" Padding="2,2,0,2" HorizontalAlignment="Left" VerticalAlignment="Top" Height="20" Width="40">           
+            <Hyperlink x:Name="HyperLink_URL" RequestNavigate="HyperLink_URL_RequestNavigate">Github</Hyperlink>
+        </TextBlock>
+        <TextBlock Margin="10,84,0,0" Grid.Column="1" Padding="2,2,0,2" HorizontalAlignment="Left" VerticalAlignment="Top" Height="20" Width="40">           
+            <Hyperlink x:Name="HyperLink_URL_Direct" RequestNavigate="HyperLink_URL_RequestNavigate">Github</Hyperlink>
+        </TextBlock>
+        <TextBox x:Name="TextBox_PatchNotes" HorizontalAlignment="Center" Height="136" Margin="10" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Center" Width="414" Grid.ColumnSpan="2" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
+    </Grid>
+</Window>
