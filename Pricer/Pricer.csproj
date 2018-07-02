@@ -63,6 +63,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="League\Deserializers.cs" />
+    <Compile Include="League\LeagueManager.cs" />
+    <Compile Include="League\ManualLeagueWindow.xaml.cs">
+      <DependentUpon>ManualLeagueWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Settings.cs" />
     <Compile Include="SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
@@ -73,6 +78,10 @@
     </Compile>
     <Compile Include="Utility\Deserializers.cs" />
     <Compile Include="Utility\MiscMethods.cs" />
+    <Page Include="League\ManualLeagueWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

@@ -18,7 +18,7 @@ namespace Pricer {
         }
 
         /// <summary>
-        ///  Get latest release and show updater window if version is newer
+        /// Get latest release and show updater window if version is newer
         /// </summary>
         public void Run() {
             // Can't be null when making calls to github

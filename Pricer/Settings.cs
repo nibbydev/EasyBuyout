@@ -8,8 +8,11 @@ namespace Pricer {
     public static class Settings {
         public static readonly string[] sourceList = { "Poe.ninja", "Poe-stats.com" };
         public const string programTitle = "PoE EasyBuyout";
-        public const string programVersion = "v1.0.21";
+        public const string programVersion = "v1.0.22";
         public const string activeWindowTitle = "Path of Exile";
+
+        // League manager
+        public const string poeLeagueAPI = "https://www.pathofexile.com/api/trade/data/leagues";
 
         // Updater
         public const string githubReleaseAPI = "https://api.github.com/repos/siegrest/Pricer/releases";
@@ -28,7 +31,6 @@ namespace Pricer {
 
         public static string prefix = "~b/o";
         public static int lowerPricePercentage; // ?? needed ??
-        public static string league;
         public static string source;
 
         public static readonly string[] poeNinjaKeys = {

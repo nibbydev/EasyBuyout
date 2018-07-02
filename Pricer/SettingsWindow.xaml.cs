@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Pricer.League;
+using System;
 using System.Net;
 using System.Threading.Tasks;
 using System.Windows;
@@ -10,9 +11,11 @@ namespace Pricer {
     /// </summary>
     public partial class SettingsWindow : Window {
         private readonly MainWindow main;
+        private readonly LeagueManager leagueManager;
 
-        public SettingsWindow(MainWindow main) {
+        public SettingsWindow(MainWindow main, LeagueManager leagueManager) {
             this.main = main;
+            this.leagueManager = leagueManager;
 
             InitializeComponent();
 
@@ -29,26 +32,21 @@ namespace Pricer {
         /// Gets active leagues and adds them to controls
         /// </summary>
         public void AddLeagues() {
-            MainWindow.Log("Updating league list...", 0);
-            string[] leagues = Utility.MiscMethods.GetLeagueList(main.GetWebClient());
-
-            if (leagues == null) {
-                MainWindow.Log("Unable to update leagues", 3);
-                return;
-            }
-
             Dispatcher.Invoke(() => {
-                foreach (string league in leagues) {
-                    ComboBox_League.Items.Add(league);
+                if (leagueManager.GetLeagues() == null) {
+                    ComboBox_League.Items.Add(leagueManager.GetSelectedLeague());
+                    ComboBox_League.IsEnabled = false;
+                } else {
+                    foreach (string league in leagueManager.GetLeagues()) {
+                        ComboBox_League.Items.Add(league);
+                    }
                 }
 
                 ComboBox_League.SelectedIndex = 0;
-                Settings.league = ComboBox_League.SelectedValue.ToString();
+                leagueManager.SetSelectedLeague(ComboBox_League.SelectedValue.ToString());
 
                 Button_Download.IsEnabled = true;
             });
-
-            MainWindow.Log("League list updated", 0);
         }
 
         /// <summary>
@@ -56,7 +54,7 @@ namespace Pricer {
         /// </summary>
         private void ResetOptions() {
             // Reset dropdown boxes
-            ComboBox_League.SelectedValue = Settings.league;
+            ComboBox_League.SelectedValue = leagueManager.GetSelectedLeague();
             ComboBox_Source.SelectedValue = Settings.source;
 
             // Reset text fields
@@ -155,11 +153,11 @@ namespace Pricer {
         /// </summary>
         private void Button_Download_Click(object sender, RoutedEventArgs e) {
             Settings.source = (string)ComboBox_Source.SelectedValue;
-            Settings.league = (string)ComboBox_League.SelectedValue;
+            leagueManager.SetSelectedLeague((string)ComboBox_League.SelectedValue);
 
             Button_Download.IsEnabled = false;
 
-            MainWindow.Log("Downloading data for " + Settings.league +  " from " + Settings.source, 0);
+            MainWindow.Log("Downloading data for " + leagueManager.GetSelectedLeague() +  " from " + Settings.source, 0);
 
             Task.Run(() => {
                 // Download and format price data

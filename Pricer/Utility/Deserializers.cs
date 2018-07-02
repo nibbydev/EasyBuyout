@@ -59,13 +59,6 @@ namespace Pricer.Utility {
         public double max { get; set; }
     }
 
-    /// <summary>
-    /// Deserializer for https://www.pathofexile.com/api/trade/data/leagues
-    /// </summary>
-    public sealed class LeagueList {
-        public List<Dictionary<string, string>> result { get; set; }
-    }
-
     //-----------------------------------------------------------------------------------------------------------
     // Eye-candy for pretty code
     //-----------------------------------------------------------------------------------------------------------
