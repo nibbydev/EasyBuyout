@@ -6,11 +6,17 @@ using System.Threading.Tasks;
 
 namespace Pricer {
     public static class Settings {
-        public static readonly string[] sourceList = { "Poe-stats.com", "Poe.ninja" };
-        public const string programTitle = "Item pricer";
-        public const string programVersion = "v1.0.20";
+        public static readonly string[] sourceList = { "Poe.ninja", "Poe-stats.com" };
+        public const string programTitle = "PoE EasyBuyout";
+        public const string programVersion = "v1.0.22";
         public const string activeWindowTitle = "Path of Exile";
-        public const string programReleaseAPI = "https://api.github.com/repos/siegrest/Pricer/releases";
+
+        // League manager
+        public const string poeLeagueAPI = "https://www.pathofexile.com/api/trade/data/leagues";
+
+        // Updater
+        public const string githubReleaseAPI = "https://api.github.com/repos/siegrest/Pricer/releases";
+        public const bool flag_updaterEnabled = true; // Set to false to disable updater
 
         // Situational flags
         public static volatile bool flag_clipBoardPaste = false;
@@ -25,7 +31,6 @@ namespace Pricer {
 
         public static string prefix = "~b/o";
         public static int lowerPricePercentage; // ?? needed ??
-        public static string league;
         public static string source;
 
         public static readonly string[] poeNinjaKeys = {

@@ -14,7 +14,7 @@
         </Grid.ColumnDefinitions>
         <Button x:Name="Button_Apply" Content="Apply" HorizontalAlignment="Left" Margin="128,220,0,0" VerticalAlignment="Top" Width="75" Click="Button_Apply_Click" Height="20" Grid.Column="2"/>
         <Button x:Name="Button_Cancel" Content="Cancel" HorizontalAlignment="Left" Margin="13,220,0,0" VerticalAlignment="Top" Width="75" Click="Button_Cancel_Click" Height="20" Grid.Column="2"/>
-        <GroupBox Header="Database download" HorizontalAlignment="Left" Height="230" Margin="10,10,0,0" VerticalAlignment="Top" Width="190">
+        <GroupBox Header="Data download" HorizontalAlignment="Left" Height="230" Margin="10,10,0,0" VerticalAlignment="Top" Width="190">
             <Grid>
                 <ComboBox x:Name="ComboBox_League" HorizontalAlignment="Left" Margin="12,30,0,0" VerticalAlignment="Top" Width="150" Height="22" ToolTip="Current active league"/>
                 <ComboBox x:Name="ComboBox_Source" HorizontalAlignment="Left" Margin="12,77,0,0" VerticalAlignment="Top" Width="150" SelectionChanged="ComboBox_Source_SelectionChanged" Height="22" ToolTip="API from which to download price data"/>

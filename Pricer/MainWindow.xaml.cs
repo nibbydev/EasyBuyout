@@ -1,4 +1,5 @@
 ﻿using Pricer.hooks;
+using Pricer.League;
 using Pricer.Utility;
 using System;
 using System.Net;
@@ -19,6 +20,8 @@ namespace Pricer {
         private readonly PriceManager priceManager;
         private readonly Button runButton;
         private readonly UpdateWindow updateWindow;
+        private readonly LeagueManager leagueManager;
+        
 
         private static TextBox console;
 
@@ -28,7 +31,8 @@ namespace Pricer {
         public MainWindow() {
             // Initialize objects
             webClient = new WebClient() { Encoding = System.Text.Encoding.UTF8 };
-            priceManager = new PriceManager(webClient);
+            leagueManager = new LeagueManager(webClient);
+            priceManager = new PriceManager(webClient, leagueManager);
 
             // Define eventhandlers
             ClipboardNotification.ClipboardUpdate += new EventHandler(Event_clipboard);
@@ -41,20 +45,22 @@ namespace Pricer {
             console = console_window;
             runButton = Button_Run;
             priceBox = new PriceBox();
-            settingsWindow = new SettingsWindow(this);
+            settingsWindow = new SettingsWindow(this, leagueManager);
             updateWindow = new UpdateWindow(webClient);
 
             priceManager.SetProgressBar(settingsWindow.ProgressBar_Progress);
 
             // Set window title
-            Title = Settings.programTitle + " (" + Settings.programVersion + ")";
-            Log(Settings.programTitle + " (" + Settings.programVersion + ")" + " by Siegrest", 0);
+            Title = Settings.programTitle + " " + Settings.programVersion;
+            Log(Settings.programTitle + " " + Settings.programVersion + " by Siegrest", 0);
 
             Task.Run(() => {
                 // Get list of active leagues from official API
+                leagueManager.Run();
+                // Add those leagues to settings window
                 settingsWindow.AddLeagues();
                 // Check for updates now that we finished using the webclient
-                updateWindow.Run();
+                if (Settings.flag_updaterEnabled) updateWindow.Run();
             });
         }
 
