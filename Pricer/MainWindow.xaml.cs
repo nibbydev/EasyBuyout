@@ -54,7 +54,7 @@ namespace Pricer {
                 // Get list of active leagues from official API
                 settingsWindow.AddLeagues();
                 // Check for updates now that we finished using the webclient
-                updateWindow.Run();
+                if (Settings.flag_updaterEnabled) updateWindow.Run();
             });
         }
 

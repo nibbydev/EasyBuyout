@@ -66,22 +66,6 @@ namespace Pricer.Utility {
         public List<Dictionary<string, string>> result { get; set; }
     }
 
-    /// <summary>
-    /// Deserializer for Github's latest release API
-    /// </summary>
-    public sealed class ReleaseObject {
-        public sealed class AssetObject {
-            public string name { get; set; }
-            public string size { get; set; }
-            public string browser_download_url { get; set; }
-        }
-
-        public string html_url { get; set; }
-        public string tag_name { get; set; }
-        public string name { get; set; }
-        public List<AssetObject> assets { get; set; }
-    }
-
     //-----------------------------------------------------------------------------------------------------------
     // Eye-candy for pretty code
     //-----------------------------------------------------------------------------------------------------------
