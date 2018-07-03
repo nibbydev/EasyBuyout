@@ -13,7 +13,7 @@
         </Grid.RowDefinitions>
         <TextBox x:Name="TextBox_League" HorizontalAlignment="Left" Height="23" Margin="10,12,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="194" Grid.Row="1" VerticalContentAlignment="Center" Text="Standard"/>
         <Button x:Name="Button_Apply" Content="Apply" HorizontalAlignment="Right" VerticalAlignment="Top" Width="75" Margin="0,12,10,0" Height="23" Grid.Row="1" Click="Button_Apply_Click"/>
-        <TextBox HorizontalAlignment="Center" Height="74" Margin="10,10,10,0" TextWrapping="Wrap" Text="Manually specify league name (case sensitive) in box below." VerticalAlignment="Top" Width="274"/>
+        <TextBox HorizontalAlignment="Center" Height="74" Margin="10,10,10,0" TextWrapping="Wrap" Text="Manually specify league name (case sensitive) in box below." VerticalAlignment="Top" Width="274" IsReadOnly="True"/>
 
     </Grid>
 </Window>
