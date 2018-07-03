@@ -38,14 +38,13 @@ namespace EasyBuyout {
         /// </summary>
         public void AddLeagues() {
             Dispatcher.Invoke(() => {
-                if (leagueManager.GetLeagues() == null) {
-                    ComboBox_League.Items.Add(leagueManager.GetSelectedLeague());
-                    ComboBox_League.IsEnabled = false;
-                } else {
+                if (leagueManager.GetLeagues() != null) {
                     foreach (string league in leagueManager.GetLeagues()) {
                         ComboBox_League.Items.Add(league);
                     }
                 }
+
+                ComboBox_League.Items.Add(Settings.manualLeagueDisplay);
 
                 ComboBox_League.SelectedIndex = 0;
                 leagueManager.SetSelectedLeague(ComboBox_League.SelectedValue.ToString());
@@ -156,23 +155,30 @@ namespace EasyBuyout {
         }
 
         /// <summary>
-        /// Runs database download task
+        /// Download price data on button press
         /// </summary>
         private void Button_Download_Click(object sender, RoutedEventArgs e) {
-            Settings.source = (string)ComboBox_Source.SelectedValue;
-            leagueManager.SetSelectedLeague((string)ComboBox_League.SelectedValue);
-
             Button_Download.IsEnabled = false;
 
-            MainWindow.Log("Downloading data for " + leagueManager.GetSelectedLeague() +  " from " + Settings.source, 0);
+            string source = (string)ComboBox_Source.SelectedValue;
+            string league = (string)ComboBox_League.SelectedValue;
+
+            if (league == Settings.manualLeagueDisplay) {
+                leagueManager.DisplayManualInputWindow();
+                league = leagueManager.GetSelectedLeague();
+            }
+
+            leagueManager.SetSelectedLeague(league);
 
             Task.Run(() => {
+                MainWindow.Log("Downloading data for " + league + " from " + source, 0);
+
                 // Download and format price data
-                main.GetPriceManager().Download();
+                main.GetPriceManager().Download(source, league);
+
                 // Enable run button on MainWindow
                 Application.Current.Dispatcher.Invoke(() => {
                     main.Button_Run.IsEnabled = true;
-                    // Re-enable the button so user knows dl finished
                     Button_Download.IsEnabled = true;
                 });
 

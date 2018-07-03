@@ -8,11 +8,12 @@ namespace EasyBuyout {
     public static class Settings {
         public static readonly string[] sourceList = { "Poe.ninja", "Poe-stats.com" };
         public const string programTitle = "EasyBuyout";
-        public const string programVersion = "v1.0.22.4";
+        public const string programVersion = "v1.0.23.0";
         public const string activeWindowTitle = "Path of Exile";
 
         // League manager
         public const string poeLeagueAPI = "https://www.pathofexile.com/api/trade/data/leagues";
+        public const string manualLeagueDisplay = "<Manually specify>";
 
         // Updater
         public const string githubReleaseAPI = "https://api.github.com/repos/siegrest/Pricer/releases";
