@@ -46,6 +46,7 @@
                 <TextBox x:Name="TextBox_LowerPrice" HorizontalAlignment="Left" Height="23" Margin="97,10,0,0" Text="0" VerticalAlignment="Top" Width="29" ToolTip="How much % of the price should be reduced?" AllowDrop="False" VerticalScrollBarVisibility="Disabled"/>
                 <Label Content="%" HorizontalAlignment="Left" Margin="126,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="15"/>
                 <CheckBox x:Name="CheckBox_RunOnRightClick" Content="Run on right click" HorizontalAlignment="Left" Margin="10,58,0,0" VerticalAlignment="Top" Height="15" Width="116" ToolTip="If this is disabled, use Ctrl+C to use the tool" IsChecked="True"/>
+                <CheckBox x:Name="CheckBox_IncludeEnchant" Content="Include Enchantment" HorizontalAlignment="Left" Margin="10,78,0,0" VerticalAlignment="Top" ToolTip="Includes the price of the enchantment in the buyout note (warning: may be incredibly inaccurate)"/>
             </Grid>
         </GroupBox>
 

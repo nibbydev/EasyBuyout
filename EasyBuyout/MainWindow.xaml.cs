@@ -144,8 +144,10 @@ namespace EasyBuyout {
 
             // Form enchantEntry's displaystring
             string enchantDisplay = "";
-            if (enchantEntry != null && enchantEntry.value > 0) {
-                enchantDisplay += "\nEnchant: "+ enchantEntry.value +"c";
+            if (Settings.flag_includeEnchantment) {
+                if (enchantEntry != null && enchantEntry.value > 0) {
+                    enchantDisplay += "\nEnchant: " + enchantEntry.value + "c";
+                }
             }
 
             // If there were no matches
@@ -214,13 +216,20 @@ namespace EasyBuyout {
             double oldPrice = Math.Ceiling(itemEntry.value * 2) / 2.0;
             double newPrice = Math.Ceiling(itemEntry.value * (100 - Settings.lowerPricePercentage) / 100.0 * 2) / 2.0;
 
+            if (Settings.flag_includeEnchantment) {
+                if (enchantEntry != null && enchantEntry.value > 0) {
+                    oldPrice += Math.Ceiling(enchantEntry.value * 2) / 2.0;
+                    newPrice += Math.Ceiling(enchantEntry.value * (100 - Settings.lowerPricePercentage) / 100.0 * 2) / 2.0;
+                }
+            }
+
             string note = priceManager.MakeNote(newPrice);
 
             // If the LowerPriceByPercentage slider is more than 0, change output message
-            if (Settings.lowerPricePercentage == 0) {
-                Log(item.key + ": " + oldPrice + "c", 0);
-            } else {
+            if (Settings.lowerPricePercentage > 0) {
                 Log(item.key + ": " + oldPrice + "c -> " + newPrice + "c", 0);
+            } else {
+                Log(item.key + ": " + oldPrice + "c", 0);
             }
 
             if (Settings.flag_showOverlay) {

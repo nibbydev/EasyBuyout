@@ -13,6 +13,11 @@ namespace EasyBuyout {
         private readonly MainWindow main;
         private readonly LeagueManager leagueManager;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="main"></param>
+        /// <param name="leagueManager"></param>
         public SettingsWindow(MainWindow main, LeagueManager leagueManager) {
             this.main = main;
             this.leagueManager = leagueManager;
@@ -61,12 +66,13 @@ namespace EasyBuyout {
             TextBox_Delay.Text = Settings.pasteDelay.ToString();
             TextBox_LowerPrice.Text = Settings.lowerPricePercentage.ToString();
 
-            // Reset checkboxe states
+            // Reset checkbox states
             CheckBox_Fallback.IsChecked = Settings.flag_fallback;
             CheckBox_SendEnter.IsChecked = Settings.flag_sendEnter;
             CheckBox_SendNote.IsChecked = Settings.flag_sendNote;
             CheckBox_ShowOverlay.IsChecked = Settings.flag_showOverlay;
             CheckBox_RunOnRightClick.IsChecked = Settings.flag_runOnRightClick;
+            CheckBox_IncludeEnchant.IsChecked = Settings.flag_includeEnchantment;
 
             // Reset ~b/o radio states
             bool tempCheck1 = Settings.prefix == (string)Radio_Buyout.Content;
@@ -133,6 +139,7 @@ namespace EasyBuyout {
             Settings.flag_sendEnter = (bool)CheckBox_SendEnter.IsChecked;
             Settings.flag_sendNote = (bool)CheckBox_SendNote.IsChecked;
             Settings.flag_runOnRightClick = (bool)CheckBox_RunOnRightClick.IsChecked;
+            Settings.flag_includeEnchantment = (bool)CheckBox_IncludeEnchant.IsChecked;
 
             // Radio buttons
             if ((bool)Radio_Buyout.IsChecked) Settings.prefix = Radio_Buyout.Content.ToString();

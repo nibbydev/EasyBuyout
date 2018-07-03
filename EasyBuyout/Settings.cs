@@ -27,6 +27,7 @@ namespace EasyBuyout {
         public static volatile bool flag_fallback = true;
         public static volatile bool flag_showOverlay = false;
         public static volatile bool flag_runOnRightClick = true;
+        public static volatile bool flag_includeEnchantment = false;
         public static int pasteDelay = 120;
 
         public static string prefix = "~b/o";
