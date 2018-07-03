@@ -8,7 +8,7 @@ namespace EasyBuyout {
     public static class Settings {
         public static readonly string[] sourceList = { "Poe.ninja", "Poe-stats.com" };
         public const string programTitle = "EasyBuyout";
-        public const string programVersion = "v1.0.22.3";
+        public const string programVersion = "v1.0.22.4";
         public const string activeWindowTitle = "Path of Exile";
 
         // League manager

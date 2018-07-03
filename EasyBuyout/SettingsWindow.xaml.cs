@@ -69,8 +69,8 @@ namespace EasyBuyout {
             // Reset checkbox states
             CheckBox_Fallback.IsChecked = Settings.flag_fallback;
             CheckBox_SendEnter.IsChecked = Settings.flag_sendEnter;
-            CheckBox_SendNote.IsChecked = Settings.flag_sendNote;
-            CheckBox_ShowOverlay.IsChecked = Settings.flag_showOverlay;
+            Radio_SendNote.IsChecked = Settings.flag_sendNote;
+            Radio_ShowOverlay.IsChecked = Settings.flag_showOverlay;
             CheckBox_RunOnRightClick.IsChecked = Settings.flag_runOnRightClick;
             CheckBox_IncludeEnchant.IsChecked = Settings.flag_includeEnchantment;
 
@@ -134,10 +134,10 @@ namespace EasyBuyout {
             }
 
             // Checkboxes
-            Settings.flag_showOverlay = (bool)CheckBox_ShowOverlay.IsChecked;
+            Settings.flag_showOverlay = (bool)Radio_ShowOverlay.IsChecked;
             Settings.flag_fallback = (bool)CheckBox_Fallback.IsChecked;
             Settings.flag_sendEnter = (bool)CheckBox_SendEnter.IsChecked;
-            Settings.flag_sendNote = (bool)CheckBox_SendNote.IsChecked;
+            Settings.flag_sendNote = (bool)Radio_SendNote.IsChecked;
             Settings.flag_runOnRightClick = (bool)CheckBox_RunOnRightClick.IsChecked;
             Settings.flag_includeEnchantment = (bool)CheckBox_IncludeEnchant.IsChecked;
 
@@ -181,11 +181,17 @@ namespace EasyBuyout {
         }
 
         /// <summary>
+        /// Cancel button handler
+        /// </summary>
+        private void Button_Cancel_Click(object sender, RoutedEventArgs e) {
+            ResetOptions();
+            Hide();
+        }
+
+        /// <summary>
         /// Enables/disables other controls based on checkbox
         /// </summary>
-        private void CheckBox_ShowOverlay_Click(object sender, RoutedEventArgs e) {
-            CheckBox_SendNote.IsChecked = false;
-
+        private void Radio_ShowOverlay_Click(object sender, RoutedEventArgs e) {
             CheckBox_SendEnter.IsEnabled = false;
             Radio_Buyout.IsEnabled = false;
             Radio_Price.IsEnabled = false;
@@ -195,21 +201,11 @@ namespace EasyBuyout {
         /// <summary>
         /// Enables/disables other controls based on checkbox
         /// </summary>
-        private void CheckBox_SendNote_Click(object sender, RoutedEventArgs e) {
-            CheckBox_ShowOverlay.IsChecked = false;
-
-            CheckBox_SendEnter.IsEnabled = (bool)CheckBox_SendNote.IsChecked;
-            Radio_Buyout.IsEnabled = (bool)CheckBox_SendNote.IsChecked;
-            Radio_Price.IsEnabled = (bool)CheckBox_SendNote.IsChecked;
-            TextBox_Delay.IsEnabled = (bool)CheckBox_SendNote.IsChecked;
-        }
-
-        /// <summary>
-        /// Cancel button handler
-        /// </summary>
-        private void Button_Cancel_Click(object sender, RoutedEventArgs e) {
-            ResetOptions();
-            Hide();
+        private void Radio_SendNote_Click(object sender, RoutedEventArgs e) {
+            CheckBox_SendEnter.IsEnabled = (bool)Radio_SendNote.IsChecked;
+            Radio_Buyout.IsEnabled = (bool)Radio_SendNote.IsChecked;
+            Radio_Price.IsEnabled = (bool)Radio_SendNote.IsChecked;
+            TextBox_Delay.IsEnabled = (bool)Radio_SendNote.IsChecked;
         }
     }
 }
