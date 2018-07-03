@@ -23,6 +23,9 @@ namespace EasyBuyout {
         private readonly Button runButton;
         private static TextBox console;
 
+        private volatile bool flag_clipBoardPaste = false;
+        private volatile bool flag_run = false;
+
         /// <summary>
         /// Initializes the form and sets event listeners
         /// </summary>
@@ -72,7 +75,7 @@ namespace EasyBuyout {
         /// <param name="e"></param>
         private void Event_mouse(object sender, EventArgs e) {
             // Do not run if user has not pressed run button
-            if (!Settings.flag_run || !Settings.flag_runOnRightClick) return;
+            if (!flag_run || !settingsWindow.IsRunOnRightClick()) return;
             // Only run if "Path of Exile" is the main focused window
             if (WindowDiscovery.GetActiveWindowTitle() != Settings.activeWindowTitle) return;
 
@@ -85,7 +88,7 @@ namespace EasyBuyout {
         /// </summary>
         private void Event_clipboard(object sender, EventArgs e) {
             // Do not run if user has not pressed run button
-            if (!Settings.flag_run && !Settings.flag_runOnRightClick) return;
+            if (!flag_run && !settingsWindow.IsRunOnRightClick()) return;
             // Only run if "Path of Exile" is the main focused window
             if (WindowDiscovery.GetActiveWindowTitle() != Settings.activeWindowTitle) return;
             // At this point there should be text in the clipboard
@@ -144,7 +147,7 @@ namespace EasyBuyout {
 
             // Form enchantEntry's displaystring
             string enchantDisplay = "";
-            if (Settings.flag_includeEnchantment) {
+            if (settingsWindow.IsIncludeEnchant()) {
                 if (enchantEntry != null && enchantEntry.value > 0) {
                     enchantDisplay += "\nEnchant: " + enchantEntry.value + "c";
                 }
@@ -153,11 +156,11 @@ namespace EasyBuyout {
             // If there were no matches
             if (itemEntry == null) {
                 // If user had enabled poeprices fallback
-                if (Settings.flag_fallback) {
+                if (settingsWindow.IsFallBack()) {
                     Log("No database entry found. Feeding item to PoePrices...", 0);
 
                     // If pricebox was enabled, display "Searching..." in it until a price is found
-                    if (Settings.flag_showOverlay) {
+                    if (settingsWindow.IsShowOverlay()) {
                         priceManager.DisplayPriceBox("Searching...");
                     }
 
@@ -166,7 +169,7 @@ namespace EasyBuyout {
             }
 
             // Display error
-            if (itemEntry == null && Settings.flag_showOverlay) {
+            if (itemEntry == null && settingsWindow.IsShowOverlay()) {
                 priceManager.DisplayPriceBox("Item: No match..." + enchantDisplay);
                 return;
             }
@@ -199,7 +202,7 @@ namespace EasyBuyout {
                 Log(errorMessage, 2);
 
                 // If pricebox was enabled, display error in it
-                if (Settings.flag_showOverlay) {
+                if (settingsWindow.IsShowOverlay()) {
                     priceManager.DisplayPriceBox(errorMessage);
                 }
 
@@ -207,32 +210,32 @@ namespace EasyBuyout {
             }
 
             // Send a warning message when count is less than 10 as these items probably have inaccurate prices
-            if (itemEntry.quantity < 5 && !Settings.source.Equals("poe.ninja") && item.GetFrame() != 5) {
+            if (itemEntry.quantity < 5 && !settingsWindow.GetSelectedSource().ToLower().Equals("poe.ninja") && item.GetFrame() != 5) {
                 System.Media.SystemSounds.Asterisk.Play();
                 Log("Likely incorrect price (quantity: " + itemEntry.quantity + ")", 1);
             }
 
             // Calculate prices
             double oldPrice = Math.Ceiling(itemEntry.value * 2) / 2.0;
-            double newPrice = Math.Ceiling(itemEntry.value * (100 - Settings.lowerPricePercentage) / 100.0 * 2) / 2.0;
+            double newPrice = Math.Ceiling(itemEntry.value * (100 - settingsWindow.GetLowerPricePercentage()) / 100.0 * 2) / 2.0;
 
-            if (Settings.flag_includeEnchantment) {
+            if (settingsWindow.IsIncludeEnchant()) {
                 if (enchantEntry != null && enchantEntry.value > 0) {
                     oldPrice += Math.Ceiling(enchantEntry.value * 2) / 2.0;
-                    newPrice += Math.Ceiling(enchantEntry.value * (100 - Settings.lowerPricePercentage) / 100.0 * 2) / 2.0;
+                    newPrice += Math.Ceiling(enchantEntry.value * (100 - settingsWindow.GetLowerPricePercentage()) / 100.0 * 2) / 2.0;
                 }
             }
 
             string note = priceManager.MakeNote(newPrice);
 
             // If the LowerPriceByPercentage slider is more than 0, change output message
-            if (Settings.lowerPricePercentage > 0) {
+            if (settingsWindow.GetLowerPricePercentage() > 0) {
                 Log(item.key + ": " + oldPrice + "c -> " + newPrice + "c", 0);
             } else {
                 Log(item.key + ": " + oldPrice + "c", 0);
             }
 
-            if (Settings.flag_showOverlay) {
+            if (settingsWindow.IsShowOverlay()) {
                 priceManager.DisplayPriceBox("Item: " + newPrice + "c" + enchantDisplay);
                 return;
             }
@@ -244,26 +247,25 @@ namespace EasyBuyout {
             }
 
             // Raise flag allowing next cb event to be processed
-            Settings.flag_clipBoardPaste = true;
-            if (Settings.flag_sendNote) Dispatcher.Invoke(() => Clipboard.SetText(note));
+            flag_clipBoardPaste = true;
+            if (settingsWindow.IsSendNote()) Dispatcher.Invoke(() => Clipboard.SetText(note));
         }
 
         /// <summary>
         /// Called via task, this method pastes the current clipboard contents and presses enter
         /// </summary>
         private void ClipBoard_NotePasteTask() {
-            if (Settings.flag_clipBoardPaste)
-                Settings.flag_clipBoardPaste = false;
-            else
-                return;
+            if (flag_clipBoardPaste) {
+                flag_clipBoardPaste = false;
+            } else return;
 
-            Thread.Sleep(Settings.pasteDelay);
+            Thread.Sleep(settingsWindow.GetPasteDelay());
 
             // Paste clipboard contents
             System.Windows.Forms.SendKeys.SendWait("^v");
 
             // Send enter key if checkbox is checked
-            if (Settings.flag_sendEnter) System.Windows.Forms.SendKeys.SendWait("{ENTER}");
+            if (settingsWindow.IsSendEnter()) System.Windows.Forms.SendKeys.SendWait("{ENTER}");
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -277,8 +279,6 @@ namespace EasyBuyout {
         /// <param name="e"></param>
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
             MouseHook.Stop();
-
-            // Close app
             Application.Current.Shutdown();
         }
 
@@ -288,12 +288,12 @@ namespace EasyBuyout {
         private void Button_Run_Click(object sender, RoutedEventArgs e) {
             if (Button_Run.Content.ToString() == "Run") {
                 Button_Run.Content = "Pause";
-                Settings.flag_run = true;
+                flag_run = true;
                 Log("Service started", 0);
                 MouseHook.Start();
             } else {
                 Button_Run.Content = "Run";
-                Settings.flag_run = false;
+                flag_run = false;
                 Log("Service paused", 0);
             }
         }
@@ -305,6 +305,8 @@ namespace EasyBuyout {
             settingsWindow.Left = Left + Width / 2 - settingsWindow.Width / 2;
             settingsWindow.Top = Top + Height / 2 - settingsWindow.Height / 2;
             settingsWindow.ShowDialog();
+
+            priceManager.SetNotePrefix(settingsWindow.GetNotePrefix());
         }
 
         /// <summary>

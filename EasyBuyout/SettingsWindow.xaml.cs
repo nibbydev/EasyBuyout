@@ -13,6 +13,17 @@ namespace EasyBuyout {
         private readonly MainWindow main;
         private readonly LeagueManager leagueManager;
 
+        private string notePrefix = "~b/o";
+        private string selectedSource;
+        private int lowerPricePercentage = 0;
+        private int pasteDelay = 120;
+        private bool flag_sendNote = true;
+        private bool flag_sendEnter = true;
+        private bool flag_fallback = true;
+        private bool flag_showOverlay = false;
+        private bool flag_runOnRightClick = true;
+        private bool flag_includeEnchantment = false;
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -26,7 +37,7 @@ namespace EasyBuyout {
 
             foreach (string source in Settings.sourceList) ComboBox_Source.Items.Add(source);
             ComboBox_Source.SelectedIndex = 0;
-            Settings.source = Settings.sourceList[0];
+            selectedSource = Settings.sourceList[0];
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -59,30 +70,30 @@ namespace EasyBuyout {
         private void ResetOptions() {
             // Reset dropdown boxes
             ComboBox_League.SelectedValue = leagueManager.GetSelectedLeague();
-            ComboBox_Source.SelectedValue = Settings.source;
+            ComboBox_Source.SelectedValue = selectedSource;
 
             // Reset text fields
-            TextBox_Delay.Text = Settings.pasteDelay.ToString();
-            TextBox_LowerPrice.Text = Settings.lowerPricePercentage.ToString();
+            TextBox_Delay.Text = pasteDelay.ToString();
+            TextBox_LowerPrice.Text = lowerPricePercentage.ToString();
 
             // Reset checkbox states
-            CheckBox_Fallback.IsChecked = Settings.flag_fallback;
-            CheckBox_SendEnter.IsChecked = Settings.flag_sendEnter;
-            Radio_SendNote.IsChecked = Settings.flag_sendNote;
-            Radio_ShowOverlay.IsChecked = Settings.flag_showOverlay;
-            CheckBox_RunOnRightClick.IsChecked = Settings.flag_runOnRightClick;
-            CheckBox_IncludeEnchant.IsChecked = Settings.flag_includeEnchantment;
+            CheckBox_Fallback.IsChecked = flag_fallback;
+            CheckBox_SendEnter.IsChecked = flag_sendEnter;
+            Radio_SendNote.IsChecked = flag_sendNote;
+            Radio_ShowOverlay.IsChecked = flag_showOverlay;
+            CheckBox_RunOnRightClick.IsChecked = flag_runOnRightClick;
+            CheckBox_IncludeEnchant.IsChecked = flag_includeEnchantment;
 
             // Reset ~b/o radio states
-            bool tempCheck1 = Settings.prefix == (string)Radio_Buyout.Content;
+            bool tempCheck1 = notePrefix == (string)Radio_Buyout.Content;
             Radio_Buyout.IsChecked = tempCheck1;
             Radio_Price.IsChecked = !tempCheck1;
 
             // Reset enabled states
-            CheckBox_SendEnter.IsEnabled = Settings.flag_sendNote;
-            Radio_Buyout.IsEnabled = Settings.flag_sendNote;
-            Radio_Price.IsEnabled = Settings.flag_sendNote;
-            TextBox_Delay.IsEnabled = Settings.flag_sendNote;
+            CheckBox_SendEnter.IsEnabled = flag_sendNote;
+            Radio_Buyout.IsEnabled = flag_sendNote;
+            Radio_Price.IsEnabled = flag_sendNote;
+            TextBox_Delay.IsEnabled = flag_sendNote;
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -102,47 +113,46 @@ namespace EasyBuyout {
         /// Verifies current settings and saves them
         /// </summary>
         private void Button_Apply_Click(object sender, RoutedEventArgs e) {
-            // Radio buttons
-            if ((bool)Radio_Buyout.IsChecked) Settings.prefix = "~b/o";
-            else Settings.prefix = "price";
-
             // Delay box
             int delay;
             Int32.TryParse(TextBox_Delay.Text, out delay);
-            if (delay != Settings.pasteDelay) {
+            if (delay != pasteDelay) {
                 if (delay < 1 || delay > 500) {
                     MainWindow.Log("Invalid input - delay (allowed: 1 - 500)", 2);
-                    TextBox_Delay.Text = Settings.pasteDelay.ToString();
+                    TextBox_Delay.Text = pasteDelay.ToString();
                 } else {
-                    MainWindow.Log("Changed delay " + Settings.pasteDelay + " -> " + delay, 0);
-                    Settings.pasteDelay = delay;
+                    MainWindow.Log("Changed delay " + pasteDelay + " -> " + delay, 0);
+                    pasteDelay = delay;
                 }
             }
 
             // Lower price % box
             int percentage;
             Int32.TryParse(TextBox_LowerPrice.Text, out percentage);
-            if (percentage != Settings.lowerPricePercentage) {
+            if (percentage != lowerPricePercentage) {
                 if (percentage < 0 || percentage > 100) {
                     MainWindow.Log("Invalid input - percentage (allowed: 0 - 100)", 2);
-                    TextBox_LowerPrice.Text = Settings.lowerPricePercentage.ToString();
+                    TextBox_LowerPrice.Text = lowerPricePercentage.ToString();
                 } else {
-                    MainWindow.Log("Changed percentage " + Settings.lowerPricePercentage + " -> " + percentage, 0);
-                    Settings.lowerPricePercentage = percentage;
+                    MainWindow.Log("Changed percentage " + lowerPricePercentage + " -> " + percentage, 0);
+                    lowerPricePercentage = percentage;
                 }
             }
 
             // Checkboxes
-            Settings.flag_showOverlay = (bool)Radio_ShowOverlay.IsChecked;
-            Settings.flag_fallback = (bool)CheckBox_Fallback.IsChecked;
-            Settings.flag_sendEnter = (bool)CheckBox_SendEnter.IsChecked;
-            Settings.flag_sendNote = (bool)Radio_SendNote.IsChecked;
-            Settings.flag_runOnRightClick = (bool)CheckBox_RunOnRightClick.IsChecked;
-            Settings.flag_includeEnchantment = (bool)CheckBox_IncludeEnchant.IsChecked;
+            flag_showOverlay = (bool)Radio_ShowOverlay.IsChecked;
+            flag_fallback = (bool)CheckBox_Fallback.IsChecked;
+            flag_sendEnter = (bool)CheckBox_SendEnter.IsChecked;
+            flag_sendNote = (bool)Radio_SendNote.IsChecked;
+            flag_runOnRightClick = (bool)CheckBox_RunOnRightClick.IsChecked;
+            flag_includeEnchantment = (bool)CheckBox_IncludeEnchant.IsChecked;
 
             // Radio buttons
-            if ((bool)Radio_Buyout.IsChecked) Settings.prefix = Radio_Buyout.Content.ToString();
-            else Settings.prefix = Radio_Price.Content.ToString();
+            if ((bool)Radio_Buyout.IsChecked) {
+                notePrefix = Radio_Buyout.Content.ToString();
+            } else {
+                notePrefix = Radio_Price.Content.ToString();
+            }
 
             Hide();
         }
@@ -212,6 +222,50 @@ namespace EasyBuyout {
             Radio_Buyout.IsEnabled = (bool)Radio_SendNote.IsChecked;
             Radio_Price.IsEnabled = (bool)Radio_SendNote.IsChecked;
             TextBox_Delay.IsEnabled = (bool)Radio_SendNote.IsChecked;
+        }
+
+        //-----------------------------------------------------------------------------------------------------------
+        // Getters and Setters
+        //-----------------------------------------------------------------------------------------------------------
+
+        public string GetNotePrefix() {
+            return notePrefix;
+        }
+
+        public string GetSelectedSource() {
+            return selectedSource;
+        }
+
+        public int GetLowerPricePercentage() {
+            return lowerPricePercentage;
+        }
+
+        public int GetPasteDelay() {
+            return pasteDelay;
+        }
+
+        public bool IsSendNote() {
+            return flag_sendNote;
+        }
+
+        public bool IsSendEnter() {
+            return flag_sendEnter;
+        }
+
+        public bool IsFallBack() {
+            return flag_fallback;
+        }
+
+        public bool IsShowOverlay() {
+            return flag_showOverlay;
+        }
+
+        public bool IsRunOnRightClick() {
+            return flag_runOnRightClick;
+        }
+
+        public bool IsIncludeEnchant() {
+            return flag_includeEnchantment;
         }
     }
 }

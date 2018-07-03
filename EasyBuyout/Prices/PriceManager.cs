@@ -18,6 +18,8 @@ namespace EasyBuyout.Prices {
         private readonly PriceBox priceBox;
         private readonly Dictionary<String, Entry> entryMap;
 
+        private string notePrefix;
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -392,7 +394,7 @@ namespace EasyBuyout.Prices {
         /// <returns>Formatted buyout note (e.g. "~b/o 53.2 chaos")</returns>
         public string MakeNote(double price) {
             // Replace "," with "." due to game limitations
-            return Settings.prefix + " " + price.ToString().Replace(',', '.') + " chaos";
+            return notePrefix + " " + price.ToString().Replace(',', '.') + " chaos";
         }
 
         /// <summary>
@@ -455,6 +457,14 @@ namespace EasyBuyout.Prices {
                 priceBox.SetPosition();
                 priceBox.Show();
             });
+        }
+
+        //-----------------------------------------------------------------------------------------------------------
+        // Getters and Setters
+        //-----------------------------------------------------------------------------------------------------------
+
+        public void SetNotePrefix(string prefix) {
+            notePrefix = prefix;
         }
     }
 }
