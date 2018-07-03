@@ -18,6 +18,8 @@ namespace EasyBuyout.Prices {
         private readonly PriceBox priceBox;
         private readonly Dictionary<String, Entry> entryMap;
 
+        private string notePrefix;
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -40,13 +42,13 @@ namespace EasyBuyout.Prices {
         /// <summary>
         /// Picks download source depending on source selection
         /// </summary>
-        public void Download() {
-            switch (Settings.source.ToLower()) {
+        public void Download(string source, string league) {
+            switch (source.ToLower()) {
                 case "poe.ninja":
-                    DownloadPoeNinjaData();
+                    DownloadPoeNinjaData(league);
                     break;
                 case "poe-stats.com":
-                    DownloadPoeStatsData();
+                    DownloadPoeStatsData(league);
                     break;
                 default:
                     return;
@@ -56,22 +58,22 @@ namespace EasyBuyout.Prices {
         /// <summary>
         /// Download data from http://poe-stats.com and populate price dict
         /// </summary>
-        private void DownloadPoeStatsData() {
+        private void DownloadPoeStatsData(string league) {
             ConfigureProgressBar(Settings.poeStatsKeys.Length);
             entryMap.Clear();
 
             foreach (string category in Settings.poeStatsKeys) {
-                MainWindow.Log("[PS] Downloading: " + category + " for " + leagueManager.GetSelectedLeague(), 0);
+                MainWindow.Log("[PS] Downloading: " + category + " for " + league, 0);
 
                 try {
-                    string url = "http://api.poe-stats.com/get?league=" + leagueManager.GetSelectedLeague() + "&category=" + category;
+                    string url = "http://api.poe-stats.com/get?league=" + league + "&category=" + category;
                     string jsonString = webClient.DownloadString(url);
 
                     // Deserialize
                     List<PoeStatsEntry> poeStatsEntryList = javaScriptSerializer.Deserialize<List<PoeStatsEntry>>(jsonString);
 
                     if (poeStatsEntryList == null) {
-                        MainWindow.Log("[PS][" + leagueManager.GetSelectedLeague() + "] Reply was null: " + category, 0);
+                        MainWindow.Log("[PS][" + league + "] Reply was null: " + category, 0);
                         return;
                     }
 
@@ -83,7 +85,7 @@ namespace EasyBuyout.Prices {
                         };
 
                         if (entryMap.ContainsKey(statsEntry.key)) {
-                            MainWindow.Log("[PS][" + leagueManager.GetSelectedLeague() + "] Duplicate key: " + statsEntry.key, 1);
+                            MainWindow.Log("[PS][" + league + "] Duplicate key: " + statsEntry.key, 1);
                         } else {
                             entryMap.Add(statsEntry.key, entry);
                         }
@@ -99,25 +101,25 @@ namespace EasyBuyout.Prices {
         /// <summary>
         /// Download data from http://poe.ninja and populate price dict
         /// </summary>
-        private void DownloadPoeNinjaData() {
+        private void DownloadPoeNinjaData(string league) {
             ConfigureProgressBar(Settings.poeNinjaKeys.Length);
             entryMap.Clear();
 
             foreach (string category in Settings.poeNinjaKeys) {
-                MainWindow.Log("[PN] Downloading: " + category + " for " + leagueManager.GetSelectedLeague(), 0);
+                MainWindow.Log("[PN] Downloading: " + category + " for " + league, 0);
 
                 try {
-                    string url = "http://poe.ninja/api/Data/Get" + category + "Overview?league=" + leagueManager.GetSelectedLeague();
+                    string url = "http://poe.ninja/api/Data/Get" + category + "Overview?league=" + league;
                     string jsonString = webClient.DownloadString(url);
 
                     // Deserialize
                     PoeNinjasEntryDict poeNinjaEntryDict = javaScriptSerializer.Deserialize<PoeNinjasEntryDict> (jsonString);
 
                     if (poeNinjaEntryDict == null) {
-                        MainWindow.Log("[PN][" + leagueManager.GetSelectedLeague() + "] Reply was null: " + category, 0);
+                        MainWindow.Log("[PN][" + league + "] Reply was null: " + category, 0);
                         return;
                     } else if (poeNinjaEntryDict.lines == null) {
-                        MainWindow.Log("[PN][" + leagueManager.GetSelectedLeague() + "] Got invalid JSON format for:" + category, 0);
+                        MainWindow.Log("[PN][" + league + "] Got invalid JSON format for:" + category, 0);
                         return;
                     }
 
@@ -130,12 +132,12 @@ namespace EasyBuyout.Prices {
                         string key = FormatPoeNinjaItemKey(category, ninjaEntry, entry);
 
                         if (key == null) {
-                            MainWindow.Log("[PN][" + leagueManager.GetSelectedLeague() + "] Couldn't generate key for:" + ninjaEntry.name, 1);
+                            MainWindow.Log("[PN][" + league + "] Couldn't generate key for:" + ninjaEntry.name, 1);
                             return;
                         }
 
                         if (entryMap.ContainsKey(key)) {
-                            MainWindow.Log("[PN][" + leagueManager.GetSelectedLeague() + "] Duplicate key: " + key, 1);
+                            MainWindow.Log("[PN][" + league + "] Duplicate key: " + key, 1);
                         } else {
                             entryMap.Add(key, entry);
                         }
@@ -392,7 +394,7 @@ namespace EasyBuyout.Prices {
         /// <returns>Formatted buyout note (e.g. "~b/o 53.2 chaos")</returns>
         public string MakeNote(double price) {
             // Replace "," with "." due to game limitations
-            return Settings.prefix + " " + price.ToString().Replace(',', '.') + " chaos";
+            return notePrefix + " " + price.ToString().Replace(',', '.') + " chaos";
         }
 
         /// <summary>
@@ -455,6 +457,14 @@ namespace EasyBuyout.Prices {
                 priceBox.SetPosition();
                 priceBox.Show();
             });
+        }
+
+        //-----------------------------------------------------------------------------------------------------------
+        // Getters and Setters
+        //-----------------------------------------------------------------------------------------------------------
+
+        public void SetNotePrefix(string prefix) {
+            notePrefix = prefix;
         }
     }
 }

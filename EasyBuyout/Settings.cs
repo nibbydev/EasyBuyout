@@ -8,30 +8,16 @@ namespace EasyBuyout {
     public static class Settings {
         public static readonly string[] sourceList = { "Poe.ninja", "Poe-stats.com" };
         public const string programTitle = "EasyBuyout";
-        public const string programVersion = "v1.0.22.3";
+        public const string programVersion = "v1.0.23.2";
         public const string activeWindowTitle = "Path of Exile";
 
         // League manager
         public const string poeLeagueAPI = "https://www.pathofexile.com/api/trade/data/leagues";
+        public const string manualLeagueDisplay = "<Manually specify>";
 
         // Updater
         public const string githubReleaseAPI = "https://api.github.com/repos/siegrest/Pricer/releases";
         public const bool flag_updaterEnabled = true; // Set to false to disable updater
-
-        // Situational flags
-        public static volatile bool flag_clipBoardPaste = false;
-
-        public static volatile bool flag_run = false;
-        public static volatile bool flag_sendNote = true;
-        public static volatile bool flag_sendEnter = true;
-        public static volatile bool flag_fallback = true;
-        public static volatile bool flag_showOverlay = false;
-        public static volatile bool flag_runOnRightClick = true;
-        public static int pasteDelay = 120;
-
-        public static string prefix = "~b/o";
-        public static int lowerPricePercentage; // ?? needed ??
-        public static string source;
 
         public static readonly string[] poeNinjaKeys = {
             "Currency", "UniqueArmour", "Fragment", "Essence", "DivinationCards", "Prophecy", "UniqueMap",

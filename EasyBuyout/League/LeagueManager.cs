@@ -32,9 +32,6 @@ namespace EasyBuyout.League {
             List<LeagueEntry> leagueEntries = DownloadLeagueList();
             if (leagueEntries == null) {
                 MainWindow.Log("Unable to update leagues", 3);
-
-                Application.Current.Dispatcher.Invoke(() => manualLeagueWindow.ShowDialog());
-
                 return;
             }
 
@@ -63,6 +60,13 @@ namespace EasyBuyout.League {
                 Console.WriteLine(ex);
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Opens dialog allowing user to manually input league
+        /// </summary>
+        public void DisplayManualInputWindow() {
+            Application.Current.Dispatcher.Invoke(() => manualLeagueWindow.ShowDialog());
         }
 
         //-----------------------------------------------------------------------------------------------------------
