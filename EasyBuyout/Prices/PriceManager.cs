@@ -1,4 +1,5 @@
 ﻿using EasyBuyout.League;
+using EasyBuyout.Settings;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -59,10 +60,10 @@ namespace EasyBuyout.Prices {
         /// Download data from http://poe-stats.com and populate price dict
         /// </summary>
         private void DownloadPoeStatsData(string league) {
-            ConfigureProgressBar(Settings.poeStatsKeys.Length);
+            ConfigureProgressBar(Config.poeStatsKeys.Length);
             entryMap.Clear();
 
-            foreach (string category in Settings.poeStatsKeys) {
+            foreach (string category in Config.poeStatsKeys) {
                 MainWindow.Log("[PS] Downloading: " + category + " for " + league, 0);
 
                 try {
@@ -102,10 +103,10 @@ namespace EasyBuyout.Prices {
         /// Download data from http://poe.ninja and populate price dict
         /// </summary>
         private void DownloadPoeNinjaData(string league) {
-            ConfigureProgressBar(Settings.poeNinjaKeys.Length);
+            ConfigureProgressBar(Config.poeNinjaKeys.Length);
             entryMap.Clear();
 
-            foreach (string category in Settings.poeNinjaKeys) {
+            foreach (string category in Config.poeNinjaKeys) {
                 MainWindow.Log("[PN] Downloading: " + category + " for " + league, 0);
 
                 try {

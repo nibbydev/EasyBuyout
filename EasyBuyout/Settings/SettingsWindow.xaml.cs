@@ -1,11 +1,10 @@
 ﻿using EasyBuyout.League;
 using System;
-using System.Net;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace EasyBuyout {
+namespace EasyBuyout.Settings {
     /// <summary>
     /// Interaction logic for SettingsWindow.xaml
     /// </summary>
@@ -35,9 +34,9 @@ namespace EasyBuyout {
 
             InitializeComponent();
 
-            foreach (string source in Settings.sourceList) ComboBox_Source.Items.Add(source);
+            foreach (string source in Config.sourceList) ComboBox_Source.Items.Add(source);
             ComboBox_Source.SelectedIndex = 0;
-            selectedSource = Settings.sourceList[0];
+            selectedSource = Config.sourceList[0];
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -55,7 +54,7 @@ namespace EasyBuyout {
                     }
                 }
 
-                ComboBox_League.Items.Add(Settings.manualLeagueDisplay);
+                ComboBox_League.Items.Add(Config.manualLeagueDisplay);
 
                 ComboBox_League.SelectedIndex = 0;
                 leagueManager.SetSelectedLeague(ComboBox_League.SelectedValue.ToString());
@@ -94,6 +93,16 @@ namespace EasyBuyout {
             Radio_Buyout.IsEnabled = flag_sendNote;
             Radio_Price.IsEnabled = flag_sendNote;
             TextBox_Delay.IsEnabled = flag_sendNote;
+        }
+
+        /// <summary>
+        /// Opens dialog allowing user to manually input league
+        /// </summary>
+        public string DisplayManualLeagueInputDialog() {
+            ManualLeagueWindow manualLeagueWindow = new ManualLeagueWindow();
+            manualLeagueWindow.ShowDialog();
+
+            return manualLeagueWindow.input;
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -168,16 +177,15 @@ namespace EasyBuyout {
         /// Download price data on button press
         /// </summary>
         private void Button_Download_Click(object sender, RoutedEventArgs e) {
-            Button_Download.IsEnabled = false;
-
             string source = (string)ComboBox_Source.SelectedValue;
             string league = (string)ComboBox_League.SelectedValue;
 
-            if (league == Settings.manualLeagueDisplay) {
-                leagueManager.DisplayManualInputWindow();
-                league = leagueManager.GetSelectedLeague();
+            if (league == Config.manualLeagueDisplay) {
+                league = DisplayManualLeagueInputDialog();
+                if (league == null) return;
             }
 
+            Button_Download.IsEnabled = false;
             leagueManager.SetSelectedLeague(league);
 
             Task.Run(() => {

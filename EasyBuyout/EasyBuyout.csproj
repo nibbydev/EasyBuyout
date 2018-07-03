@@ -65,20 +65,20 @@
     </ApplicationDefinition>
     <Compile Include="League\Deserializers.cs" />
     <Compile Include="League\LeagueManager.cs" />
-    <Compile Include="League\ManualLeagueWindow.xaml.cs">
+    <Compile Include="Settings\ManualLeagueWindow.xaml.cs">
       <DependentUpon>ManualLeagueWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Prices\Deserializers.cs" />
     <Compile Include="Prices\PriceManager.cs" />
-    <Compile Include="Settings.cs" />
-    <Compile Include="SettingsWindow.xaml.cs">
+    <Compile Include="Settings\Config.cs" />
+    <Compile Include="Settings\SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Updater\Deserializers.cs" />
     <Compile Include="Updater\UpdateWindow.xaml.cs">
       <DependentUpon>UpdateWindow.xaml</DependentUpon>
     </Compile>
-    <Page Include="League\ManualLeagueWindow.xaml">
+    <Page Include="Settings\ManualLeagueWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -102,7 +102,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="SettingsWindow.xaml">
+    <Page Include="Settings\SettingsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

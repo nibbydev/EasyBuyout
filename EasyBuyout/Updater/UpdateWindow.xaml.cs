@@ -1,4 +1,5 @@
-﻿using EasyBuyout.Updater;
+﻿using EasyBuyout.Settings;
+using EasyBuyout.Updater;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -49,7 +50,7 @@ namespace EasyBuyout {
                 // Update UpdateWindow's elements
                 Dispatcher.Invoke(() => {
                     Label_NewVersion.Content = newReleases[0].tag_name;
-                    Label_CurrentVersion.Content = Settings.programVersion;
+                    Label_CurrentVersion.Content = Config.programVersion;
 
                     HyperLink_URL.NavigateUri = new Uri(newReleases[0].html_url);
                     HyperLink_URL_Direct.NavigateUri = new Uri(newReleases[0].assets[0].browser_download_url);
@@ -71,7 +72,7 @@ namespace EasyBuyout {
             while (webClient.IsBusy) System.Threading.Thread.Sleep(10);
 
             try {
-                string jsonString = webClient.DownloadString(Settings.githubReleaseAPI);
+                string jsonString = webClient.DownloadString(Config.githubReleaseAPI);
                 return new JavaScriptSerializer().Deserialize<List<ReleaseEntry>>(jsonString);
             } catch (Exception ex) {
                 Console.WriteLine(ex);
@@ -88,7 +89,7 @@ namespace EasyBuyout {
 
             foreach (ReleaseEntry releaseEntry in releaseEntries) {
                 string[] splitNew = releaseEntry.tag_name.Substring(1).Split('.');
-                string[] splitOld = Settings.programVersion.Substring(1).Split('.');
+                string[] splitOld = Config.programVersion.Substring(1).Split('.');
 
                 int minLen = splitNew.Length > splitOld.Length ? splitOld.Length : splitNew.Length;
 

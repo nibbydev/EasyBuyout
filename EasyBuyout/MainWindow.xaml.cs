@@ -1,6 +1,7 @@
 ﻿using EasyBuyout.hooks;
 using EasyBuyout.League;
 using EasyBuyout.Prices;
+using EasyBuyout.Settings;
 using System;
 using System.Net;
 using System.Threading;
@@ -51,8 +52,8 @@ namespace EasyBuyout {
             runButton = Button_Run;
             
             // Set window title
-            Title = Settings.programTitle + " " + Settings.programVersion;
-            Log(Settings.programTitle + " " + Settings.programVersion + " by Siegrest", 0);
+            Title = Config.programTitle + " " + Config.programVersion;
+            Log(Config.programTitle + " " + Config.programVersion + " by Siegrest", 0);
 
             Task.Run(() => {
                 // Get list of active leagues from official API
@@ -60,7 +61,7 @@ namespace EasyBuyout {
                 // Add those leagues to settings window
                 settingsWindow.AddLeagues();
                 // Check for updates now that we finished using the webclient
-                if (Settings.flag_updaterEnabled) updateWindow.Run();
+                if (Config.flag_updaterEnabled) updateWindow.Run();
             });
         }
 
@@ -77,7 +78,7 @@ namespace EasyBuyout {
             // Do not run if user has not pressed run button
             if (!flag_run || !settingsWindow.IsRunOnRightClick()) return;
             // Only run if "Path of Exile" is the main focused window
-            if (WindowDiscovery.GetActiveWindowTitle() != Settings.activeWindowTitle) return;
+            if (WindowDiscovery.GetActiveWindowTitle() != Config.activeWindowTitle) return;
 
             // Send Ctrl+C on mouse click
             KeyEmulator.SendCtrlC();
@@ -90,7 +91,7 @@ namespace EasyBuyout {
             // Do not run if user has not pressed run button
             if (!flag_run && !settingsWindow.IsRunOnRightClick()) return;
             // Only run if "Path of Exile" is the main focused window
-            if (WindowDiscovery.GetActiveWindowTitle() != Settings.activeWindowTitle) return;
+            if (WindowDiscovery.GetActiveWindowTitle() != Config.activeWindowTitle) return;
             // At this point there should be text in the clipboard
             if (!Clipboard.ContainsText()) return;
 
