@@ -248,7 +248,8 @@ namespace EasyBuyout {
             // Find the index of "Item Level:"
             int exModIndex = FindIndexOf("Item Level:", splitRaw);
             // Couldn't find index of item level
-            if (exModIndex == -1) return null;
+            if (exModIndex == -1 || exModIndex >= splitRaw.Length - 1) return null;
+
 
             // Get the line that *might* cointain enchantment data
             string enchant = splitRaw[exModIndex + 1];
