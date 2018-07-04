@@ -1,4 +1,4 @@
-﻿<Window x:Class="EasyBuyout.SettingsWindow"
+﻿<Window x:Class="EasyBuyout.Settings.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -12,16 +12,16 @@
             <ColumnDefinition/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Button x:Name="Button_Apply" Content="Apply" HorizontalAlignment="Left" Margin="128,220,0,0" VerticalAlignment="Top" Width="75" Click="Button_Apply_Click" Height="20" Grid.Column="2"/>
-        <Button x:Name="Button_Cancel" Content="Cancel" HorizontalAlignment="Left" Margin="13,220,0,0" VerticalAlignment="Top" Width="75" Click="Button_Cancel_Click" Height="20" Grid.Column="2"/>
+        <Button x:Name="Button_Apply" Content="Apply" HorizontalAlignment="Left" Margin="10,217,0,0" VerticalAlignment="Top" Width="75" Click="Button_Apply_Click" Height="23" Grid.Column="2"/>
+        <Button x:Name="Button_Cancel" Content="Cancel" HorizontalAlignment="Left" Margin="128,217,0,0" VerticalAlignment="Top" Width="75" Click="Button_Cancel_Click" Height="23" Grid.Column="2" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
         <GroupBox Header="Data download" HorizontalAlignment="Left" Height="230" Margin="10,10,0,0" VerticalAlignment="Top" Width="190">
             <Grid>
-                <ComboBox x:Name="ComboBox_League" HorizontalAlignment="Left" Margin="12,30,0,0" VerticalAlignment="Top" Width="150" Height="22" ToolTip="Current active league"/>
-                <ComboBox x:Name="ComboBox_Source" HorizontalAlignment="Left" Margin="12,77,0,0" VerticalAlignment="Top" Width="150" SelectionChanged="ComboBox_Source_SelectionChanged" Height="22" ToolTip="API from which to download price data"/>
+                <ComboBox x:Name="ComboBox_League" HorizontalAlignment="Left" Margin="10,30,0,0" VerticalAlignment="Top" Width="158" Height="22" ToolTip="Current active league"/>
+                <ComboBox x:Name="ComboBox_Source" HorizontalAlignment="Left" Margin="12,77,0,0" VerticalAlignment="Top" Width="156" SelectionChanged="ComboBox_Source_SelectionChanged" Height="22" ToolTip="API from which to download price data"/>
                 <Label Content="League" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="42"/>
                 <Label Content="Source" HorizontalAlignment="Left" Margin="10,57,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="40"/>
-                <Button x:Name="Button_Download" Content="Download" HorizontalAlignment="Right" Margin="0,0,16,10" VerticalAlignment="Bottom" Width="75" IsEnabled="False" Click="Button_Download_Click" Height="20" ToolTip="Download the datapackage associated with the selected league"/>
-                <ProgressBar x:Name="ProgressBar_Progress" HorizontalAlignment="Left" Height="18" Margin="10,129,0,0" VerticalAlignment="Top" Width="158"/>
+                <Button x:Name="Button_Download" Content="Download" HorizontalAlignment="Right" Margin="0,0,10,10" VerticalAlignment="Bottom" Width="75" IsEnabled="False" Click="Button_Download_Click" Height="23" ToolTip="Download the datapackage associated with the selected league"/>
+                <ProgressBar x:Name="ProgressBar_Progress" HorizontalAlignment="Left" Height="18" Margin="12,129,0,0" VerticalAlignment="Top" Width="156"/>
                 <Label Content="Progress" HorizontalAlignment="Left" Margin="12,104,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="54"/>
             </Grid>
         </GroupBox>
@@ -47,6 +47,7 @@
                 <Label Content="%" HorizontalAlignment="Left" Margin="126,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="15"/>
                 <CheckBox x:Name="CheckBox_RunOnRightClick" Content="Run on right click" HorizontalAlignment="Left" Margin="10,58,0,0" VerticalAlignment="Top" Height="15" Width="116" ToolTip="If this is disabled, use Ctrl+C to use the tool" IsChecked="True"/>
                 <CheckBox x:Name="CheckBox_IncludeEnchant" Content="Include Enchantment" HorizontalAlignment="Left" Margin="10,78,0,0" VerticalAlignment="Top" ToolTip="Includes the price of the enchantment in the buyout note (warning: may be incredibly inaccurate)"/>
+                <CheckBox x:Name="CheckBox_LiveUpdate" Content="Live update" HorizontalAlignment="Left" Margin="10,98,0,0" VerticalAlignment="Top" ToolTip="Automatically downloads data every 10 minutes" IsChecked="True"/>
             </Grid>
         </GroupBox>
 

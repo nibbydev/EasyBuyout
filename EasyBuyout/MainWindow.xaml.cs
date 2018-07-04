@@ -1,6 +1,7 @@
 ﻿using EasyBuyout.hooks;
 using EasyBuyout.League;
 using EasyBuyout.Prices;
+using EasyBuyout.Settings;
 using System;
 using System.Net;
 using System.Threading;
@@ -20,9 +21,7 @@ namespace EasyBuyout {
         private readonly UpdateWindow updateWindow;
         private readonly LeagueManager leagueManager;
 
-        private readonly Button runButton;
         private static TextBox console;
-
         private volatile bool flag_clipBoardPaste = false;
         private volatile bool flag_run = false;
 
@@ -34,10 +33,11 @@ namespace EasyBuyout {
             webClient = new WebClient() { Encoding = System.Text.Encoding.UTF8 };
             leagueManager = new LeagueManager(webClient);
             updateWindow = new UpdateWindow(webClient);
-            settingsWindow = new SettingsWindow(this, leagueManager);
-
             priceManager = new PriceManager(webClient, leagueManager);
+            settingsWindow = new SettingsWindow(this, leagueManager, priceManager);
+
             priceManager.SetProgressBar(settingsWindow.ProgressBar_Progress);
+            priceManager.SetSettingsWindow(settingsWindow);
 
             // Define eventhandlers
             ClipboardNotification.ClipboardUpdate += new EventHandler(Event_clipboard);
@@ -48,11 +48,10 @@ namespace EasyBuyout {
 
             // Set objects that need to be accessed from outside
             console = console_window;
-            runButton = Button_Run;
             
             // Set window title
-            Title = Settings.programTitle + " " + Settings.programVersion;
-            Log(Settings.programTitle + " " + Settings.programVersion + " by Siegrest", 0);
+            Title = Config.programTitle + " " + Config.programVersion;
+            Log(Config.programTitle + " " + Config.programVersion + " by Siegrest", 0);
 
             Task.Run(() => {
                 // Get list of active leagues from official API
@@ -60,12 +59,12 @@ namespace EasyBuyout {
                 // Add those leagues to settings window
                 settingsWindow.AddLeagues();
                 // Check for updates now that we finished using the webclient
-                if (Settings.flag_updaterEnabled) updateWindow.Run();
+                if (Config.flag_updaterEnabled) updateWindow.Run();
             });
         }
 
         //-----------------------------------------------------------------------------------------------------------
-        // Major event handlers
+        // External event handlers
         //-----------------------------------------------------------------------------------------------------------
 
         /// <summary>
@@ -77,7 +76,7 @@ namespace EasyBuyout {
             // Do not run if user has not pressed run button
             if (!flag_run || !settingsWindow.IsRunOnRightClick()) return;
             // Only run if "Path of Exile" is the main focused window
-            if (WindowDiscovery.GetActiveWindowTitle() != Settings.activeWindowTitle) return;
+            if (WindowDiscovery.GetActiveWindowTitle() != Config.activeWindowTitle) return;
 
             // Send Ctrl+C on mouse click
             KeyEmulator.SendCtrlC();
@@ -90,7 +89,7 @@ namespace EasyBuyout {
             // Do not run if user has not pressed run button
             if (!flag_run && !settingsWindow.IsRunOnRightClick()) return;
             // Only run if "Path of Exile" is the main focused window
-            if (WindowDiscovery.GetActiveWindowTitle() != Settings.activeWindowTitle) return;
+            if (WindowDiscovery.GetActiveWindowTitle() != Config.activeWindowTitle) return;
             // At this point there should be text in the clipboard
             if (!Clipboard.ContainsText()) return;
 
@@ -114,6 +113,8 @@ namespace EasyBuyout {
         /// </summary>
         /// <param name="clipboardString">Item data from the clipboard</param>
         private void ClipBoard_ItemParseTask(string clipboardString) {
+            priceManager.RefreshLastUseTime();
+
             Item item = new Item(clipboardString);
             item.ParseData();
 
@@ -269,7 +270,7 @@ namespace EasyBuyout {
         }
 
         //-----------------------------------------------------------------------------------------------------------
-        // Event handlers
+        // WPF Event handlers
         //-----------------------------------------------------------------------------------------------------------
 
         /// <summary>
@@ -305,8 +306,6 @@ namespace EasyBuyout {
             settingsWindow.Left = Left + Width / 2 - settingsWindow.Width / 2;
             settingsWindow.Top = Top + Height / 2 - settingsWindow.Height / 2;
             settingsWindow.ShowDialog();
-
-            priceManager.SetNotePrefix(settingsWindow.GetNotePrefix());
         }
 
         /// <summary>
@@ -362,18 +361,6 @@ namespace EasyBuyout {
                 console.AppendText("[" + time + "]" + prefix + str + "\n");
                 console.ScrollToEnd();
             });
-        }
-
-        //-----------------------------------------------------------------------------------------------------------
-        // Getters and setters
-        //-----------------------------------------------------------------------------------------------------------
-
-        public PriceManager GetPriceManager() {
-            return priceManager;
-        }
-
-        public WebClient GetWebClient() {
-            return webClient;
         }
     }
 }

@@ -1,20 +1,22 @@
 ﻿using EasyBuyout.League;
+using EasyBuyout.Prices;
 using System;
-using System.Net;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace EasyBuyout {
+namespace EasyBuyout.Settings {
     /// <summary>
     /// Interaction logic for SettingsWindow.xaml
     /// </summary>
     public partial class SettingsWindow : Window {
         private readonly MainWindow main;
         private readonly LeagueManager leagueManager;
+        private readonly PriceManager priceManager;
 
         private string notePrefix = "~b/o";
         private string selectedSource;
+        private string selectedLeague;
         private int lowerPricePercentage = 0;
         private int pasteDelay = 120;
         private bool flag_sendNote = true;
@@ -23,21 +25,24 @@ namespace EasyBuyout {
         private bool flag_showOverlay = false;
         private bool flag_runOnRightClick = true;
         private bool flag_includeEnchantment = false;
+        private bool flag_liveUpdate = true;
+
+        
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="main"></param>
         /// <param name="leagueManager"></param>
-        public SettingsWindow(MainWindow main, LeagueManager leagueManager) {
-            this.main = main;
+        public SettingsWindow(MainWindow main, LeagueManager leagueManager, PriceManager priceManager) {
             this.leagueManager = leagueManager;
+            this.priceManager = priceManager;
+            this.main = main;
 
             InitializeComponent();
 
-            foreach (string source in Settings.sourceList) ComboBox_Source.Items.Add(source);
+            foreach (string source in Config.sourceList) ComboBox_Source.Items.Add(source);
             ComboBox_Source.SelectedIndex = 0;
-            selectedSource = Settings.sourceList[0];
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -55,7 +60,7 @@ namespace EasyBuyout {
                     }
                 }
 
-                ComboBox_League.Items.Add(Settings.manualLeagueDisplay);
+                ComboBox_League.Items.Add(Config.manualLeagueDisplay);
 
                 ComboBox_League.SelectedIndex = 0;
                 leagueManager.SetSelectedLeague(ComboBox_League.SelectedValue.ToString());
@@ -83,6 +88,7 @@ namespace EasyBuyout {
             Radio_ShowOverlay.IsChecked = flag_showOverlay;
             CheckBox_RunOnRightClick.IsChecked = flag_runOnRightClick;
             CheckBox_IncludeEnchant.IsChecked = flag_includeEnchantment;
+            CheckBox_LiveUpdate.IsChecked = flag_liveUpdate;
 
             // Reset ~b/o radio states
             bool tempCheck1 = notePrefix == (string)Radio_Buyout.Content;
@@ -94,6 +100,16 @@ namespace EasyBuyout {
             Radio_Buyout.IsEnabled = flag_sendNote;
             Radio_Price.IsEnabled = flag_sendNote;
             TextBox_Delay.IsEnabled = flag_sendNote;
+        }
+
+        /// <summary>
+        /// Opens dialog allowing user to manually input league
+        /// </summary>
+        public string DisplayManualLeagueInputDialog() {
+            ManualLeagueWindow manualLeagueWindow = new ManualLeagueWindow();
+            manualLeagueWindow.ShowDialog();
+
+            return manualLeagueWindow.input;
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -146,6 +162,7 @@ namespace EasyBuyout {
             flag_sendNote = (bool)Radio_SendNote.IsChecked;
             flag_runOnRightClick = (bool)CheckBox_RunOnRightClick.IsChecked;
             flag_includeEnchantment = (bool)CheckBox_IncludeEnchant.IsChecked;
+            flag_liveUpdate = (bool)CheckBox_LiveUpdate.IsChecked;
 
             // Radio buttons
             if ((bool)Radio_Buyout.IsChecked) {
@@ -168,23 +185,22 @@ namespace EasyBuyout {
         /// Download price data on button press
         /// </summary>
         private void Button_Download_Click(object sender, RoutedEventArgs e) {
-            Button_Download.IsEnabled = false;
+            selectedSource = (string)ComboBox_Source.SelectedValue;
+            selectedLeague = (string)ComboBox_League.SelectedValue;
 
-            string source = (string)ComboBox_Source.SelectedValue;
-            string league = (string)ComboBox_League.SelectedValue;
-
-            if (league == Settings.manualLeagueDisplay) {
-                leagueManager.DisplayManualInputWindow();
-                league = leagueManager.GetSelectedLeague();
+            if (selectedLeague == Config.manualLeagueDisplay) {
+                selectedLeague = DisplayManualLeagueInputDialog();
+                if (selectedLeague == null) return;
             }
 
-            leagueManager.SetSelectedLeague(league);
+            Button_Download.IsEnabled = false;
+            leagueManager.SetSelectedLeague(selectedLeague);
 
             Task.Run(() => {
-                MainWindow.Log("Downloading data for " + league + " from " + source, 0);
+                MainWindow.Log("Downloading data for " + selectedLeague + " from " + selectedSource, 0);
 
                 // Download and format price data
-                main.GetPriceManager().Download(source, league);
+                priceManager.Download(selectedSource, selectedLeague);
 
                 // Enable run button on MainWindow
                 Application.Current.Dispatcher.Invoke(() => {
@@ -236,6 +252,10 @@ namespace EasyBuyout {
             return selectedSource;
         }
 
+        public string GetSelectedLeague() {
+            return selectedLeague;
+        }
+
         public int GetLowerPricePercentage() {
             return lowerPricePercentage;
         }
@@ -266,6 +286,10 @@ namespace EasyBuyout {
 
         public bool IsIncludeEnchant() {
             return flag_includeEnchantment;
+        }
+
+        public bool IsLiveUpdate() {
+            return flag_liveUpdate;
         }
     }
 }

@@ -5,8 +5,8 @@ namespace EasyBuyout.Prices {
     /// <summary>
     /// Interaction logic for PriceBox.xaml
     /// </summary>
-    public partial class PriceBox : Window {
-        public PriceBox() {
+    public partial class PriceboxWindow : Window {
+        public PriceboxWindow() {
             InitializeComponent();
         }
 

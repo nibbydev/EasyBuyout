@@ -1,4 +1,4 @@
-# Path of Exile EasyBuyout for pricing items
+# EasyBuyout for Path of Exile
 
 ![EasyBuyout](screenshots/action.gif)
 
@@ -9,7 +9,7 @@ Sets a buyout note on an item with one click. This handy program instantly outpu
 Be you a labrunner or an Uber Atziri farmer, who has dozens upon dozens of gems or maps that need prices or maybe just your average player who wants to actually enjoy the game instead of playing Shoppe Keep all day long. Well, then this program is perfect for you.
 
 ## How to get it running (as of v1.0.22)
-1. Download a compiled file from the [releases](https://github.com/siegrest/Pricer/releases/latest) page (or compile it yourself) and run it
+1. Download a compiled file from the [releases](https://github.com/siegrest/EasyBuyout/releases/latest) page (or compile it yourself) and run it
 2. Open settings, pick a league and source to your liking, hit download, choose whatever settings (explained in next section)
 3. Click Apply and then Run
 4. Right click (or Ctrl+C) an item in a public premium stash tab

@@ -1,15 +1,11 @@
-﻿using System;
+﻿using EasyBuyout.Settings;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.Script.Serialization;
-using System.Windows;
 
 namespace EasyBuyout.League {
     public class LeagueManager {
-        private readonly ManualLeagueWindow manualLeagueWindow;
         private readonly WebClient webClient;
         private string[] leagues;
         private string selectedLeague;
@@ -19,7 +15,6 @@ namespace EasyBuyout.League {
         /// </summary>
         /// <param name="webClient"></param>
         public LeagueManager(WebClient webClient) {
-            manualLeagueWindow = new ManualLeagueWindow(this);
             this.webClient = webClient;
         }
 
@@ -31,7 +26,7 @@ namespace EasyBuyout.League {
 
             List<LeagueEntry> leagueEntries = DownloadLeagueList();
             if (leagueEntries == null) {
-                MainWindow.Log("Unable to update leagues", 3);
+                MainWindow.Log("Unable to update leagues", 2);
                 return;
             }
 
@@ -54,19 +49,12 @@ namespace EasyBuyout.League {
             while (webClient.IsBusy) System.Threading.Thread.Sleep(10);
 
             try {
-                string jsonString = webClient.DownloadString(Settings.poeLeagueAPI);
+                string jsonString = webClient.DownloadString(Config.poeLeagueAPI);
                 return new JavaScriptSerializer().Deserialize<LeagueParcel>(jsonString).result;
             } catch (Exception ex) {
                 Console.WriteLine(ex);
                 return null;
             }
-        }
-
-        /// <summary>
-        /// Opens dialog allowing user to manually input league
-        /// </summary>
-        public void DisplayManualInputWindow() {
-            Application.Current.Dispatcher.Invoke(() => manualLeagueWindow.ShowDialog());
         }
 
         //-----------------------------------------------------------------------------------------------------------
