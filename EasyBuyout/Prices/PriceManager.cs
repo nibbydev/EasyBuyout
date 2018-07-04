@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Web.Script.Serialization;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,8 +20,10 @@ namespace EasyBuyout.Prices {
         private readonly PriceboxWindow priceBox;
         private readonly Dictionary<String, Entry> entryMap;
 
+        private long lastUseTimeMin = DateTime.Now.Ticks / TimeSpan.TicksPerMinute;
+        private Timer liveUpdateTask;
+        private SettingsWindow settingsWindow;
         private ProgressBar progressBar;
-        private string notePrefix;
 
         /// <summary>
         /// Constructor
@@ -53,6 +56,9 @@ namespace EasyBuyout.Prices {
                 default:
                     return;
             }
+
+            if (liveUpdateTask != null) liveUpdateTask.Dispose();
+            liveUpdateTask = new Timer(LiveUpdate, null, Config.liveUpdateDelayMS, Config.liveUpdateDelayMS);
         }
 
         /// <summary>
@@ -136,9 +142,7 @@ namespace EasyBuyout.Prices {
                             return;
                         }
 
-                        if (entryMap.ContainsKey(key)) {
-                            MainWindow.Log("[PN][" + league + "] Duplicate key: " + key, 1);
-                        } else {
+                        if (!entryMap.ContainsKey(key)) {
                             entryMap.Add(key, entry);
                         }
                     }
@@ -356,6 +360,19 @@ namespace EasyBuyout.Prices {
             }
         }
 
+        /// <summary>
+        /// Periodically downloads price data
+        /// </summary>
+        /// <param name="state">Literally null</param>
+        private void LiveUpdate(object state) {
+            if (!settingsWindow.IsLiveUpdate()) return;
+            if (DateTime.Now.Ticks / TimeSpan.TicksPerMinute - lastUseTimeMin > Config.liveUpdateInactiveMin) return;
+
+            MainWindow.Log("Updating prices", 0);
+            Download(settingsWindow.GetSelectedSource(), settingsWindow.GetSelectedLeague());
+            MainWindow.Log("Prices updated", 0);
+        }
+
         //-----------------------------------------------------------------------------------------------------------
         // Generic methods
         //-----------------------------------------------------------------------------------------------------------
@@ -394,7 +411,7 @@ namespace EasyBuyout.Prices {
         /// <returns>Formatted buyout note (e.g. "~b/o 53.2 chaos")</returns>
         public string MakeNote(double price) {
             // Replace "," with "." due to game limitations
-            return notePrefix + " " + price.ToString().Replace(',', '.') + " chaos";
+            return settingsWindow.GetNotePrefix() + " " + price.ToString().Replace(',', '.') + " chaos";
         }
 
         /// <summary>
@@ -410,14 +427,6 @@ namespace EasyBuyout.Prices {
         //-----------------------------------------------------------------------------------------------------------
         // Progressbar-related shenanigans
         //-----------------------------------------------------------------------------------------------------------
-
-        /// <summary>
-        /// Just a setter
-        /// </summary>
-        /// <param name="progressBar"></param>
-        public void SetProgressBar(System.Windows.Controls.ProgressBar progressBar) {
-            this.progressBar = progressBar;
-        }
 
         /// <summary>
         /// Set initial progressbar values
@@ -463,8 +472,16 @@ namespace EasyBuyout.Prices {
         // Getters and Setters
         //-----------------------------------------------------------------------------------------------------------
 
-        public void SetNotePrefix(string prefix) {
-            notePrefix = prefix;
+        public void SetSettingsWindow(SettingsWindow settingsWindow) {
+            this.settingsWindow = settingsWindow;
+        }
+
+        public void SetProgressBar(ProgressBar progressBar) {
+            this.progressBar = progressBar;
+        }
+
+        public void RefreshLastUseTime() {
+            lastUseTimeMin = DateTime.Now.Ticks / TimeSpan.TicksPerMinute;
         }
     }
 }

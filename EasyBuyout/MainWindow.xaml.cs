@@ -22,7 +22,6 @@ namespace EasyBuyout {
         private readonly LeagueManager leagueManager;
 
         private static TextBox console;
-
         private volatile bool flag_clipBoardPaste = false;
         private volatile bool flag_run = false;
 
@@ -38,6 +37,7 @@ namespace EasyBuyout {
             settingsWindow = new SettingsWindow(this, leagueManager, priceManager);
 
             priceManager.SetProgressBar(settingsWindow.ProgressBar_Progress);
+            priceManager.SetSettingsWindow(settingsWindow);
 
             // Define eventhandlers
             ClipboardNotification.ClipboardUpdate += new EventHandler(Event_clipboard);
@@ -113,6 +113,8 @@ namespace EasyBuyout {
         /// </summary>
         /// <param name="clipboardString">Item data from the clipboard</param>
         private void ClipBoard_ItemParseTask(string clipboardString) {
+            priceManager.RefreshLastUseTime();
+
             Item item = new Item(clipboardString);
             item.ParseData();
 
@@ -304,8 +306,6 @@ namespace EasyBuyout {
             settingsWindow.Left = Left + Width / 2 - settingsWindow.Width / 2;
             settingsWindow.Top = Top + Height / 2 - settingsWindow.Height / 2;
             settingsWindow.ShowDialog();
-
-            priceManager.SetNotePrefix(settingsWindow.GetNotePrefix());
         }
 
         /// <summary>
