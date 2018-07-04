@@ -1,4 +1,5 @@
 ﻿using EasyBuyout.League;
+using EasyBuyout.Prices;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
@@ -11,6 +12,7 @@ namespace EasyBuyout.Settings {
     public partial class SettingsWindow : Window {
         private readonly MainWindow main;
         private readonly LeagueManager leagueManager;
+        private readonly PriceManager priceManager;
 
         private string notePrefix = "~b/o";
         private string selectedSource;
@@ -28,9 +30,10 @@ namespace EasyBuyout.Settings {
         /// </summary>
         /// <param name="main"></param>
         /// <param name="leagueManager"></param>
-        public SettingsWindow(MainWindow main, LeagueManager leagueManager) {
-            this.main = main;
+        public SettingsWindow(MainWindow main, LeagueManager leagueManager, PriceManager priceManager) {
             this.leagueManager = leagueManager;
+            this.priceManager = priceManager;
+            this.main = main;
 
             InitializeComponent();
 
@@ -192,7 +195,7 @@ namespace EasyBuyout.Settings {
                 MainWindow.Log("Downloading data for " + league + " from " + source, 0);
 
                 // Download and format price data
-                main.GetPriceManager().Download(source, league);
+                priceManager.Download(source, league);
 
                 // Enable run button on MainWindow
                 Application.Current.Dispatcher.Invoke(() => {

@@ -21,7 +21,6 @@ namespace EasyBuyout {
         private readonly UpdateWindow updateWindow;
         private readonly LeagueManager leagueManager;
 
-        private readonly Button runButton;
         private static TextBox console;
 
         private volatile bool flag_clipBoardPaste = false;
@@ -35,9 +34,9 @@ namespace EasyBuyout {
             webClient = new WebClient() { Encoding = System.Text.Encoding.UTF8 };
             leagueManager = new LeagueManager(webClient);
             updateWindow = new UpdateWindow(webClient);
-            settingsWindow = new SettingsWindow(this, leagueManager);
-
             priceManager = new PriceManager(webClient, leagueManager);
+            settingsWindow = new SettingsWindow(this, leagueManager, priceManager);
+
             priceManager.SetProgressBar(settingsWindow.ProgressBar_Progress);
 
             // Define eventhandlers
@@ -49,7 +48,6 @@ namespace EasyBuyout {
 
             // Set objects that need to be accessed from outside
             console = console_window;
-            runButton = Button_Run;
             
             // Set window title
             Title = Config.programTitle + " " + Config.programVersion;
@@ -66,7 +64,7 @@ namespace EasyBuyout {
         }
 
         //-----------------------------------------------------------------------------------------------------------
-        // Major event handlers
+        // External event handlers
         //-----------------------------------------------------------------------------------------------------------
 
         /// <summary>
@@ -270,7 +268,7 @@ namespace EasyBuyout {
         }
 
         //-----------------------------------------------------------------------------------------------------------
-        // Event handlers
+        // WPF Event handlers
         //-----------------------------------------------------------------------------------------------------------
 
         /// <summary>
@@ -363,18 +361,6 @@ namespace EasyBuyout {
                 console.AppendText("[" + time + "]" + prefix + str + "\n");
                 console.ScrollToEnd();
             });
-        }
-
-        //-----------------------------------------------------------------------------------------------------------
-        // Getters and setters
-        //-----------------------------------------------------------------------------------------------------------
-
-        public PriceManager GetPriceManager() {
-            return priceManager;
-        }
-
-        public WebClient GetWebClient() {
-            return webClient;
         }
     }
 }

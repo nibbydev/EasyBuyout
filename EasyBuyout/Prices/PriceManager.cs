@@ -6,19 +6,20 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace EasyBuyout.Prices {
     /// <summary>
     /// PriceManager handles downlading, managing and translating price data from various websites
     /// </summary>
     public class PriceManager {
-        private System.Windows.Controls.ProgressBar progressBar;
-        private readonly JavaScriptSerializer javaScriptSerializer;
+        private readonly JavaScriptSerializer javaScriptSerializer = new JavaScriptSerializer { MaxJsonLength = Int32.MaxValue };
         private readonly WebClient webClient;
         private readonly LeagueManager leagueManager;
         private readonly PriceboxWindow priceBox;
         private readonly Dictionary<String, Entry> entryMap;
 
+        private ProgressBar progressBar;
         private string notePrefix;
 
         /// <summary>
@@ -27,10 +28,8 @@ namespace EasyBuyout.Prices {
         /// <param name="webClient"></param>
         /// <param name="leagueManager"></param>
         public PriceManager (WebClient webClient, LeagueManager leagueManager) {
-            this.webClient = webClient;
             this.leagueManager = leagueManager;
-
-            javaScriptSerializer = new JavaScriptSerializer { MaxJsonLength = Int32.MaxValue };
+            this.webClient = webClient;
 
             priceBox = new PriceboxWindow();
             entryMap = new Dictionary<string, Entry>();

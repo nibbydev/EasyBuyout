@@ -31,7 +31,7 @@ namespace EasyBuyout {
             // Make webrequest
             List<ReleaseEntry> releaseEntries = DownloadReleaseList();
             if (releaseEntries == null) {
-                MainWindow.Log("[Updater] Error getting update info...", 2);
+                MainWindow.Log("Error getting update info...", 2);
                 return;
             }
 
@@ -40,7 +40,7 @@ namespace EasyBuyout {
 
             // If there was a newer version available
             if (newReleases.Count > 0) {
-                MainWindow.Log("[Updater] New version available", 1);
+                MainWindow.Log("New version available", 1);
 
                 string patchNotes = "";
                 foreach (ReleaseEntry releaseEntry in newReleases) {

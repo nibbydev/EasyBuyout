@@ -26,7 +26,7 @@ namespace EasyBuyout.League {
 
             List<LeagueEntry> leagueEntries = DownloadLeagueList();
             if (leagueEntries == null) {
-                MainWindow.Log("Unable to update leagues", 3);
+                MainWindow.Log("Unable to update leagues", 2);
                 return;
             }
 
