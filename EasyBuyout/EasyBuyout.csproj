@@ -98,7 +98,7 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Prices\PriceBox.xaml">
+    <Page Include="Prices\PriceboxWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -113,8 +113,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Hooks\MouseHook.cs" />
-    <Compile Include="Prices\PriceBox.xaml.cs">
-      <DependentUpon>PriceBox.xaml</DependentUpon>
+    <Compile Include="Prices\PriceboxWindow.xaml.cs">
+      <DependentUpon>PriceboxWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>

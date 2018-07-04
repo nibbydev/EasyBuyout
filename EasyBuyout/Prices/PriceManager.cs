@@ -16,7 +16,7 @@ namespace EasyBuyout.Prices {
         private readonly JavaScriptSerializer javaScriptSerializer;
         private readonly WebClient webClient;
         private readonly LeagueManager leagueManager;
-        private readonly PriceBox priceBox;
+        private readonly PriceboxWindow priceBox;
         private readonly Dictionary<String, Entry> entryMap;
 
         private string notePrefix;
@@ -32,7 +32,7 @@ namespace EasyBuyout.Prices {
 
             javaScriptSerializer = new JavaScriptSerializer { MaxJsonLength = Int32.MaxValue };
 
-            priceBox = new PriceBox();
+            priceBox = new PriceboxWindow();
             entryMap = new Dictionary<string, Entry>();
         }
 
