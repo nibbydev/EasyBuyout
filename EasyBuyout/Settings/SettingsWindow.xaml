@@ -17,12 +17,12 @@
         <GroupBox Header="Data download" HorizontalAlignment="Left" Height="230" Margin="10,10,0,0" VerticalAlignment="Top" Width="190">
             <Grid>
                 <ComboBox x:Name="ComboBox_League" HorizontalAlignment="Left" Margin="10,30,0,0" VerticalAlignment="Top" Width="158" Height="22" ToolTip="Current active league"/>
-                <ComboBox x:Name="ComboBox_Source" HorizontalAlignment="Left" Margin="12,77,0,0" VerticalAlignment="Top" Width="156" SelectionChanged="ComboBox_Source_SelectionChanged" Height="22" ToolTip="API from which to download price data"/>
+                <ComboBox x:Name="ComboBox_Source" HorizontalAlignment="Left" Margin="10,77,0,0" VerticalAlignment="Top" Width="158" SelectionChanged="ComboBox_Source_SelectionChanged" Height="22" ToolTip="API from which to download price data"/>
                 <Label Content="League" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="42"/>
                 <Label Content="Source" HorizontalAlignment="Left" Margin="10,57,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="40"/>
                 <Button x:Name="Button_Download" Content="Download" HorizontalAlignment="Right" Margin="0,0,10,10" VerticalAlignment="Bottom" Width="75" IsEnabled="False" Click="Button_Download_Click" Height="23" ToolTip="Download the datapackage associated with the selected league"/>
-                <ProgressBar x:Name="ProgressBar_Progress" HorizontalAlignment="Left" Height="18" Margin="12,129,0,0" VerticalAlignment="Top" Width="156"/>
-                <Label Content="Progress" HorizontalAlignment="Left" Margin="12,104,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="54"/>
+                <ProgressBar x:Name="ProgressBar_Progress" HorizontalAlignment="Left" Height="18" Margin="10,129,0,0" VerticalAlignment="Top" Width="158"/>
+                <Label Content="Progress" HorizontalAlignment="Left" Margin="10,104,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="54"/>
             </Grid>
         </GroupBox>
         <GroupBox Header="Mode selection" HorizontalAlignment="Left" Height="230" Margin="10,10,0,0" VerticalAlignment="Top" Width="194" Grid.Column="1">
