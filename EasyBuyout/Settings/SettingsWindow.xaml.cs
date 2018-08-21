@@ -234,10 +234,10 @@ namespace EasyBuyout.Settings {
         /// Enables/disables other controls based on checkbox
         /// </summary>
         private void Radio_SendNote_Click(object sender, RoutedEventArgs e) {
-            CheckBox_SendEnter.IsEnabled = (bool)Radio_SendNote.IsChecked;
-            Radio_Buyout.IsEnabled = (bool)Radio_SendNote.IsChecked;
-            Radio_Price.IsEnabled = (bool)Radio_SendNote.IsChecked;
-            TextBox_Delay.IsEnabled = (bool)Radio_SendNote.IsChecked;
+            CheckBox_SendEnter.IsEnabled = true;
+            Radio_Buyout.IsEnabled = true;
+            Radio_Price.IsEnabled = true;
+            TextBox_Delay.IsEnabled = true;
         }
 
         //-----------------------------------------------------------------------------------------------------------

@@ -217,23 +217,24 @@ namespace EasyBuyout {
             }
 
             // Calculate prices
-            double oldPrice = Math.Ceiling(itemEntry.value * 2) / 2.0;
-            double newPrice = Math.Ceiling(itemEntry.value * (100 - settingsWindow.GetLowerPricePercentage()) / 100.0 * 2) / 2.0;
+            double oldPrice = Math.Ceiling(itemEntry.value);
+            double newPrice = Math.Ceiling(itemEntry.value * (100 - settingsWindow.GetLowerPricePercentage()) / 100.0);
 
             if (settingsWindow.IsIncludeEnchant()) {
                 if (enchantEntry != null && enchantEntry.value > 0) {
-                    oldPrice += Math.Ceiling(enchantEntry.value * 2) / 2.0;
-                    newPrice += Math.Ceiling(enchantEntry.value * (100 - settingsWindow.GetLowerPricePercentage()) / 100.0 * 2) / 2.0;
+                    oldPrice += Math.Ceiling(enchantEntry.value);
+                    newPrice += Math.Ceiling(enchantEntry.value * (100 - settingsWindow.GetLowerPricePercentage()) / 100.0);
                 }
             }
 
             string note = priceManager.MakeNote(newPrice);
+            newPrice = itemEntry.value * (100 - settingsWindow.GetLowerPricePercentage()) / 100.0;
 
             // If the LowerPriceByPercentage slider is more than 0, change output message
             if (settingsWindow.GetLowerPricePercentage() > 0) {
-                Log(item.key + ": " + oldPrice + "c -> " + newPrice + "c", 0);
+                Log(item.key + ": " + itemEntry.value + "c -> " + newPrice + "c", 0);
             } else {
-                Log(item.key + ": " + oldPrice + "c", 0);
+                Log(item.key + ": " + itemEntry.value + "c", 0);
             }
 
             if (settingsWindow.IsShowOverlay()) {
