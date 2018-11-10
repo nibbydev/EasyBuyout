@@ -6,37 +6,39 @@ using System.Web.Script.Serialization;
 
 namespace EasyBuyout.League {
     public class LeagueManager {
-        private readonly WebClient webClient;
-        private string[] leagues;
-        private string selectedLeague;
+        private readonly Config _config;
+        private readonly Action<string, MainWindow.Flair> _logAction;
+        private readonly WebClient _webClient;
 
         /// <summary>
         /// Constructor
         /// </summary>
+        /// <param name="config"></param>
         /// <param name="webClient"></param>
-        public LeagueManager(WebClient webClient) {
-            this.webClient = webClient;
+        /// <param name="logAction"></param>
+        public LeagueManager(Config config, WebClient webClient, Action<string, MainWindow.Flair> logAction) {
+            _config = config;
+            _webClient = webClient;
+            _logAction = logAction;
         }
 
         /// <summary>
         /// Get list of active leagues
         /// </summary>
-        public void Run() {
-            MainWindow.Log("Updating league list...", 0);
+        public string[] GetLeagueList() {
+            var leagueEntries = DownloadLeagueList();
 
-            List<LeagueEntry> leagueEntries = DownloadLeagueList();
             if (leagueEntries == null) {
-                MainWindow.Log("Unable to update leagues", 2);
-                return;
+                return null;
             }
 
-            leagues = new string[leagueEntries.Count];
+            var leagues = new string[leagueEntries.Count];
 
-            for (int i = 0; i < leagueEntries.Count; i++) {
+            for (var i = 0; i < leagueEntries.Count; i++) {
                 leagues[i] = leagueEntries[i].id;
             }
 
-            MainWindow.Log("League list updated", 0);
+            return leagues;
         }
 
         /// <summary>
@@ -44,33 +46,18 @@ namespace EasyBuyout.League {
         /// </summary>
         /// <returns>List of active leagues or null on failure</returns>
         private List<LeagueEntry> DownloadLeagueList() {
-            // WebClient can only handle one connection per instance.
-            // It is bad practice to have multiple WebClients.
-            while (webClient.IsBusy) System.Threading.Thread.Sleep(10);
+            // WebClient can only handle one connection per instance. It is bad practice to have multiple WebClients.
+            while (_webClient.IsBusy) {
+                System.Threading.Thread.Sleep(10);
+            }
 
             try {
-                string jsonString = webClient.DownloadString(Config.poeLeagueAPI);
+                var jsonString = _webClient.DownloadString(_config.LeagueApiUrl);
                 return new JavaScriptSerializer().Deserialize<LeagueParcel>(jsonString).result;
             } catch (Exception ex) {
-                Console.WriteLine(ex);
+                _logAction(ex.ToString(), MainWindow.Flair.Error);
                 return null;
             }
-        }
-
-        //-----------------------------------------------------------------------------------------------------------
-        // Getters and setters
-        //-----------------------------------------------------------------------------------------------------------
-
-        public void SetSelectedLeague(string league) {
-            selectedLeague = league;
-        }
-
-        public string[] GetLeagues() {
-            return leagues;
-        }
-
-        public string GetSelectedLeague() {
-            return selectedLeague;
         }
     }
 }

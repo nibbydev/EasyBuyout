@@ -63,6 +63,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Item\Item.cs" />
+    <Compile Include="Item\Key.cs" />
     <Compile Include="League\Deserializers.cs" />
     <Compile Include="League\LeagueManager.cs" />
     <Compile Include="Settings\ManualLeagueWindow.xaml.cs">
@@ -74,6 +76,8 @@
     <Compile Include="Settings\SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Settings\Source\SourceSite.cs" />
+    <Compile Include="Settings\Source\SourceApi.cs" />
     <Compile Include="Updater\Deserializers.cs" />
     <Compile Include="Updater\UpdateWindow.xaml.cs">
       <DependentUpon>UpdateWindow.xaml</DependentUpon>
@@ -93,7 +97,6 @@
     <Compile Include="Hooks\ClipboardHandler.cs" />
     <Compile Include="Hooks\KeyEmulator.cs" />
     <Compile Include="Hooks\WindowDiscovery.cs" />
-    <Compile Include="Item.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

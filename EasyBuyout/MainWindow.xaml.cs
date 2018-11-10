@@ -1,5 +1,4 @@
 ﻿using EasyBuyout.hooks;
-using EasyBuyout.League;
 using EasyBuyout.Prices;
 using EasyBuyout.Settings;
 using System;
@@ -8,58 +7,69 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
+using EasyBuyout.League;
+using EasyBuyout.Updater;
 
 namespace EasyBuyout {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window {
-        private readonly WebClient webClient;
-        private readonly SettingsWindow settingsWindow;
-        private readonly PriceManager priceManager;
-        private readonly UpdateWindow updateWindow;
-        private readonly LeagueManager leagueManager;
+    public partial class MainWindow {
+        public enum Flair {
+            Info,
+            Warn,
+            Error,
+            Critical
+        }
 
-        private static TextBox console;
-        private volatile bool flag_clipBoardPaste = false;
-        private volatile bool flag_run = false;
+        private readonly SettingsWindow _settingsWindow;
+        private readonly PriceboxWindow _priceBox;
+        private readonly PriceManager _priceManager;
+        private readonly Config _config;
+        private static TextBox _console;
+        private volatile bool _flagClipBoardPaste;
+
+        private readonly LeagueManager _leagueManager;
+        private readonly ManualLeagueWindow _manualLeagueWindow;
 
         /// <summary>
         /// Initializes the form and sets event listeners
         /// </summary>
         public MainWindow() {
-            // Initialize objects
-            webClient = new WebClient() { Encoding = System.Text.Encoding.UTF8 };
-            leagueManager = new LeagueManager(webClient);
-            updateWindow = new UpdateWindow(webClient);
-            priceManager = new PriceManager(webClient, leagueManager);
-            settingsWindow = new SettingsWindow(this, leagueManager, priceManager);
+            _config = new Config();
 
-            priceManager.SetProgressBar(settingsWindow.ProgressBar_Progress);
-            priceManager.SetSettingsWindow(settingsWindow);
+            // Web client setup
+            var webClient = new WebClient {Encoding = System.Text.Encoding.UTF8};
+            webClient.Headers.Add("user-agent", $"{_config.ProgramTitle} {_config.ProgramVersion}");
+            ServicePointManager.SecurityProtocol =
+                SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
 
-            // Define eventhandlers
-            ClipboardNotification.ClipboardUpdate += new EventHandler(Event_clipboard);
-            MouseHook.MouseAction += new EventHandler(Event_mouse);
+            // Define event handlers
+            ClipboardNotification.ClipboardUpdate += Event_clipboard;
+            MouseHook.MouseAction += Event_mouse;
 
             // Initialize the UI components
             InitializeComponent();
 
             // Set objects that need to be accessed from outside
-            console = console_window;
-            
+            _console = console_window;
+
+            // Object setup
+            _settingsWindow = new SettingsWindow(_config, Log);
+            _priceManager = new PriceManager(_config, webClient, Log);
+            _priceBox = new PriceboxWindow();
+            var updateWindow = new UpdateWindow(_config, webClient, Log);
+            _leagueManager = new LeagueManager(_config, webClient, Log);
+
             // Set window title
-            Title = Config.programTitle + " " + Config.programVersion;
-            Log(Config.programTitle + " " + Config.programVersion + " by Siegrest", 0);
+            Title = $"{_config.ProgramTitle} {_config.ProgramVersion}";
+            Log($"{_config.ProgramTitle} {_config.ProgramVersion} by Siegrest");
 
             Task.Run(() => {
-                // Get list of active leagues from official API
-                leagueManager.Run();
-                // Add those leagues to settings window
-                settingsWindow.AddLeagues();
-                // Check for updates now that we finished using the webclient
-                if (Config.flag_updaterEnabled) updateWindow.Run();
+                // Check for updates
+                updateWindow.Run();
+                // Query PoE API for active league list and add them to settings selectors
+                UpdateLeagues();
             });
         }
 
@@ -74,9 +84,9 @@ namespace EasyBuyout {
         /// <param name="e"></param>
         private void Event_mouse(object sender, EventArgs e) {
             // Do not run if user has not pressed run button
-            if (!flag_run || !settingsWindow.IsRunOnRightClick()) return;
-            // Only run if "Path of Exile" is the main focused window
-            if (WindowDiscovery.GetActiveWindowTitle() != Config.activeWindowTitle) return;
+            if (!_config.FlagRun) {
+                return;
+            }
 
             // Send Ctrl+C on mouse click
             KeyEmulator.SendCtrlC();
@@ -87,25 +97,28 @@ namespace EasyBuyout {
         /// </summary>
         private void Event_clipboard(object sender, EventArgs e) {
             // Do not run if user has not pressed run button
-            if (!flag_run && !settingsWindow.IsRunOnRightClick()) return;
-            // Only run if "Path of Exile" is the main focused window
-            if (WindowDiscovery.GetActiveWindowTitle() != Config.activeWindowTitle) return;
+            if (!_config.FlagRun) {
+                return;
+            }
+
             // At this point there should be text in the clipboard
-            if (!Clipboard.ContainsText()) return;
+            if (!Clipboard.ContainsText()) {
+                return;
+            }
 
             // TODO: check limits
             // Sleep to allow clipboard write action to finish
-            Thread.Sleep(4);
+            Thread.Sleep(_config.ClipboardWriteDelay);
 
             // Get clipboard contents
-            string clipboardString = Clipboard.GetText();
+            var clipboardString = Clipboard.GetText();
 
-            // Since this event handles *all* clipboard events AND we put the buyout note in the clipboard
-            // then this event will also fire when we do that. So, to prevent an infinte loop, this is needed
-            if (clipboardString.Contains("~b/o ") || clipboardString.Contains("~price "))
+            // This event handles *all* clipboard events
+            if (clipboardString.StartsWith("~")) {
                 Task.Run(() => ClipBoard_NotePasteTask());
-            else
+            } else {
                 Task.Run(() => ClipBoard_ItemParseTask(clipboardString));
+            }
         }
 
         /// <summary>
@@ -113,160 +126,84 @@ namespace EasyBuyout {
         /// </summary>
         /// <param name="clipboardString">Item data from the clipboard</param>
         private void ClipBoard_ItemParseTask(string clipboardString) {
-            priceManager.RefreshLastUseTime();
-
-            Item item = new Item(clipboardString);
-            item.ParseData();
-
-            Console.WriteLine("key: " + item.key);
+            var item = new Item.Item(clipboardString);
 
             // If the item was shite, discard it
-            if (item.discard) {
+            if (item.Discard) {
                 System.Media.SystemSounds.Asterisk.Play();
 
-                switch (item.errorCode) {
-                    case 1:
-                        Log("Did not find any item data", 2);
-                        break;
-                    case 2:
-                        Log("Unable to price unidentified items", 2);
-                        break;
-                    case 3:
-                        Log("Unable to price items with notes", 2);
-                        break;
-                    case 4:
-                        Log("Poe.ninja does not have any data for that item. Try poe-stats.com instead", 2);
-                        break;
+                foreach (var error in item.Errors) {
+                    Log(error, Flair.Error);
                 }
+
                 return;
             }
 
             // Get entries associated with item keys
-            Entry[] entries = priceManager.Search(new string[] { item.key, item.enchantKey });
-            Entry itemEntry = entries[0];
-            Entry enchantEntry = entries[1];
-
-            // Form enchantEntry's displaystring
-            string enchantDisplay = "";
-            if (settingsWindow.IsIncludeEnchant()) {
-                if (enchantEntry != null && enchantEntry.value > 0) {
-                    enchantDisplay += "\nEnchant: " + enchantEntry.value + "c";
-                }
-            }
-
-            // If there were no matches
-            if (itemEntry == null) {
-                // If user had enabled poeprices fallback
-                if (settingsWindow.IsFallBack()) {
-                    Log("No database entry found. Feeding item to PoePrices...", 0);
-
-                    // If pricebox was enabled, display "Searching..." in it until a price is found
-                    if (settingsWindow.IsShowOverlay()) {
-                        priceManager.DisplayPriceBox("Searching...");
-                    }
-
-                    itemEntry = priceManager.SearchPoePrices(item.GetRaw());
-                }
-            }
+            var entry = _priceManager.GetEntry(item.Key);
 
             // Display error
-            if (itemEntry == null && settingsWindow.IsShowOverlay()) {
-                priceManager.DisplayPriceBox("Item: No match..." + enchantDisplay);
-                return;
-            }
+            if (entry == null) {
+                Log($"No match for: {item.Key}", Flair.Warn);
 
-            // Display some info about some error codes, if any
-            if (itemEntry.value < 0) {
-                // Play a warning sound
-                System.Media.SystemSounds.Asterisk.Play();
-
-                string errorMessage;
-                int entryValue = (int)itemEntry.value;
-                switch (entryValue) {
-                    case -1:
-                        errorMessage = "Empty HTTP reply from PoePrices";
-                        break;
-                    case -2:
-                        errorMessage = "Invalid item for PoePrices";
-                        break;
-                    case -3:
-                        errorMessage = "No exalted conversion rate found for PoePrices";
-                        break;
-                    case -4:
-                        errorMessage = "Unable to send request to PoePrices";
-                        break;
-                    default:
-                        errorMessage = "Something went wrong with PoePrices";
-                        break;
-                }
-
-                Log(errorMessage, 2);
-
-                // If pricebox was enabled, display error in it
-                if (settingsWindow.IsShowOverlay()) {
-                    priceManager.DisplayPriceBox(errorMessage);
+                if (_config.FlagShowOverlay) {
+                    DisplayPriceBox("No match");
                 }
 
                 return;
             }
 
-            // Send a warning message when count is less than 10 as these items probably have inaccurate prices
-            if (itemEntry.quantity < 5 && !settingsWindow.GetSelectedSource().ToLower().Equals("poe.ninja") && item.GetFrame() != 5) {
-                System.Media.SystemSounds.Asterisk.Play();
-                Log("Likely incorrect price (quantity: " + itemEntry.quantity + ")", 1);
-            }
-
-            // Calculate prices
-            double oldPrice = Math.Ceiling(itemEntry.value * 2) / 2.0;
-            double newPrice = Math.Ceiling(itemEntry.value * (100 - settingsWindow.GetLowerPricePercentage()) / 100.0 * 2) / 2.0;
-
-            if (settingsWindow.IsIncludeEnchant()) {
-                if (enchantEntry != null && enchantEntry.value > 0) {
-                    oldPrice += Math.Ceiling(enchantEntry.value * 2) / 2.0;
-                    newPrice += Math.Ceiling(enchantEntry.value * (100 - settingsWindow.GetLowerPricePercentage()) / 100.0 * 2) / 2.0;
-                }
-            }
-
-            string note = priceManager.MakeNote(newPrice);
-
-            // If the LowerPriceByPercentage slider is more than 0, change output message
-            if (settingsWindow.GetLowerPricePercentage() > 0) {
-                Log(item.key + ": " + oldPrice + "c -> " + newPrice + "c", 0);
+            double price;
+            if (_config.LowerPricePercentage > 0) {
+                price = (entry.Value * (100 - _config.LowerPricePercentage)) / 100.0;
             } else {
-                Log(item.key + ": " + oldPrice + "c", 0);
+                price = entry.Value;
             }
 
-            if (settingsWindow.IsShowOverlay()) {
-                priceManager.DisplayPriceBox("Item: " + newPrice + "c" + enchantDisplay);
-                return;
-            }
+            // Round price
+            var pow = Math.Pow(10, _config.PricePrecision);
+            price = Math.Round(price * pow) / pow;
 
-            // Item already has a note. Can't overwrite it
-            if (item.errorCode == 3) {
-                Log("Item already has a note", 2);
+            // Replace "," with "." due to game limitations
+            var strPrice = price.ToString().Replace(',', '.');
+            var note = $"{_config.NotePrefix} {strPrice} chaos";
+
+            // Log item price to main console
+            Log($"{item.Key}: {price} chaos");
+
+            if (_config.FlagShowOverlay) {
+                DisplayPriceBox($"{price} chaos");
                 return;
             }
 
             // Raise flag allowing next cb event to be processed
-            flag_clipBoardPaste = true;
-            if (settingsWindow.IsSendNote()) Dispatcher.Invoke(() => Clipboard.SetText(note));
+            if (_config.FlagSendNote) {
+                _flagClipBoardPaste = true;
+                Dispatcher.Invoke(() => Clipboard.SetText(note));
+            }
         }
 
         /// <summary>
         /// Called via task, this method pastes the current clipboard contents and presses enter
         /// </summary>
         private void ClipBoard_NotePasteTask() {
-            if (flag_clipBoardPaste) {
-                flag_clipBoardPaste = false;
-            } else return;
+            if (_flagClipBoardPaste) {
+                _flagClipBoardPaste = false;
+            } else {
+                return;
+            }
 
-            Thread.Sleep(settingsWindow.GetPasteDelay());
+            Thread.Sleep(_config.PasteDelay);
 
             // Paste clipboard contents
             System.Windows.Forms.SendKeys.SendWait("^v");
 
             // Send enter key if checkbox is checked
-            if (settingsWindow.IsSendEnter()) System.Windows.Forms.SendKeys.SendWait("{ENTER}");
+            if (_config.FlagSendEnter) {
+                System.Windows.Forms.SendKeys.SendWait("{ENTER}");
+            }
+
+            _flagClipBoardPaste = false;
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -284,18 +221,18 @@ namespace EasyBuyout {
         }
 
         /// <summary>
-        /// Run button event handler
+        /// GetLeagueList button event handler
         /// </summary>
         private void Button_Run_Click(object sender, RoutedEventArgs e) {
             if (Button_Run.Content.ToString() == "Run") {
                 Button_Run.Content = "Pause";
-                flag_run = true;
-                Log("Service started", 0);
+                _config.FlagRun = true;
+                Log("Service started");
                 MouseHook.Start();
             } else {
                 Button_Run.Content = "Run";
-                flag_run = false;
-                Log("Service paused", 0);
+                _config.FlagRun = false;
+                Log("Service paused");
             }
         }
 
@@ -303,9 +240,9 @@ namespace EasyBuyout {
         /// Calculates position and opens settings window
         /// </summary>
         private void Button_Settings_Click(object sender, RoutedEventArgs e) {
-            settingsWindow.Left = Left + Width / 2 - settingsWindow.Width / 2;
-            settingsWindow.Top = Top + Height / 2 - settingsWindow.Height / 2;
-            settingsWindow.ShowDialog();
+            _settingsWindow.Left = Left + Width / 2 - _settingsWindow.Width / 2;
+            _settingsWindow.Top = Top + Height / 2 - _settingsWindow.Height / 2;
+            _settingsWindow.ShowDialog();
         }
 
         /// <summary>
@@ -319,7 +256,7 @@ namespace EasyBuyout {
 
             // Position window to screen center manually
             try {
-                Rect rect = SystemParameters.WorkArea;
+                var rect = SystemParameters.WorkArea;
                 Left = (rect.Width - Width) / 2 + rect.Left;
                 Top = (rect.Height - Height) / 2 + rect.Top;
             } catch (Exception ex) {
@@ -328,38 +265,107 @@ namespace EasyBuyout {
         }
 
         //-----------------------------------------------------------------------------------------------------------
-        // Static methods
+        // Other
         //-----------------------------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Set the content, position and visibility of the pricebox with one method
+        /// </summary>
+        /// <param name="content">String to be displayed in the overlay</param>
+        public void DisplayPriceBox(string content) {
+            Application.Current.Dispatcher.Invoke(() => {
+                _priceBox.Content = content;
+                _priceBox.SetPosition();
+                _priceBox.Show();
+            });
+        }
 
         /// <summary>
         /// Prints text to window in console-like fashion, prefixes a timestamp
         /// </summary>
-        /// <param name="str">String to print</param>
-        /// <param name="status">Status code to indicate INFO/WARN/ERROR/CRITICAL</param>
-        public static void Log(string str, int status) {
-            string prefix;
+        /// <param name="msg">String to print</param>
+        /// <param name="flair">Status code of message</param>
+        public void Log(string msg, Flair flair = Flair.Info) {
+            var prefix = "";
 
-            switch (status) {
-                default:
-                case 0:
-                    prefix = "[INFO] ";
+            switch (flair) {
+                case Flair.Info:
+                    prefix = "INFO";
                     break;
-                case 1:
-                    prefix = "[WARN] ";
+                case Flair.Warn:
+                    prefix = "WARN";
                     break;
-                case 2:
-                    prefix = "[ERROR] ";
+                case Flair.Error:
+                    prefix = "ERROR";
                     break;
-                case 3:
-                    prefix = "[CRITICAL] ";
+                case Flair.Critical:
+                    prefix = "CRITICAL";
                     break;
             }
 
-            string time = string.Format("{0:HH:mm:ss}", DateTime.Now);
+            Application.Current.Dispatcher.Invoke(() => {
+                _console.AppendText($"[{DateTime.Now:HH:mm:ss}][{prefix}] {msg}\n");
+                _console.ScrollToEnd();
+            });
+        }
+
+        /// <summary>
+        /// Adds provided league names to league selector
+        /// </summary>
+        public void UpdateLeagues() {
+            Log("Updating league list...");
+
+            var leagues = _leagueManager.GetLeagueList();
+            if (leagues == null) {
+                Log("Unable to update leagues");
+                return;
+            }
 
             Application.Current.Dispatcher.Invoke(() => {
-                console.AppendText("[" + time + "]" + prefix + str + "\n");
-                console.ScrollToEnd();
+                foreach (var league in leagues) {
+                    ComboBox_League.Items.Add(league);
+                }
+
+                ComboBox_League.Items.Add(_config.ManualLeagueDisplay);
+                ComboBox_League.SelectedIndex = 0;
+                Button_Download.IsEnabled = true;
+
+                Log("League list updated");
+            });
+        }
+
+        /// <summary>
+        /// Download price data on button press
+        /// </summary>
+        private void Button_Download_Click(object sender, RoutedEventArgs e) {
+            _config.SelectedLeague = (string) ComboBox_League.SelectedValue;
+
+            // User has chosen to set league manually
+            if (_config.SelectedLeague == _config.ManualLeagueDisplay) {
+                var manualLeagueWindow = new ManualLeagueWindow();
+                manualLeagueWindow.ShowDialog();
+
+                if (string.IsNullOrEmpty(manualLeagueWindow.input)) {
+                    Log("Invalid league", Flair.Error);
+                    return;
+                }
+
+                _config.SelectedLeague = manualLeagueWindow.input;
+            }
+
+            Button_Download.IsEnabled = false;
+
+            Task.Run(() => {
+                Log($"Downloading data for {_config.SelectedLeague}");
+
+                _priceManager.Download();
+
+                Application.Current.Dispatcher.Invoke(() => {
+                    Button_Download.IsEnabled = true;
+                    Button_Run.IsEnabled = true;
+                });
+
+                Log("Download finished");
             });
         }
     }

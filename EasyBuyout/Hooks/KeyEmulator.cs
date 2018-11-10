@@ -2,7 +2,7 @@
 using System.Threading;
 
 namespace EasyBuyout.hooks {
-    public partial class KeyEmulator {
+    public sealed class KeyEmulator {
         public static void SendCtrlC() {
             keybd_event(0x11, 0, 0, 0); // 0x11 - ctrl, 0 - down
             keybd_event(0x43, 0, 0, 0); // 0x43 - c,    0 - down
