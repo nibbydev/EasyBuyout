@@ -34,10 +34,12 @@
         </GroupBox>
         <GroupBox Header="Universal settings" HorizontalAlignment="Left" Height="200" Margin="10,10,0,0" VerticalAlignment="Top" Width="193" Grid.Column="2" Padding="0">
             <Grid>
-                <Label Content="Lower price by" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="82"/>
-                <TextBox x:Name="TextBox_LowerPrice" HorizontalAlignment="Left" Height="23" Margin="97,10,0,0" Text="0" VerticalAlignment="Top" Width="29" ToolTip="How much % of the price should be reduced?" AllowDrop="False" VerticalScrollBarVisibility="Disabled" VerticalContentAlignment="Center"/>
+                <Label Content="Lower price by" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="82" ToolTip="How much % of the price should be reduced?"/>
+                <TextBox x:Name="TextBox_LowerPrice" HorizontalAlignment="Left" Height="23" Margin="97,10,0,0" Text="0" VerticalAlignment="Top" Width="29" AllowDrop="False" VerticalScrollBarVisibility="Disabled" VerticalContentAlignment="Center"/>
                 <Label Content="%" HorizontalAlignment="Left" Margin="126,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="15"/>
                 <CheckBox x:Name="CheckBox_LiveUpdate" Content="Live update" HorizontalAlignment="Left" Margin="10,35,0,0" VerticalAlignment="Top" ToolTip="Automatically downloads data every 10 minutes" IsChecked="True"/>
+                <ComboBox x:Name="ComboBox_PricePrecision" HorizontalAlignment="Left" Margin="97,55,0,0" VerticalAlignment="Top" Width="44" Height="20"/>
+                <Label Content="Price precision" HorizontalAlignment="Left" Margin="10,55,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="82" ToolTip="Nr of decimal places after comma to keep"/>
             </Grid>
         </GroupBox>
 

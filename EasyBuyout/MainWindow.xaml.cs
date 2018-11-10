@@ -150,16 +150,24 @@ namespace EasyBuyout {
                 return;
             }
 
-            // Calculate prices
-            var oldPrice = Math.Round(entry.Value * 100) / 100.0;
-            var newPrice = Math.Round((entry.Value * (100 - _config.LowerPricePercentage) / 100.0) * 100) / 100.0;
-            var note = MakeNote(newPrice);
+            double price;
+            if (_config.LowerPricePercentage > 0) {
+                price = (entry.Value * (100 - _config.LowerPricePercentage)) / 100.0;
+            } else {
+                price = entry.Value;
+            }
+        
+            // Round price
+            var pow = Math.Pow(10, _config.PricePrecision);
+            price = Math.Round(price * pow) / pow;
+
+            var note = MakeNote(price);
 
             // Log item price to main console
-            Log(_config.LowerPricePercentage == 0 ? $"{item.Key}: {oldPrice} chaos" : $"{item.Key}: {oldPrice} -> {newPrice} chaos");
+            Log($"{item.Key}: {price} chaos");
 
             if (_config.FlagShowOverlay) {
-                DisplayPriceBox($"{newPrice} chaos");
+                DisplayPriceBox($"{price} chaos");
                 return;
             }
 

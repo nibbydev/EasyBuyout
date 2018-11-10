@@ -39,6 +39,13 @@ namespace EasyBuyout.Settings {
             _manualLeagueWindow = new ManualLeagueWindow();
             _leagueManager = new LeagueManager(config, webClient, _log);
 
+            // Add initial values to PricePrecision dropdown
+            for (int i = 0; i < 4; i++) {
+                ComboBox_PricePrecision.Items.Add(i);
+            }
+
+            ComboBox_League.SelectedIndex = 0;
+
             // Set window options to default values
             ResetOptions();
         }
@@ -80,6 +87,8 @@ namespace EasyBuyout.Settings {
             if (_config.SelectedLeague != null) {
                 ComboBox_League.SelectedValue = _config.SelectedLeague;
             }
+
+            ComboBox_PricePrecision.SelectedValue = _config.PricePrecision;
 
             // Reset text fields
             TextBox_Delay.Text = _config.PasteDelay.ToString();
@@ -177,6 +186,13 @@ namespace EasyBuyout.Settings {
                         MainWindow.Flair.Info);
                     _config.LowerPricePercentage = newLowerPercentage;
                 }
+            }
+
+            // Dropdowns
+            if (_config.PricePrecision != (int) ComboBox_PricePrecision.SelectedValue) {
+                _log($"Changed price precision {_config.PricePrecision} -> {ComboBox_PricePrecision.SelectedValue}",
+                    MainWindow.Flair.Info);
+                _config.PricePrecision = (int) ComboBox_PricePrecision.SelectedValue;
             }
 
             // Checkboxes

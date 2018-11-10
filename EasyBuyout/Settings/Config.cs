@@ -25,6 +25,7 @@ namespace EasyBuyout.Settings {
         public int LowerPricePercentage { get; set; } = 0;
         public int PasteDelay { get; set; } = 120;
         public int ClipboardWriteDelay { get; set; } = 4;
+        public int PricePrecision { get; set; } = 1;
 
         public bool FlagSendNote { get; set; } = true;
         public bool FlagSendEnter { get; set; } = true;
