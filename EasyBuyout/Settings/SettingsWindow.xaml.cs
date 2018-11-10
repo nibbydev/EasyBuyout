@@ -1,8 +1,4 @@
-﻿using EasyBuyout.League;
-using EasyBuyout.Prices;
-using System;
-using System.Net;
-using System.Threading.Tasks;
+﻿using System;
 using System.Windows;
 
 namespace EasyBuyout.Settings {
@@ -10,84 +6,36 @@ namespace EasyBuyout.Settings {
     /// Interaction logic for SettingsWindow.xaml
     /// </summary>
     public partial class SettingsWindow {
-        private readonly ManualLeagueWindow _manualLeagueWindow;
         private readonly Config _config;
-
-        private readonly Action<bool> _setStartButtonState;
         private readonly Action<string, MainWindow.Flair> _log;
-        public Action<string> Download;
-
-        private readonly LeagueManager _leagueManager;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="config"></param>
-        /// <param name="setSetStartButtonState"></param>
         /// <param name="log"></param>
-        /// <param name="webClient"></param>
-        public SettingsWindow(Config config, Action<bool> setSetStartButtonState, Action<string, MainWindow.Flair> log,
-            WebClient webClient) {
+        public SettingsWindow(Config config, Action<string, MainWindow.Flair> log) {
             _config = config;
-            _setStartButtonState = setSetStartButtonState;
             _log = log;
 
             // Initialize the UI components
             InitializeComponent();
-
-            // Instantiate objects
-            _manualLeagueWindow = new ManualLeagueWindow();
-            _leagueManager = new LeagueManager(config, webClient, _log);
 
             // Add initial values to PricePrecision dropdown
             for (int i = 0; i < 4; i++) {
                 ComboBox_PricePrecision.Items.Add(i);
             }
 
-            ComboBox_League.SelectedIndex = 0;
+            ComboBox_PricePrecision.SelectedIndex = 0;
 
             // Set window options to default values
             ResetOptions();
-        }
-
-        //-----------------------------------------------------------------------------------------------------------
-        // Generic methods
-        //-----------------------------------------------------------------------------------------------------------
-
-        /// <summary>
-        /// Adds provided league names to league selector
-        /// </summary>
-        public void UpdateLeagues() {
-            _log("Updating league list...", MainWindow.Flair.Info);
-
-            var leagues = _leagueManager.GetLeagueList();
-            if (leagues == null) {
-                _log("Unable to update leagues", MainWindow.Flair.Error);
-                return;
-            }
-
-            Application.Current.Dispatcher.Invoke(() => {
-                foreach (var league in leagues) {
-                    ComboBox_League.Items.Add(league);
-                }
-
-                ComboBox_League.Items.Add(_config.ManualLeagueDisplay);
-                ComboBox_League.SelectedIndex = 0;
-                Button_Download.IsEnabled = true;
-
-                _log("League list updated", MainWindow.Flair.Info);
-            });
         }
 
         /// <summary>
         /// Reverts all settings back to original state when cancel button is pressed
         /// </summary>
         private void ResetOptions() {
-            // Reset dropdown boxes
-            if (_config.SelectedLeague != null) {
-                ComboBox_League.SelectedValue = _config.SelectedLeague;
-            }
-
             ComboBox_PricePrecision.SelectedValue = _config.PricePrecision;
 
             // Reset text fields
@@ -110,40 +58,6 @@ namespace EasyBuyout.Settings {
             Radio_Buyout.IsEnabled = _config.FlagSendNote;
             Radio_Price.IsEnabled = _config.FlagSendNote;
             TextBox_Delay.IsEnabled = _config.FlagSendNote;
-        }
-
-        /// <summary>
-        /// Opens dialog allowing user to manually input league
-        /// </summary>
-        public string DisplayManualLeagueInputDialog() {
-            _manualLeagueWindow.ShowDialog();
-            return _manualLeagueWindow.input;
-        }
-
-        /// <summary>
-        /// Increment the progressbar by one step
-        /// </summary>
-        public void IncProgressBar() {
-            if (ProgressBar_Progress == null) {
-                return;
-            }
-
-            Application.Current.Dispatcher.Invoke(() => ++ProgressBar_Progress.Value);
-        }
-
-        /// <summary>
-        /// Set initial progressbar values
-        /// </summary>
-        /// <param name="size">Progress step count</param>
-        public void ConfigureProgressBar(int size) {
-            if (ProgressBar_Progress == null) {
-                return;
-            }
-
-            Application.Current.Dispatcher.Invoke(() => {
-                ProgressBar_Progress.Maximum = size;
-                ProgressBar_Progress.Value = 0;
-            });
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -207,36 +121,6 @@ namespace EasyBuyout.Settings {
                 : Radio_Price.Content.ToString();
 
             Hide();
-        }
-
-        /// <summary>
-        /// Download price data on button press
-        /// </summary>
-        private void Button_Download_Click(object sender, RoutedEventArgs e) {
-            _config.SelectedLeague = (string) ComboBox_League.SelectedValue;
-
-            if (_config.SelectedLeague == _config.ManualLeagueDisplay) {
-                _config.SelectedLeague = DisplayManualLeagueInputDialog();
-
-                if (_config.SelectedLeague == null) {
-                    return;
-                }
-            }
-
-            Button_Download.IsEnabled = false;
-
-            Task.Run(() => {
-                _log($"Downloading data for {_config.SelectedLeague}", MainWindow.Flair.Info);
-
-                // Download price data
-                Download(_config.SelectedLeague);
-
-                // Enable run button on MainWindow
-                _setStartButtonState(true);
-                Application.Current.Dispatcher.Invoke(() => { Button_Download.IsEnabled = true; });
-
-                _log("Download finished", MainWindow.Flair.Info);
-            });
         }
 
         /// <summary>

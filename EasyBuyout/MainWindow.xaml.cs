@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using EasyBuyout.League;
 using EasyBuyout.Updater;
 
 namespace EasyBuyout {
@@ -27,6 +28,9 @@ namespace EasyBuyout {
         private readonly Config _config;
         private static TextBox _console;
         private volatile bool _flagClipBoardPaste;
+
+        private readonly LeagueManager _leagueManager;
+        private readonly ManualLeagueWindow _manualLeagueWindow;
 
         /// <summary>
         /// Initializes the form and sets event listeners
@@ -51,12 +55,11 @@ namespace EasyBuyout {
             _console = console_window;
 
             // Object setup
-            _settingsWindow = new SettingsWindow(_config, SetStartButtonState, Log, webClient);
-            _priceManager = new PriceManager(_config, webClient, Log, _settingsWindow.IncProgressBar,
-                _settingsWindow.ConfigureProgressBar);
-            _settingsWindow.Download = _priceManager.Download;
+            _settingsWindow = new SettingsWindow(_config, Log);
+            _priceManager = new PriceManager(_config, webClient, Log);
             _priceBox = new PriceboxWindow();
             var updateWindow = new UpdateWindow(_config, webClient, Log);
+            _leagueManager = new LeagueManager(_config, webClient, Log);
 
             // Set window title
             Title = $"{_config.ProgramTitle} {_config.ProgramVersion}";
@@ -66,7 +69,7 @@ namespace EasyBuyout {
                 // Check for updates
                 updateWindow.Run();
                 // Query PoE API for active league list and add them to settings selectors
-                _settingsWindow.UpdateLeagues();
+                UpdateLeagues();
             });
         }
 
@@ -156,12 +159,14 @@ namespace EasyBuyout {
             } else {
                 price = entry.Value;
             }
-        
+
             // Round price
             var pow = Math.Pow(10, _config.PricePrecision);
             price = Math.Round(price * pow) / pow;
 
-            var note = MakeNote(price);
+            // Replace "," with "." due to game limitations
+            var strPrice = price.ToString().Replace(',', '.');
+            var note = $"{_config.NotePrefix} {strPrice} chaos";
 
             // Log item price to main console
             Log($"{item.Key}: {price} chaos");
@@ -304,19 +309,64 @@ namespace EasyBuyout {
             });
         }
 
-        public void SetStartButtonState(bool enabled) {
-            Application.Current.Dispatcher.Invoke(() => { Button_Run.IsEnabled = enabled; });
+        /// <summary>
+        /// Adds provided league names to league selector
+        /// </summary>
+        public void UpdateLeagues() {
+            Log("Updating league list...");
+
+            var leagues = _leagueManager.GetLeagueList();
+            if (leagues == null) {
+                Log("Unable to update leagues");
+                return;
+            }
+
+            Application.Current.Dispatcher.Invoke(() => {
+                foreach (var league in leagues) {
+                    ComboBox_League.Items.Add(league);
+                }
+
+                ComboBox_League.Items.Add(_config.ManualLeagueDisplay);
+                ComboBox_League.SelectedIndex = 0;
+                Button_Download.IsEnabled = true;
+
+                Log("League list updated");
+            });
         }
 
         /// <summary>
-        /// Formats the buyout note that will be pasted on the item
+        /// Download price data on button press
         /// </summary>
-        /// <param name="price">Price that will be present in the note</param>
-        /// <returns>Formatted buyout note (e.g. "~b/o 53.2 chaos")</returns>
-        public string MakeNote(double price) {
-            // Replace "," with "." due to game limitations
-            var strPrice = price.ToString().Replace(',', '.');
-            return $"{_config.NotePrefix} {strPrice} chaos";
+        private void Button_Download_Click(object sender, RoutedEventArgs e) {
+            _config.SelectedLeague = (string) ComboBox_League.SelectedValue;
+
+            // User has chosen to set league manually
+            if (_config.SelectedLeague == _config.ManualLeagueDisplay) {
+                var manualLeagueWindow = new ManualLeagueWindow();
+                manualLeagueWindow.ShowDialog();
+
+                if (string.IsNullOrEmpty(manualLeagueWindow.input)) {
+                    Log("Invalid league", Flair.Error);
+                    return;
+                }
+
+                _config.SelectedLeague = manualLeagueWindow.input;
+            }
+
+            Button_Download.IsEnabled = false;
+
+            Task.Run(() => {
+                Log($"Downloading data for {_config.SelectedLeague}");
+
+                _priceManager.Download();
+
+                Application.Current.Dispatcher.Invoke(() => {
+                    Button_Download.IsEnabled = true;
+                    Button_Run.IsEnabled = true;
+                });
+
+                Log("Download finished");
+            });
         }
     }
 }

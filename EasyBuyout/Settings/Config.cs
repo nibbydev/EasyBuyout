@@ -9,7 +9,7 @@ namespace EasyBuyout.Settings {
 
         public readonly SourceSite Source;
         public readonly string ProgramTitle = "EasyBuyout";
-        public readonly string ProgramVersion = "v1.1";
+        public readonly string ProgramVersion = "v1.1.1";
 
         public readonly string LeagueApiUrl = "https://www.pathofexile.com/api/trade/data/leagues";
         public readonly string ManualLeagueDisplay = "<Manually specify>";

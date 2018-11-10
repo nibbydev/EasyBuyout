@@ -1,15 +1,10 @@
-﻿using EasyBuyout.League;
-using EasyBuyout.Settings;
+﻿using EasyBuyout.Settings;
 using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web.Script.Serialization;
-using System.Windows;
-using System.Windows.Controls;
 using EasyBuyout.Item;
-using EasyBuyout.Settings.Source;
 
 namespace EasyBuyout.Prices {
     /// <summary>
@@ -20,12 +15,8 @@ namespace EasyBuyout.Prices {
         private readonly WebClient _webClient;
         private readonly Action<string, MainWindow.Flair> _log;
         private readonly Dictionary<Key, Entry> _entryMap;
-        private Timer _liveUpdateTask;
         private readonly Config _config;
-
-        // Accessing SettingsWindow's progressbar
-        private readonly Action _incProgressBar;
-        private readonly Action<int> _configureProgressBar;
+        private Timer _liveUpdateTask;
 
         /// <summary>
         /// Constructor
@@ -33,15 +24,10 @@ namespace EasyBuyout.Prices {
         /// <param name="config"></param>
         /// <param name="webClient"></param>
         /// <param name="log"></param>
-        /// <param name="incProgressBar"></param>
-        /// <param name="configureProgressBar"></param>
-        public PriceManager(Config config, WebClient webClient, Action<string, MainWindow.Flair> log,
-            Action incProgressBar, Action<int> configureProgressBar) {
+        public PriceManager(Config config, WebClient webClient, Action<string, MainWindow.Flair> log) {
             _config = config;
             _webClient = webClient;
             _log = log;
-            _incProgressBar = incProgressBar;
-            _configureProgressBar = configureProgressBar;
 
             _javaScriptSerializer = new JavaScriptSerializer {MaxJsonLength = int.MaxValue};
             _entryMap = new Dictionary<Key, Entry>();
@@ -54,62 +40,48 @@ namespace EasyBuyout.Prices {
         /// <summary>
         /// Picks download source depending on source selection
         /// </summary>
-        public void Download(string league) {
-            var categoryCount = 0;
-            foreach (var api in _config.Source.SourceApis) {
-                categoryCount += api.Categories.Count;
+        public void Download() {
+            if (_config.SelectedLeague == null) {
+                return;
             }
-
-            _configureProgressBar(categoryCount);
 
             _entryMap.Clear();
             foreach (var api in _config.Source.SourceApis) {
-                Download2(api, league);
+                foreach (var category in api.Categories) {
+                    _log($"Fetching: {category} for {_config.SelectedLeague}", MainWindow.Flair.Info);
+
+                    try {
+                        var url = api.Url.Replace("{league}", _config.SelectedLeague).Replace("{category}", category);
+                        var jsonString = _webClient.DownloadString(url);
+
+                        // Deserialize
+                        var entryDict = _javaScriptSerializer.Deserialize<PoeNinjasEntryDict>(jsonString);
+
+                        if (entryDict == null) {
+                            _log($"[{_config.SelectedLeague}] Reply was null for {category}", MainWindow.Flair.Error);
+                            break;
+                        }
+
+                        // Add all entries
+                        foreach (var line in entryDict.lines) {
+                            var key = new Key(category, line);
+
+                            if (_entryMap.ContainsKey(key)) {
+                                Console.WriteLine($"Duplicate key for {key}");
+                                continue;
+                            }
+
+                            _entryMap.Add(new Key(category, line), new Entry(line.GetValue(), line.count));
+                        }
+                    } catch (Exception ex) {
+                        _log(ex.ToString(), MainWindow.Flair.Error);
+                    }
+                }
             }
 
             _liveUpdateTask?.Dispose();
             if (_config.FlagLiveUpdate) {
                 _liveUpdateTask = new Timer(LiveUpdate, null, _config.LiveUpdateDelayMs, _config.LiveUpdateDelayMs);
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sourceApi"></param>
-        /// <param name="league"></param>
-        private void Download2(SourceApi sourceApi, string league) {
-            foreach (var category in sourceApi.Categories) {
-                _log($"Fetching: {category} for {league}", MainWindow.Flair.Info);
-
-                try {
-                    var url = sourceApi.Url.Replace("{league}", league).Replace("{category}", category);
-                    var jsonString = _webClient.DownloadString(url);
-
-                    // Deserialize
-                    var entryDict = _javaScriptSerializer.Deserialize<PoeNinjasEntryDict>(jsonString);
-
-                    if (entryDict == null) {
-                        _log($"[{league}] Reply was null for {category}", MainWindow.Flair.Error);
-                        break;
-                    }
-
-                    // Add all entries
-                    foreach (var line in entryDict.lines) {
-                        var key = new Key(category, line);
-
-                        if (_entryMap.ContainsKey(key)) {
-                            Console.WriteLine($"Duplicate key for {key}");
-                            continue;
-                        }
-
-                        _entryMap.Add(new Key(category, line), new Entry(line.GetValue(), line.count));
-                    }
-                } catch (Exception ex) {
-                    _log(ex.ToString(), MainWindow.Flair.Error);
-                } finally {
-                    _incProgressBar();
-                }
             }
         }
 
@@ -123,7 +95,7 @@ namespace EasyBuyout.Prices {
             }
 
             _log("Updating prices", MainWindow.Flair.Info);
-            Download(_config.SelectedLeague);
+            Download();
             _log("Prices updated", MainWindow.Flair.Info);
         }
 
