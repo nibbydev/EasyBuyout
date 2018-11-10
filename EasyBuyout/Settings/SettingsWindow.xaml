@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:EasyBuyout"
         mc:Ignorable="d"
         Title="Settings" Closing="Window_Closing" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" SizeToContent="WidthAndHeight">
     <Grid Width="640" Height="250">
@@ -17,19 +16,13 @@
         <GroupBox Header="Data download" HorizontalAlignment="Left" Height="230" Margin="10,10,0,0" VerticalAlignment="Top" Width="190">
             <Grid>
                 <ComboBox x:Name="ComboBox_League" HorizontalAlignment="Left" Margin="10,30,0,0" VerticalAlignment="Top" Width="158" Height="22" ToolTip="Current active league"/>
-                <ComboBox x:Name="ComboBox_Source" HorizontalAlignment="Left" Margin="10,77,0,0" VerticalAlignment="Top" Width="158" SelectionChanged="ComboBox_Source_SelectionChanged" Height="22" ToolTip="API from which to download price data"/>
                 <Label Content="League" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="42"/>
-                <Label Content="Source" HorizontalAlignment="Left" Margin="10,57,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="40"/>
                 <Button x:Name="Button_Download" Content="Download" HorizontalAlignment="Right" Margin="0,0,10,10" VerticalAlignment="Bottom" Width="75" IsEnabled="False" Click="Button_Download_Click" Height="23" ToolTip="Download the datapackage associated with the selected league"/>
-                <ProgressBar x:Name="ProgressBar_Progress" HorizontalAlignment="Left" Height="18" Margin="10,129,0,0" VerticalAlignment="Top" Width="158"/>
-                <Label Content="Progress" HorizontalAlignment="Left" Margin="10,104,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="54"/>
+                <ProgressBar x:Name="ProgressBar_Progress" HorizontalAlignment="Left" Height="18" Margin="10,57,0,0" VerticalAlignment="Top" Width="158"/>
             </Grid>
         </GroupBox>
         <GroupBox Header="Mode selection" HorizontalAlignment="Left" Height="230" Margin="10,10,0,0" VerticalAlignment="Top" Width="194" Grid.Column="1">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                </Grid.ColumnDefinitions>
                 <CheckBox x:Name="CheckBox_SendEnter" Content="Send enter" HorizontalAlignment="Left" Margin="10,50,0,0" VerticalAlignment="Top" Height="15" Width="77" ToolTip="Press enter after sending note"/>
                 <RadioButton x:Name="Radio_Buyout" Content="~b/o" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="True" Margin="10,118,0,0" Height="15" Width="46" GroupName="noteType" />
                 <RadioButton x:Name="Radio_Price" Content="~price" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,138,0,0" Height="15" Width="53" GroupName="noteType" />
@@ -42,12 +35,9 @@
         <GroupBox Header="Universal settings" HorizontalAlignment="Left" Height="200" Margin="10,10,0,0" VerticalAlignment="Top" Width="193" Grid.Column="2" Padding="0">
             <Grid>
                 <Label Content="Lower price by" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="82"/>
-                <CheckBox x:Name="CheckBox_Fallback" Content="PoePrices Fallback" HorizontalAlignment="Left" Margin="10,38,0,0" VerticalAlignment="Top" ToolTip="Send item data to PoePrices API when there's no local match" IsChecked="True" Height="15" Width="116"/>
                 <TextBox x:Name="TextBox_LowerPrice" HorizontalAlignment="Left" Height="23" Margin="97,10,0,0" Text="0" VerticalAlignment="Top" Width="29" ToolTip="How much % of the price should be reduced?" AllowDrop="False" VerticalScrollBarVisibility="Disabled" VerticalContentAlignment="Center"/>
                 <Label Content="%" HorizontalAlignment="Left" Margin="126,10,0,0" VerticalAlignment="Top" Padding="2" Height="20" Width="15"/>
-                <CheckBox x:Name="CheckBox_RunOnRightClick" Content="Run on right click" HorizontalAlignment="Left" Margin="10,58,0,0" VerticalAlignment="Top" Height="15" Width="116" ToolTip="If this is disabled, use Ctrl+C to use the tool" IsChecked="True"/>
-                <CheckBox x:Name="CheckBox_IncludeEnchant" Content="Include Enchantment" HorizontalAlignment="Left" Margin="10,78,0,0" VerticalAlignment="Top" ToolTip="Includes the price of the enchantment in the buyout note (warning: may be incredibly inaccurate)"/>
-                <CheckBox x:Name="CheckBox_LiveUpdate" Content="Live update" HorizontalAlignment="Left" Margin="10,98,0,0" VerticalAlignment="Top" ToolTip="Automatically downloads data every 10 minutes" IsChecked="True"/>
+                <CheckBox x:Name="CheckBox_LiveUpdate" Content="Live update" HorizontalAlignment="Left" Margin="10,35,0,0" VerticalAlignment="Top" ToolTip="Automatically downloads data every 10 minutes" IsChecked="True"/>
             </Grid>
         </GroupBox>
 

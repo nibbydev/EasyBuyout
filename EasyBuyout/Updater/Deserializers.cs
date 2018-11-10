@@ -15,7 +15,7 @@ namespace EasyBuyout.Updater {
         public string tag_name { get; set; }
         // Release name
         public string name { get; set; }
-        // Patchnotes
+        // Patch notes
         public string body { get; set; }
         // Attached files
         public List<Asset> assets { get; set; }

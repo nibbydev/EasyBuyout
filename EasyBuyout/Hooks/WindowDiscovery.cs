@@ -4,16 +4,13 @@ using System.Text;
 
 namespace EasyBuyout.hooks {
     public sealed class WindowDiscovery {
-        private const int nChars = 256;
+        private const int NChars = 256;
 
         public static string GetActiveWindowTitle() {
-            StringBuilder Buff = new StringBuilder(nChars);
-            IntPtr handle = GetForegroundWindow();
-
-            if (GetWindowText(handle, Buff, nChars) > 0)
-                return Buff.ToString();
-            else
-                return null;
+            var buff = new StringBuilder(NChars);
+            var handle = GetForegroundWindow();
+      
+            return GetWindowText(handle, buff, NChars) > 0 ? buff.ToString() : null;
         }
 
         [DllImport("user32.dll")]

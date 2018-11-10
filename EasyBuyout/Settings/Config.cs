@@ -1,34 +1,59 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using EasyBuyout.Settings.Source;
 
 namespace EasyBuyout.Settings {
-    public static class Config {
-        public static readonly string[] sourceList = { "Poe.ninja", "Poe-stats.com" };
-        public const string programTitle = "EasyBuyout";
-        public const string programVersion = "v1.0.24.2";
-        public const string activeWindowTitle = "Path of Exile";
+    public class Config {
+        //-----------------------------------------------------------------------------------------------------------
+        // Readonly
+        //-----------------------------------------------------------------------------------------------------------
 
-        // League manager
-        public const string poeLeagueAPI = "https://www.pathofexile.com/api/trade/data/leagues";
-        public const string manualLeagueDisplay = "<Manually specify>";
+        public readonly SourceSite Source;
+        public readonly string ProgramTitle = "EasyBuyout";
+        public readonly string ProgramVersion = "v1.1";
 
-        // Updater
-        public const string githubReleaseAPI = "https://api.github.com/repos/siegrest/EasyBuyout/releases";
-        public const bool flag_updaterEnabled = true; // Set to false to disable updater
+        public readonly string LeagueApiUrl = "https://www.pathofexile.com/api/trade/data/leagues";
+        public readonly string ManualLeagueDisplay = "<Manually specify>";
+        public readonly string GithubReleaseApi = "https://api.github.com/repos/siegrest/EasyBuyout/releases";
+        public readonly int LiveUpdateDelayMs = 600000; // Update prices every x milliseconds
 
-        // Pricemanager
-        public const int liveUpdateDelayMS = 1000 * 60 * 10; // Update prices every x milliseconds
-        public const double liveUpdateInactiveMin = 15; // Don't download new prices if program was last used > x minutes ago
-        public static readonly string[] poeNinjaKeys = {
-            "Currency", "UniqueArmour", "Fragment", "Essence", "DivinationCards", "Prophecy", "UniqueMap",
-            "Map", "UniqueJewel", "UniqueFlask", "UniqueWeapon", "UniqueAccessory", "SkillGem", "HelmetEnchant"
-        };
-        public static readonly string[] poeStatsKeys = {
-            "gems", "maps", "prophecy", "currency", "weapons", "armour", "accessories",
-            "jewels", "cards", "flasks", "essence", "enchantments"
-        };
+        //-----------------------------------------------------------------------------------------------------------
+        // Dynamic
+        //-----------------------------------------------------------------------------------------------------------
+
+        public string NotePrefix { get; set; } = "~b/o";
+        public string SelectedLeague { get; set; }
+        public int LowerPricePercentage { get; set; } = 0;
+        public int PasteDelay { get; set; } = 120;
+        public int ClipboardWriteDelay { get; set; } = 4;
+
+        public bool FlagSendNote { get; set; } = true;
+        public bool FlagSendEnter { get; set; } = true;
+        public bool FlagShowOverlay { get; set; } = false;
+        public bool FlagLiveUpdate { get; set; } = true;
+        public bool FlagRun { get; set; } = false;
+
+        public Config() {
+            // Initialize data sources
+            Source = new SourceSite() {
+                Name = "Poe.Ninja",
+                SourceApis = new List<SourceApi>() {
+                    new SourceApi() {
+                        Display = "Currency",
+                        Url = "https://poe.ninja/api/data/currencyoverview?league={league}&type={category}",
+                        Categories = new List<string>() {
+                            "Currency", "Fragment"
+                        }
+                    },
+                    new SourceApi() {
+                        Display = "Items",
+                        Url = "https://poe.ninja/api/data/itemoverview?league={league}&type={category}",
+                        Categories = new List<string>() {
+                            "UniqueArmour", "Essence", "DivinationCard", "Prophecy", "UniqueMap",
+                            "Map", "UniqueJewel", "UniqueFlask", "UniqueWeapon", "UniqueAccessory", "SkillGem"
+                        }
+                    }
+                }
+            };
+        }
     }
 }
