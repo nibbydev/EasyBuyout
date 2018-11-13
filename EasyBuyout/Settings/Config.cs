@@ -9,7 +9,7 @@ namespace EasyBuyout.Settings {
 
         public readonly SourceSite Source;
         public readonly string ProgramTitle = "EasyBuyout";
-        public readonly string ProgramVersion = "v1.1.1";
+        public readonly string ProgramVersion = "v1.1.2";
 
         public readonly string LeagueApiUrl = "https://www.pathofexile.com/api/trade/data/leagues";
         public readonly string ManualLeagueDisplay = "<Manually specify>";
@@ -28,7 +28,7 @@ namespace EasyBuyout.Settings {
         public int PricePrecision { get; set; } = 1;
 
         public bool FlagSendNote { get; set; } = true;
-        public bool FlagSendEnter { get; set; } = true;
+        public bool FlagSendEnter { get; set; } = false;
         public bool FlagShowOverlay { get; set; } = false;
         public bool FlagLiveUpdate { get; set; } = true;
         public bool FlagRun { get; set; } = false;
