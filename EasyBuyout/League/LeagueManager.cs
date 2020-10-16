@@ -52,6 +52,7 @@ namespace EasyBuyout.League {
             }
 
             try {
+                _webClient.Headers.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36");
                 var jsonString = _webClient.DownloadString(_config.LeagueApiUrl);
                 return new JavaScriptSerializer().Deserialize<LeagueParcel>(jsonString).result;
             } catch (Exception ex) {
