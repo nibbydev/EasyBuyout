@@ -48,7 +48,7 @@ namespace EasyBuyout.Prices {
             _entryMap.Clear();
             foreach (var api in _config.Source.SourceApis) {
                 foreach (var category in api.Categories) {
-                    _log($"Fetching: {category} for {_config.SelectedLeague}", MainWindow.Flair.Info);
+                    _log($"Fetching: {category}", MainWindow.Flair.Info);
 
                     try {
                         var url = api.Url.Replace("{league}", _config.SelectedLeague).Replace("{category}", category);

@@ -318,6 +318,10 @@ namespace EasyBuyout {
             var leagues = _leagueManager.GetLeagueList();
             if (leagues == null) {
                 Log("Unable to update leagues");
+
+                ComboBox_League.Items.Add(_config.ManualLeagueDisplay);
+                ComboBox_League.SelectedIndex = 0;
+
                 return;
             }
 
