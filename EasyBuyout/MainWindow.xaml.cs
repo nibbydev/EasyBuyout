@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using EasyBuyout.League;
 using EasyBuyout.Updater;
+using System.Runtime.InteropServices;
 
 namespace EasyBuyout {
     /// <summary>
@@ -106,12 +107,19 @@ namespace EasyBuyout {
                 return;
             }
 
-            // TODO: check limits
-            // Sleep to allow clipboard write action to finish
-            Thread.Sleep(_config.ClipboardWriteDelay);
-
             // Get clipboard contents
-            var clipboardString = Clipboard.GetText();
+            var clipboardString = "";
+            // Workaround for the clipboard error. just spams it, probably need to write our own clipboard class honestly idk
+            for (int i = 0; i < 10; i++)
+            {
+                try
+                {
+                    clipboardString = Clipboard.GetText();
+                }
+                // Catches annoying Clipboard race condition error ;/
+                catch (COMException ex) { const uint CLIPBRD_E_CANT_OPEN = 0x800401D0; if ((uint)ex.ErrorCode != CLIPBRD_E_CANT_OPEN) throw; }
+                //Thread.Sleep(_config.ClipboardWriteDelay);
+            } 
 
             // This event handles *all* clipboard events
             if (clipboardString.StartsWith("~")) {
@@ -179,7 +187,7 @@ namespace EasyBuyout {
             // Raise flag allowing next cb event to be processed
             if (_config.FlagSendNote) {
                 _flagClipBoardPaste = true;
-                Dispatcher.Invoke(() => Clipboard.SetText(note));
+                Dispatcher.Invoke(() => Clipboard.SetDataObject(note, false));
             }
         }
 
@@ -202,7 +210,6 @@ namespace EasyBuyout {
             if (_config.FlagSendEnter) {
                 System.Windows.Forms.SendKeys.SendWait("{ENTER}");
             }
-
             _flagClipBoardPaste = false;
         }
 

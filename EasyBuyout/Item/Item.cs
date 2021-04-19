@@ -94,10 +94,10 @@ namespace EasyBuyout.Item {
         public void ParseItemData(string[] splitRaw) {
             // Find name, type and rarity
             var nameLine = splitRaw[0].Split('|');
-            var rarity = TrimProperty(nameLine[0]);
+            var rarity = TrimProperty(nameLine[1]);
 
-            Key.Name = nameLine[1];
-            Key.TypeLine = nameLine.Length > 2 ? nameLine[2] : null;
+            Key.Name = nameLine[2];
+            Key.TypeLine = nameLine.Length > 3 ? nameLine[3] : null;
 
             if (rarity.Equals("Rare")) {
                 Key.Name = Key.TypeLine;
@@ -175,6 +175,7 @@ namespace EasyBuyout.Item {
             // Could not determine the frame type
             Discard = true;
             Errors.Add("Unknown frame type");
+            Errors.Add(rarity);
             return -1;
         }
 
