@@ -73,6 +73,7 @@ namespace EasyBuyout {
             });
         }
 
+        private bool _checkActive = false;
         //-----------------------------------------------------------------------------------------------------------
         // External event handlers
         //-----------------------------------------------------------------------------------------------------------
@@ -82,11 +83,14 @@ namespace EasyBuyout {
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Event_mouse(object sender, EventArgs e) {
+        private void Event_mouse() {
             // Do not run if user has not pressed run button
             if (!_config.FlagRun) {
                 return;
             }
+
+            _checkActive = true;
+            Task.Delay(100).ContinueWith(t => _checkActive = false);
 
             // Send Ctrl+C on mouse click
             KeyEmulator.SendCtrlC();
@@ -97,7 +101,7 @@ namespace EasyBuyout {
         /// </summary>
         private void Event_clipboard(object sender, EventArgs e) {
             // Do not run if user has not pressed run button
-            if (!_config.FlagRun) {
+            if (!_config.FlagRun || !_checkActive) {
                 return;
             }
 
@@ -111,7 +115,16 @@ namespace EasyBuyout {
             Thread.Sleep(_config.ClipboardWriteDelay);
 
             // Get clipboard contents
-            var clipboardString = Clipboard.GetText();
+            var clipboardString = string.Empty;
+            try
+            {
+                clipboardString = Clipboard.GetText();
+            }
+            catch (Exception exception)
+            {
+                //awakened poe trade came first. probably should check if right mouse has been pressed shortly before to prevent this kind of fetching
+                //Log(exception.ToString());
+            }
 
             // This event handles *all* clipboard events
             if (clipboardString.StartsWith("~")) {
@@ -130,7 +143,7 @@ namespace EasyBuyout {
 
             // If the item was shite, discard it
             if (item.Discard) {
-                System.Media.SystemSounds.Asterisk.Play();
+                //System.Media.SystemSounds.Asterisk.Play();
 
                 foreach (var error in item.Errors) {
                     Log(error, Flair.Error);
@@ -154,7 +167,7 @@ namespace EasyBuyout {
             }
 
             double price;
-            if (_config.LowerPricePercentage > 0) {
+            if (_config.LowerPricePercentage > -100) {
                 price = (entry.Value * (100 - _config.LowerPricePercentage)) / 100.0;
             } else {
                 price = entry.Value;

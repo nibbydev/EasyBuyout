@@ -92,8 +92,8 @@ namespace EasyBuyout.Settings {
             // Lower price % box
             int.TryParse(TextBox_LowerPrice.Text, out var newLowerPercentage);
             if (newLowerPercentage != _config.LowerPricePercentage) {
-                if (newLowerPercentage < 0 || newLowerPercentage > 100) {
-                    _log("Invalid input - percentage (allowed: 0 - 100)", MainWindow.Flair.Warn);
+                if (newLowerPercentage < -100 || newLowerPercentage > 100) {
+                    _log("Invalid input - percentage (allowed: -100 - 100)", MainWindow.Flair.Warn);
                     TextBox_LowerPrice.Text = _config.LowerPricePercentage.ToString();
                 } else {
                     _log($"Changed percentage {_config.LowerPricePercentage} -> {newLowerPercentage}",
