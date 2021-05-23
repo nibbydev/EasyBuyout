@@ -2,39 +2,55 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace EasyBuyout {
-    public static class MouseHook {
+namespace EasyBuyout
+{
+    public static class MouseHook
+    {
         private delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
-        public static event EventHandler MouseAction;
-        private static LowLevelMouseProc _proc = HookCallback;
-        private static IntPtr _hookID = IntPtr.Zero;
-        private const int WH_MOUSE_LL = 14;
 
-        public static void Start() { if (_hookID == IntPtr.Zero) _hookID = SetHook(_proc); }
-        public static void Stop() { UnhookWindowsHookEx(_hookID); }
+        public static event Action MouseAction;
+        private static LowLevelMouseProc _proc       = HookCallback;
+        private static IntPtr            _hookID     = IntPtr.Zero;
+        private const  int               WH_MOUSE_LL = 14;
 
-        private static IntPtr SetHook(LowLevelMouseProc proc) {
+        public static void Start()
+        {
+            if (_hookID == IntPtr.Zero) _hookID = SetHook(_proc);
+        }
+
+        public static void Stop()
+        {
+            UnhookWindowsHookEx(_hookID);
+        }
+
+        private static IntPtr SetHook(LowLevelMouseProc proc)
+        {
             using (Process curProcess = Process.GetCurrentProcess())
-            using (ProcessModule curModule = curProcess.MainModule) {
-                return SetWindowsHookEx(WH_MOUSE_LL, proc, GetModuleHandle(curModule.ModuleName), 0);
-            }
+                using (ProcessModule curModule = curProcess.MainModule)
+                {
+                    return SetWindowsHookEx(WH_MOUSE_LL, proc, GetModuleHandle(curModule.ModuleName), 0);
+                }
         }
 
         private static IntPtr HookCallback(
-          int nCode, IntPtr wParam, IntPtr lParam) {
-            if (nCode >= 0 && MouseMessages.WM_RBUTTONDOWN == (MouseMessages)wParam) {
-                MouseAction?.Invoke(null, new EventArgs());
+        int nCode, IntPtr wParam, IntPtr lParam)
+        {
+            if (nCode >= 0 && MouseMessages.WM_RBUTTONDOWN == (MouseMessages) wParam)
+            {
+                MouseAction?.Invoke();
             }
+
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
         }
 
-        private enum MouseMessages {
+        private enum MouseMessages
+        {
             WM_LBUTTONDOWN = 0x0201,
-            WM_LBUTTONUP = 0x0202,
-            WM_MOUSEMOVE = 0x0200,
-            WM_MOUSEWHEEL = 0x020A,
+            WM_LBUTTONUP   = 0x0202,
+            WM_MOUSEMOVE   = 0x0200,
+            WM_MOUSEWHEEL  = 0x020A,
             WM_RBUTTONDOWN = 0x0204,
-            WM_RBUTTONUP = 0x0205
+            WM_RBUTTONUP   = 0x0205
         }
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
