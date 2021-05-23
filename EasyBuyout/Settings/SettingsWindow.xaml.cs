@@ -6,7 +6,7 @@ namespace EasyBuyout.Settings {
     /// Interaction logic for SettingsWindow.xaml
     /// </summary>
     public partial class SettingsWindow {
-        private readonly Config _config;
+        private readonly Config                           _config;
         private readonly Action<string, MainWindow.Flair> _log;
 
         /// <summary>
@@ -15,13 +15,13 @@ namespace EasyBuyout.Settings {
         /// <param name="config"></param>
         /// <param name="log"></param>
         public SettingsWindow(Config config, Action<string, MainWindow.Flair> log) {
-            _config = config;
-            _log = log;
+            _config           = config;
+            _log              = log;
 
             // Initialize the UI components
             InitializeComponent();
 
-            // Add initial values to PricePrecision dropdown
+            // Add initial values to Decimals dropdown
             for (int i = 0; i < 4; i++) {
                 ComboBox_PricePrecision.Items.Add(i);
             }
@@ -45,7 +45,7 @@ namespace EasyBuyout.Settings {
             // Reset checkbox states
             CheckBox_SendEnter.IsChecked = _config.FlagSendEnter;
             Radio_SendNote.IsChecked = _config.FlagSendNote;
-            Radio_ShowOverlay.IsChecked = _config.FlagShowOverlay;
+            Radio_ShowOverlay.IsChecked = !_config.FlagSendNote;
             CheckBox_LiveUpdate.IsChecked = _config.FlagLiveUpdate;
 
             // Reset ~b/o radio states
@@ -110,7 +110,6 @@ namespace EasyBuyout.Settings {
             }
 
             // Checkboxes
-            _config.FlagShowOverlay = Radio_ShowOverlay.IsChecked ?? false;
             _config.FlagSendEnter = CheckBox_SendEnter.IsChecked ?? false;
             _config.FlagSendNote = Radio_SendNote.IsChecked ?? false;
             _config.FlagLiveUpdate = CheckBox_LiveUpdate.IsChecked ?? false;
