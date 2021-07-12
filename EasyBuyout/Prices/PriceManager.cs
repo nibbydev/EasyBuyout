@@ -70,7 +70,6 @@ namespace EasyBuyout.Prices {
                                 Console.WriteLine($"Duplicate key for {key}");
                                 continue;
                             }
-
                             _entryMap.Add(new Key(category, line), new Entry(line.GetValue(), line.count));
                         }
                     } catch (Exception ex) {

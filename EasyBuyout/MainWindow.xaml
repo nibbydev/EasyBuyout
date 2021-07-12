@@ -7,9 +7,8 @@
         mc:Ignorable="d" WindowStartupLocation="CenterScreen" Margin="0" Padding="0" Closing="Window_Closing" MinWidth="598" MinHeight="281" SizeToContent="WidthAndHeight" Loaded="Window_Loaded">
     <Grid Background="#FFF0F0F0" Margin="0,0,0,0" UseLayoutRounding="False" ScrollViewer.VerticalScrollBarVisibility="Disabled" MinWidth="580" MinHeight="240">
         <TextBox x:Name="console_window" AllowDrop="False" IsReadOnly="True" VerticalScrollBarVisibility="Visible" IsUndoEnabled="False" FontFamily="Courier New" Margin="10,10,10,50" MinHeight="180" MinWidth="560" TextWrapping="Wrap"/>
-        <Button x:Name="Button_Run" Content="Run" Width="75" Click="Button_Run_Click" Height="22" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,10,10" ToolTip="Listen to mouse/clipboard events" IsEnabled="False"/>
+        <Button x:Name="Button_Run" Content="Run" Width="75" Click="Button_Run_Click" Height="22" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,10,10" ToolTip="Listen to mouse/clipboard events" IsEnabled="True"/>
         <Button x:Name="Button_Settings" Content="Settings" HorizontalAlignment="Right" Margin="0,0,90,10" VerticalAlignment="Bottom" Width="75" Click="Button_Settings_Click" ToolTip="Open up settings window" Height="22"/>
-        <ComboBox x:Name="ComboBox_League" HorizontalAlignment="Left" Margin="10,0,0,10" VerticalAlignment="Bottom" Width="160" />
-        <Button x:Name="Button_Download" Content="Download" HorizontalAlignment="Left" Margin="175,0,0,10" VerticalAlignment="Bottom" Width="75" Click="Button_Download_Click" IsEnabled="False" Height="22"/>
+        <ComboBox x:Name="ComboBox_League" HorizontalAlignment="Left" Margin="10,0,0,10" VerticalAlignment="Bottom" Width="160" SelectionChanged="ComboBox_League_SelectionChanged" />
     </Grid>
 </Window>
